@@ -65,6 +65,9 @@ class Psi0Agent(PrimitiveAgent):
     def _make_session_id(self) -> str:
         return f"psi0-{os.getpid()}-{self._session_idx}"
 
+    def _build_state_dict(self, states, proprio, info):
+        return {"states": states}
+
     def get_action(
         self, 
         observation, 
@@ -89,7 +92,7 @@ class Psi0Agent(PrimitiveAgent):
                 ],
                 axis=1,
             ).astype(np.float32) # (1, 32)
-            state_dict = {"states": states} # np.zeros_like()
+            state_dict = self._build_state_dict(states, proprio, info)
 
             if self._reset_history:
                 history = {

@@ -47,6 +47,9 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
         self.sonic_upper_joint_names = [name for name, idx in self._dwbc_robot_model.joint_to_dof_index.items() if idx in indices]
 
+    def _build_state_dict(self, states, proprio, info):
+        return {"states": states}
+
     def get_action(
         self, 
         observation, 
@@ -71,7 +74,7 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
                 ],
                 axis=1,
             ).astype(np.float32) # (1, 32)
-            state_dict = {"states": states} # np.zeros_like()
+            state_dict = self._build_state_dict(states, proprio, info)
 
             if self._reset_history:
                 history = {"reset": True}
