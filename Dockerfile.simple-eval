@@ -1,0 +1,101 @@
+# Build with
+# cd /absolute/path/to/robo_orchard_lab/third_party/SIMPLE
+# docker build \
+#   --build-arg HTTP_PROXY="http://10.9.0.31:8838" \
+#   --build-arg HTTPS_PROXY="http://10.9.0.31:8838" \
+#   --file Dockerfile.simple-eval \
+#   --build-arg BASE_IMAGE=simple-eval:latest \
+#   --build-arg TORCH_CUDA_ARCH_LIST=12.0+PTX \
+#   --tag simple-eval-runtime:latest \
+#   .
+
+# simple-eval:latest 6fee34453ca0
+ARG BASE_IMAGE=simple-eval:latest
+FROM ${BASE_IMAGE}
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TORCH_CUDA_ARCH_LIST=8.0+PTX
+ARG UV_VERSION=0.12.1
+
+USER root
+
+# 1. Install base dependencies (Added lsb-release just in case)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential ca-certificates cmake curl dirmngr ffmpeg git \
+    gnupg libglu1-mesa libgmp-dev libgmp10 libvulkan1 ninja-build \
+    pybind11-dev python3-dev software-properties-common lsb-release
+
+# 2. Add the GPG key
+RUN curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60C317803A41BA51845E371A1E9377A2BA9EF27F' \
+    | gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu-toolchain-r.gpg
+
+# 3. Add the repository
+RUN echo "deb https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu $(lsb_release -cs) main" \
+    > /etc/apt/sources.list.d/ubuntu-toolchain-r-test.list
+
+# 4. Update and install libstdc++6
+RUN apt-get -o Acquire::Retries=5 update \
+    && apt-get install -y --no-install-recommends libstdc++6
+
+# 5. Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN python3 -m pip install \
+        --no-cache-dir \
+        --no-deps \
+        --retries 10 \
+        --timeout 180 \
+        "uv==${UV_VERSION}"
+
+ENV OMNI_KIT_ACCEPT_EULA=Y \
+    MUJOCO_GL=egl \
+    SIMPLE_PYTHON=/opt/simple-venv/bin/python \
+    UV_PROJECT_ENVIRONMENT=/opt/simple-venv \
+    UV_CACHE_DIR=/root/.cache/uv \
+    UV_HTTP_TIMEOUT=1800 \
+    UV_HTTP_RETRIES=10 \
+    SETUPTOOLS_SCM_PRETEND_VERSION=0.7.7 \
+    TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+
+WORKDIR /workspace/robo_orchard_lab/third_party/SIMPLE
+
+# Resolve the locked environment before copying frequently changed SIMPLE source.
+COPY pyproject.toml uv.lock README.md ./
+COPY third_party third_party
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    GIT_LFS_SKIP_SMUDGE=1 \
+    uv sync --locked --group lerobot --no-install-project \
+        --index-strategy unsafe-best-match
+
+COPY scripts/install_curobo_docker.sh scripts/install_curobo_docker.sh
+
+ENV SIMPLE_SKIP_NVIDIA_RUNTIME_CHECK=1 \
+    SIMPLE_SKIP_CUROBO_VERIFY=1
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    ./scripts/install_curobo_docker.sh
+
+COPY src src
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --python /opt/simple-venv/bin/python --editable . \
+    && uv pip install --python /opt/simple-venv/bin/python \
+        --no-build-isolation \
+        --editable third_party/gear_sonic \
+        --editable third_party/decoupled_wbc \
+        --editable third_party/unitree_sdk2_python \
+        tyro \
+        pin \
+        pin-pink \
+        pyyaml \
+        onnxruntime \
+        loguru \
+        termcolor \
+        qpsolvers \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Keep the base image's global Python environment for the VLA server. SIMPLE is
+# intentionally selected only through SIMPLE_PYTHON or an explicit interpreter.
+WORKDIR /workspace/robo_orchard_lab
+CMD ["sleep", "infinity"]
