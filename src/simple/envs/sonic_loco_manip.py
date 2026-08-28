@@ -160,8 +160,8 @@ class SonicLocoManipEnv(BaseDualSim):
 
             # with self._telemetry.timer("mujoco.step"):
             self.mujoco.step(render=False) # FIXME  # only render on last step
-            if self.isaac:
-                self.isaac.step(self.mujoco)
+        if self.isaac:
+            self.isaac.step(self.mujoco)
         
         self.step_count += 1
         # with self._telemetry.timer("env._get_obs"):
@@ -199,7 +199,8 @@ class SonicLocoManipEnv(BaseDualSim):
         return self._render_frame()
 
     def _render_frame(self):
-        frame_mujoco = self.mujoco.render()
+        # frame_mujoco = self.mujoco.render()
+        frame_mujoco = None
 
         if self.isaac:
             frame_isaac = self.isaac.render()
