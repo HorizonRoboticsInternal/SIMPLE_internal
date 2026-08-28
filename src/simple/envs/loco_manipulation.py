@@ -104,7 +104,7 @@ class LocoManipulationEnv(BaseDualSim):
 
 
     def _render_frame(self):
-        frame_mujoco = self.mujoco.render()
+        # frame_mujoco = self.mujoco.render()
 
         if self.isaac:
             frame_isaac = self.isaac.render()
