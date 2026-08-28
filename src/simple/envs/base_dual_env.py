@@ -83,12 +83,24 @@ class BaseDualSim(gym.Env):
         from omni.isaac.kit import SimulationApp # type: ignore
         from simple.engines.isaac_app import create_simulation_app
 
+        simulation_app_cls = SimulationApp
+        if headless:
+            class HeadlessSimulationApp(SimulationApp):
+                def _wait_for_viewport(self) -> None:
+                    # Isaac Sim 4.5 can wait forever for a GUI viewport handle
+                    # under --no-window. Headless SIMPLE uses camera render
+                    # products rather than the active GUI viewport.
+                    for _ in range(10):
+                        self._app.update()
+
+            simulation_app_cls = HeadlessSimulationApp
+
         # Step 1: Create SimulationApp
         _SIMULATION_APP = create_simulation_app(
-            SimulationApp,
+            simulation_app_cls,
             headless=headless,
             anti_aliasing=0,
-            hide_ui=False,
+            hide_ui=headless,
         )
         
         # Step 2: Enable WebRTC streaming if requested

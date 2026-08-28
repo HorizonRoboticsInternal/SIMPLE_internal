@@ -5,6 +5,7 @@ Copyright (c) 2025 Songlin Wei and Contributors
 Licensed under the terms in LICENSE file.
 """
 
+import os
 import time
 import numpy as np
 from simple.agents.sonic_decoupled_wbc_agent import SonicDecoupledWbcAgent
@@ -39,6 +40,8 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
 
         self.client = HttpActionClient(self.server_ip, self.server_port)
         self._global_step_idx = 0
+        self._session_idx = 0
+        self._session_id = self._make_session_id()
 
         # last command (high level input to lower policy)
         self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74]) # FIXME hardcoded for g1 wholebody, need to be more general in the future
@@ -46,6 +49,9 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
 
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
         self.sonic_upper_joint_names = [name for name, idx in self._dwbc_robot_model.joint_to_dof_index.items() if idx in indices]
+
+    def _make_session_id(self):
+        return f"psi0-decoupled-wbc-{os.getpid()}-{self._session_idx}"
 
     def get_action(
         self, 
@@ -73,11 +79,14 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
             ).astype(np.float32) # (1, 32)
             state_dict = {"states": states} # np.zeros_like()
 
+            history = {
+                "session_id": self._session_id,
+                "episode_index": int(info.get("episode_index", -1)) if info is not None else -1,
+                "step_index": int(self._global_step_idx),
+            }
             if self._reset_history:
-                history = {"reset": True}
+                history["reset"] = True
                 self._reset_history = False
-            else:
-                history = {}
             pred_action, *_ = self.client.query_action(
                 observations, 
                 instruction or "bend to pick up the object", 
@@ -129,6 +138,13 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
                 "interpolation_garbage_collection_time": t_now - 2 / control_freq,
                 "timestamp": t_now,
             }
+            target_pose = action_cmd["target_upper_body_pose"]
+            self._last_cmd_torso_rpyh = np.array([
+                target_pose["waist_roll_joint"],
+                target_pose["waist_pitch_joint"],
+                target_pose["waist_yaw_joint"],
+                action_cmd["base_height_command"][0],
+            ], dtype=np.float32)
             self._wbc_policy.set_goal(goal)
             wbc_action = self._wbc_policy.get_action(time=t_now)
             self._cached_target_q = self._dwbc_robot_model.get_body_actuated_joints(wbc_action["q"])
@@ -153,6 +169,8 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         super().reset(**kwargs)  # clear queue
 
         self._global_step_idx = 0
+        self._session_idx += 1
+        self._session_id = self._make_session_id()
         self._last_qpos = None
         self._last_observation = None
         self._last_pred_action = None

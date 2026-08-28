@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import faulthandler
 import multiprocessing as mp
 import os
 from collections import defaultdict
@@ -200,10 +201,9 @@ def _run_eval_worker(
     sim_dt = sonic_config["SIMULATE_DT"]
     control_dt = 4 * sim_dt  # = 0.02 s (50 Hz)
 
-    # eval videos -> data/evals/<policy>/<task>/<dr>, where <dr> is the trailing
-    # component of --data-dir (data/evals/simple-eval/<task>/<dr>). When the
-    # policy server exposes /info, the <task> component is prefixed with the
-    # exact checkpoint it serves: data/evals/<policy>/<server_policy>-<timestamp>.<task>/<dr>.
+    # Eval videos -> <eval_dir>/<policy>/<task>/<dr>, where <dr> is the trailing
+    # component of --data-dir. When the policy server exposes /info, the <task>
+    # component is prefixed with the exact checkpoint and server timestamp.
     dr = Path(data_dir).name
     task_component = env_id.split("/")[1]
     policy_info = _fetch_policy_info(host, port)
@@ -211,7 +211,7 @@ def _run_eval_worker(
     server_timestamp = policy_info.get("timestamp")
     if server_policy and server_timestamp:
         task_component = f"{server_policy}-{server_timestamp}.{task_component}"
-    eval_output_dir = os.path.join("data/evals", policy, task_component, dr)
+    eval_output_dir = os.path.join(eval_dir, policy, task_component, dr)
     os.makedirs(eval_output_dir, exist_ok=True)
 
     if rollout_save_dir and num_workers != 1:
@@ -273,6 +273,9 @@ def _run_eval_worker(
         headless=headless,
         sonic_config=sonic_config,
     )
+    setup_trace_seconds = float(os.getenv("SIMPLE_SETUP_TRACE_SECONDS", "0"))
+    if setup_trace_seconds > 0:
+        faulthandler.dump_traceback_later(setup_trace_seconds, repeat=True)
     raw_env = gym.make(env_id, **make_kwargs)
     sonic_env = raw_env.unwrapped  # type: ignore
     task = raw_env.unwrapped.task  # type: ignore[attr-defined]

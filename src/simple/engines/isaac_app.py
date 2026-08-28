@@ -1,10 +1,10 @@
-"""
-Shared Isaac SimulationApp creation helpers.
-"""
+"""Shared Isaac SimulationApp creation helpers."""
 
 from __future__ import annotations
-
 import os
+import sys
+from pathlib import Path
+
 from simple.utils import env_flag
 
 HYDRA_WAIT_IDLE = "/app/hydraEngine/waitIdle"
@@ -17,7 +17,7 @@ def _compact_dict(values: dict) -> dict:
 
 
 def create_simulation_app(
-    SimulationApp,
+    simulation_app_cls,
     *,
     headless: bool,
     renderer: str = "RayTracedLighting",
@@ -52,7 +52,22 @@ def create_simulation_app(
     if extra_args:
         sim_cfg["extra_args"] = extra_args
 
-    app = SimulationApp(sim_cfg)
+    portable_root = os.getenv("SIMPLE_ISAAC_PORTABLE_ROOT", "").strip()
+    original_argv: list[str] | None = None
+    has_portable_root = any(
+        arg == "--portable-root" or arg.startswith("--portable-root=")
+        for arg in sys.argv
+    )
+    if portable_root and not has_portable_root:
+        Path(portable_root).mkdir(parents=True, exist_ok=True)
+        original_argv = sys.argv.copy()
+        sys.argv.extend(["--portable-root", portable_root])
+
+    try:
+        app = simulation_app_cls(sim_cfg)
+    finally:
+        if original_argv is not None:
+            sys.argv[:] = original_argv
 
     for key, _, runtime_value in settings:
         app.set_setting(key, runtime_value)
