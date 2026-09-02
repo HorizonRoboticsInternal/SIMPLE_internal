@@ -1,0 +1,158 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TabletopGrasp annotation</title>
+<style>
+ body{font-family:system-ui,sans-serif;margin:0;background:#101216;color:#e6e8ea}
+ header{position:sticky;top:0;z-index:5;background:#171a20;border-bottom:1px solid #262b33;
+   padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+ h1{font-size:15px;margin:0 10px 0 0}
+ .pill{background:#20242c;border:1px solid #2d3340;border-radius:14px;padding:3px 11px;font-size:12.5px;cursor:pointer;user-select:none}
+ .pill.on{background:#2b5a8f;border-color:#3d7ec2}
+ .count{color:#8fa0b3;font-size:12.5px}
+ #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px;padding:14px 16px}
+ .card{background:#171a20;border:1px solid #262b33;border-radius:9px;overflow:hidden}
+ .card.cur{outline:2px solid #3d7ec2}
+ .card.has-moved{box-shadow:0 0 0 2px #38a169}
+ .card.has-invalid{opacity:0.55;border-color:#e05252}
+ .card.has-none{border-color:#2f855a}
+ .hd{display:flex;gap:8px;align-items:baseline;padding:7px 10px 5px;flex-wrap:wrap}
+ .id{font-weight:700;font-size:15px}
+ .meta{color:#8fa0b3;font-size:11.5px}
+ .fail{color:#f28b82;font-size:11px;font-weight:600}
+ video{width:100%;display:block;background:#000;aspect-ratio:16/9}
+ .row{display:flex;gap:5px;padding:6px 8px;flex-wrap:wrap;align-items:center}
+ button{background:#20242c;color:#e6e8ea;border:1px solid #2d3340;border-radius:6px;
+   padding:4px 9px;cursor:pointer;font-size:12px}
+ .tagbtns button{font-weight:600}
+ .b-sight.sel{background:#2b5a8f;border-color:#4a90d9}
+ .b-partial.sel{background:#155e75;border-color:#22a7c4}
+ .b-moved.sel{background:#2f855a;border-color:#38a169}
+ .b-fts.sel{background:#975a16;border-color:#d69e2e}
+ .b-invalid.sel{background:#9b2c2c;border-color:#e05252}
+ .b-none.sel{background:#1b5e3c;border-color:#2f855a}
+ #exp{background:#1b5e3c;border-color:#2f855a}
+ dialog{background:#171a20;color:#e6e8ea;border:1px solid #3d4452;border-radius:10px;max-width:720px;width:90%}
+ textarea{width:100%;height:260px;background:#0d0f13;color:#cde3cd;border:1px solid #2d3340;font-family:monospace;font-size:12px}
+ kbd{background:#262b33;border-radius:4px;padding:1px 5px;font-size:11px}
+ .help{color:#8fa0b3;font-size:12px;padding:0 16px 8px}
+</style></head><body>
+<header>
+ <h1>TabletopGrasp-policyON annotation &middot; 124 eps</h1>
+ <span class="pill on" data-f="all">all</span>
+ <span class="pill" data-f="untagged">untagged</span>
+ <span class="pill" data-f="sight">&#128065; not in sight</span>
+ <span class="pill" data-f="partial">&#9681; part of box</span>
+ <span class="pill" data-f="moved">&#9995; box moved</span>
+ <span class="pill" data-f="fts">&#8635; failed&rarr;succeeded</span>
+ <span class="pill" data-f="invalid">&#128683; not valid</span>
+ <span class="pill" data-f="good">&#10003; good</span>
+ <span class="count" id="cnt"></span>
+ <button id="exp">Export tags</button>
+ <button id="clr">Clear all tags</button>
+</header>
+<div class="help">Multi-select labels, all combinable. Keys: <kbd>b</kbd> not in sight &nbsp;<kbd>p</kbd> part of box
+ &nbsp;<kbd>m</kbd> box moved before grasp &nbsp;<kbd>f</kbd> failed then succeeded &nbsp;<kbd>v</kbd> not valid
+ &nbsp;<kbd>c</kbd> good data (advances) &nbsp;<kbd>space</kbd> play/pause &nbsp;<kbd>,</kbd>/<kbd>.</kbd> &plusmn;1 frame
+ &nbsp;<kbd>j</kbd>/<kbd>k</kbd> prev/next. Saved to localStorage; export when done.</div>
+<div id="grid"></div>
+<dialog id="dlg"><h3 style="margin-top:0">Tags</h3><textarea id="ta" readonly></textarea>
+<div class="row"><button id="cp">Copy</button><button id="dl">Download JSON</button><button id="cls">Close</button></div></dialog>
+<script>
+const DATA=[{"id":"T0","ep":0,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000000.mp4","frames":2111,"i0":null,"endclosed":false},{"id":"T1","ep":1,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000001.mp4","frames":1033,"i0":1032,"endclosed":false},{"id":"T2","ep":2,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000002.mp4","frames":3871,"i0":3870,"endclosed":false},{"id":"T3","ep":3,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000003.mp4","frames":240,"i0":135,"endclosed":true},{"id":"T4","ep":4,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000004.mp4","frames":272,"i0":152,"endclosed":true},{"id":"T5","ep":5,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000005.mp4","frames":223,"i0":143,"endclosed":true},{"id":"T6","ep":6,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000006.mp4","frames":203,"i0":121,"endclosed":true},{"id":"T7","ep":7,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000007.mp4","frames":198,"i0":116,"endclosed":true},{"id":"T8","ep":8,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000008.mp4","frames":175,"i0":107,"endclosed":true},{"id":"T9","ep":9,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000009.mp4","frames":216,"i0":137,"endclosed":true},{"id":"T10","ep":10,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000010.mp4","frames":221,"i0":137,"endclosed":true},{"id":"T11","ep":11,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000011.mp4","frames":189,"i0":107,"endclosed":true},{"id":"T12","ep":12,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000012.mp4","frames":191,"i0":112,"endclosed":true},{"id":"T13","ep":13,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000013.mp4","frames":165,"i0":98,"endclosed":true},{"id":"T14","ep":14,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000014.mp4","frames":160,"i0":90,"endclosed":true},{"id":"T15","ep":15,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000015.mp4","frames":194,"i0":122,"endclosed":true},{"id":"T16","ep":16,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000016.mp4","frames":179,"i0":106,"endclosed":true},{"id":"T17","ep":17,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000017.mp4","frames":213,"i0":140,"endclosed":true},{"id":"T18","ep":18,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000018.mp4","frames":167,"i0":98,"endclosed":true},{"id":"T19","ep":19,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000019.mp4","frames":191,"i0":116,"endclosed":true},{"id":"T20","ep":20,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000020.mp4","frames":178,"i0":93,"endclosed":true},{"id":"T21","ep":21,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000021.mp4","frames":199,"i0":116,"endclosed":true},{"id":"T22","ep":22,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000022.mp4","frames":205,"i0":122,"endclosed":true},{"id":"T23","ep":23,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000023.mp4","frames":204,"i0":141,"endclosed":true},{"id":"T24","ep":24,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000024.mp4","frames":159,"i0":91,"endclosed":true},{"id":"T25","ep":25,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000025.mp4","frames":171,"i0":115,"endclosed":true},{"id":"T26","ep":26,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000026.mp4","frames":188,"i0":118,"endclosed":true},{"id":"T27","ep":27,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000027.mp4","frames":163,"i0":99,"endclosed":true},{"id":"T28","ep":28,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000028.mp4","frames":182,"i0":115,"endclosed":true},{"id":"T29","ep":29,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000029.mp4","frames":198,"i0":128,"endclosed":true},{"id":"T30","ep":30,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000030.mp4","frames":178,"i0":107,"endclosed":true},{"id":"T31","ep":31,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000031.mp4","frames":157,"i0":93,"endclosed":true},{"id":"T32","ep":32,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000032.mp4","frames":166,"i0":108,"endclosed":true},{"id":"T33","ep":33,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000033.mp4","frames":164,"i0":98,"endclosed":true},{"id":"T34","ep":34,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000034.mp4","frames":189,"i0":105,"endclosed":true},{"id":"T35","ep":35,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000035.mp4","frames":164,"i0":101,"endclosed":true},{"id":"T36","ep":36,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000036.mp4","frames":203,"i0":106,"endclosed":true},{"id":"T37","ep":37,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000037.mp4","frames":161,"i0":94,"endclosed":true},{"id":"T38","ep":38,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000038.mp4","frames":166,"i0":100,"endclosed":true},{"id":"T39","ep":39,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000039.mp4","frames":173,"i0":103,"endclosed":true},{"id":"T40","ep":40,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000040.mp4","frames":204,"i0":137,"endclosed":true},{"id":"T41","ep":41,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000041.mp4","frames":172,"i0":87,"endclosed":true},{"id":"T42","ep":42,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000042.mp4","frames":160,"i0":102,"endclosed":true},{"id":"T43","ep":43,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000043.mp4","frames":165,"i0":94,"endclosed":true},{"id":"T44","ep":44,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000044.mp4","frames":159,"i0":81,"endclosed":true},{"id":"T45","ep":45,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000045.mp4","frames":145,"i0":74,"endclosed":true},{"id":"T46","ep":46,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000046.mp4","frames":151,"i0":86,"endclosed":true},{"id":"T47","ep":47,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000047.mp4","frames":143,"i0":73,"endclosed":true},{"id":"T48","ep":48,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000048.mp4","frames":158,"i0":95,"endclosed":true},{"id":"T49","ep":49,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000049.mp4","frames":154,"i0":93,"endclosed":true},{"id":"T50","ep":50,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000050.mp4","frames":135,"i0":81,"endclosed":true},{"id":"T51","ep":51,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000051.mp4","frames":392,"i0":391,"endclosed":false},{"id":"T52","ep":52,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000052.mp4","frames":173,"i0":100,"endclosed":true},{"id":"T53","ep":53,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000053.mp4","frames":154,"i0":83,"endclosed":true},{"id":"T54","ep":54,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000054.mp4","frames":165,"i0":95,"endclosed":true},{"id":"T55","ep":55,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000055.mp4","frames":131,"i0":73,"endclosed":true},{"id":"T56","ep":56,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000056.mp4","frames":147,"i0":88,"endclosed":true},{"id":"T57","ep":57,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000057.mp4","frames":133,"i0":78,"endclosed":true},{"id":"T58","ep":58,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000058.mp4","frames":161,"i0":97,"endclosed":true},{"id":"T59","ep":59,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000059.mp4","frames":167,"i0":106,"endclosed":true},{"id":"T60","ep":60,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000060.mp4","frames":159,"i0":88,"endclosed":true},{"id":"T61","ep":61,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000061.mp4","frames":153,"i0":87,"endclosed":true},{"id":"T62","ep":62,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000062.mp4","frames":125,"i0":78,"endclosed":true},{"id":"T63","ep":63,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000063.mp4","frames":125,"i0":70,"endclosed":true},{"id":"T64","ep":64,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000064.mp4","frames":156,"i0":86,"endclosed":true},{"id":"T65","ep":65,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000065.mp4","frames":137,"i0":82,"endclosed":true},{"id":"T66","ep":66,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000066.mp4","frames":125,"i0":70,"endclosed":true},{"id":"T67","ep":67,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000067.mp4","frames":138,"i0":72,"endclosed":true},{"id":"T68","ep":68,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000068.mp4","frames":179,"i0":116,"endclosed":true},{"id":"T69","ep":69,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000069.mp4","frames":154,"i0":96,"endclosed":true},{"id":"T70","ep":70,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000070.mp4","frames":143,"i0":78,"endclosed":true},{"id":"T71","ep":71,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000071.mp4","frames":127,"i0":72,"endclosed":true},{"id":"T72","ep":72,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000072.mp4","frames":130,"i0":75,"endclosed":true},{"id":"T73","ep":73,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000073.mp4","frames":149,"i0":85,"endclosed":true},{"id":"T74","ep":74,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000074.mp4","frames":149,"i0":90,"endclosed":true},{"id":"T75","ep":75,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000075.mp4","frames":129,"i0":76,"endclosed":true},{"id":"T76","ep":76,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000076.mp4","frames":135,"i0":81,"endclosed":true},{"id":"T77","ep":77,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000077.mp4","frames":127,"i0":81,"endclosed":true},{"id":"T78","ep":78,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000078.mp4","frames":124,"i0":74,"endclosed":true},{"id":"T79","ep":79,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000079.mp4","frames":128,"i0":65,"endclosed":true},{"id":"T80","ep":80,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000080.mp4","frames":147,"i0":93,"endclosed":true},{"id":"T81","ep":81,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000081.mp4","frames":138,"i0":81,"endclosed":true},{"id":"T82","ep":82,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000082.mp4","frames":235,"i0":73,"endclosed":true},{"id":"T83","ep":83,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000083.mp4","frames":129,"i0":72,"endclosed":true},{"id":"T84","ep":84,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000084.mp4","frames":123,"i0":72,"endclosed":true},{"id":"T85","ep":85,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000085.mp4","frames":153,"i0":65,"endclosed":true},{"id":"T86","ep":86,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000086.mp4","frames":164,"i0":79,"endclosed":true},{"id":"T87","ep":87,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000087.mp4","frames":143,"i0":68,"endclosed":true},{"id":"T88","ep":88,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000088.mp4","frames":192,"i0":97,"endclosed":true},{"id":"T89","ep":89,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000089.mp4","frames":132,"i0":75,"endclosed":true},{"id":"T90","ep":90,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000090.mp4","frames":157,"i0":105,"endclosed":true},{"id":"T91","ep":91,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000091.mp4","frames":142,"i0":83,"endclosed":true},{"id":"T92","ep":92,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000092.mp4","frames":124,"i0":60,"endclosed":true},{"id":"T93","ep":93,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000093.mp4","frames":134,"i0":80,"endclosed":true},{"id":"T94","ep":94,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000094.mp4","frames":131,"i0":70,"endclosed":true},{"id":"T95","ep":95,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000095.mp4","frames":140,"i0":83,"endclosed":true},{"id":"T96","ep":96,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000096.mp4","frames":135,"i0":62,"endclosed":true},{"id":"T97","ep":97,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000097.mp4","frames":132,"i0":68,"endclosed":true},{"id":"T98","ep":98,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000098.mp4","frames":129,"i0":71,"endclosed":true},{"id":"T99","ep":99,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000099.mp4","frames":136,"i0":80,"endclosed":true},{"id":"T100","ep":100,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000100.mp4","frames":140,"i0":78,"endclosed":true},{"id":"T101","ep":101,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000101.mp4","frames":131,"i0":73,"endclosed":true},{"id":"T102","ep":102,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000102.mp4","frames":123,"i0":72,"endclosed":true},{"id":"T103","ep":103,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000103.mp4","frames":113,"i0":65,"endclosed":true},{"id":"T104","ep":104,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000104.mp4","frames":125,"i0":76,"endclosed":true},{"id":"T105","ep":105,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000105.mp4","frames":121,"i0":63,"endclosed":true},{"id":"T106","ep":106,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000106.mp4","frames":123,"i0":64,"endclosed":true},{"id":"T107","ep":107,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000107.mp4","frames":144,"i0":71,"endclosed":true},{"id":"T108","ep":108,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000108.mp4","frames":144,"i0":79,"endclosed":true},{"id":"T109","ep":109,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000109.mp4","frames":134,"i0":77,"endclosed":true},{"id":"T110","ep":110,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000110.mp4","frames":137,"i0":77,"endclosed":true},{"id":"T111","ep":111,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000111.mp4","frames":118,"i0":73,"endclosed":true},{"id":"T112","ep":112,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000112.mp4","frames":158,"i0":73,"endclosed":true},{"id":"T113","ep":113,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000113.mp4","frames":139,"i0":69,"endclosed":true},{"id":"T114","ep":114,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000114.mp4","frames":119,"i0":64,"endclosed":true},{"id":"T115","ep":115,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000115.mp4","frames":105,"i0":60,"endclosed":true},{"id":"T116","ep":116,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000116.mp4","frames":153,"i0":85,"endclosed":true},{"id":"T117","ep":117,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000117.mp4","frames":100,"i0":53,"endclosed":true},{"id":"T118","ep":118,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000118.mp4","frames":114,"i0":63,"endclosed":true},{"id":"T119","ep":119,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000119.mp4","frames":111,"i0":65,"endclosed":true},{"id":"T120","ep":120,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000120.mp4","frames":113,"i0":65,"endclosed":true},{"id":"T121","ep":121,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000121.mp4","frames":115,"i0":66,"endclosed":true},{"id":"T122","ep":122,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000122.mp4","frames":124,"i0":56,"endclosed":true},{"id":"T123","ep":123,"video":"data/real_recordings/psi0/TabletopGrasp-policyON/videos/chunk-000/egocentric/episode_000123.mp4","frames":133,"i0":83,"endclosed":true}];
+const LABELS=['sight','partial','moved','fts','invalid','good'];
+const LSKEY='tabletop_annotation_v1';
+let tags={};try{tags=JSON.parse(localStorage.getItem(LSKEY)||'{}')}catch(e){}
+function save(){try{localStorage.setItem(LSKEY,JSON.stringify(tags))}catch(e){}}
+let filter='all', cur=0, cards=[];
+const grid=document.getElementById('grid');
+const has=(id,l)=>Array.isArray(tags[id])&&tags[id].includes(l);
+function visible(r){
+ if(filter==='untagged')return !(r.id in tags);
+ if(LABELS.includes(filter))return has(r.id,filter);
+ return true;}
+function render(){
+ grid.innerHTML='';cards=[];
+ DATA.filter(visible).forEach(r=>{
+  const d=document.createElement('div');d.className='card';d.dataset.id=r.id;
+  d.innerHTML=`<div class="hd"><span class="id">${r.id}</span>`
+   +(r.endclosed?'':'<span class="fail">ends open</span>')
+   +`<span class="meta">psi0/TabletopGrasp-policyON ep${r.ep} &middot; ${r.frames}f</span></div>`
+   +`<video preload="none" src="${r.video}" controls muted playsinline></video>`
+   +`<div class="row">`
+   +(r.i0!=null?`<button class="jt" data-t="${Math.max(0,r.i0-50)/50}">&#9199; 1s before close</button>`
+   +`<button class="jt" data-t="${r.i0/50}">&#9199; close f${r.i0}</button>`:'')
+   +`<button class="sp" data-s="0.25">&#188;&times;</button><button class="sp" data-s="0.5">&#189;&times;</button><button class="sp" data-s="1">1&times;</button></div>`
+   +`<div class="row tagbtns">`
+   +`<button class="tg b-sight" data-l="sight">&#128065; not in sight (b)</button>`
+   +`<button class="tg b-partial" data-l="partial">&#9681; part of box (p)</button>`
+   +`<button class="tg b-moved" data-l="moved">&#9995; box moved (m)</button>`
+   +`<button class="tg b-fts" data-l="fts">&#8635; failed&rarr;succ (f)</button>`
+   +`<button class="tg b-invalid" data-l="invalid">&#128683; not valid (v)</button>`
+   +`<button class="tg b-none" data-l="good">&#10003; good (c)</button></div>`;
+  grid.appendChild(d);cards.push(d);
+  const v=d.querySelector('video');
+  d.addEventListener('click',()=>setCur(cards.indexOf(d)));
+  d.querySelectorAll('.jt').forEach(b=>b.onclick=()=>{v.currentTime=+b.dataset.t;v.pause();});
+  d.querySelectorAll('.sp').forEach(b=>b.onclick=()=>{v.playbackRate=+b.dataset.s;v.play();});
+  d.querySelectorAll('.tg').forEach(b=>{b.onclick=()=>toggle(r.id,b.dataset.l,d);});
+  refreshBtns(d,r.id);refreshClass(d,r.id);
+ });
+ setCur(Math.min(cur,cards.length-1));updCnt();}
+function toggle(id,l,card){
+ let curv=Array.isArray(tags[id])?tags[id]:[];
+ curv=curv.includes(l)?curv.filter(x=>x!==l):[...curv,l];
+ if(curv.length)tags[id]=curv;else delete tags[id];
+ save();refreshBtns(card,id);refreshClass(card,id);
+ if(cards[cur]===card)card.classList.add('cur');
+ updCnt();}
+function refreshBtns(card,id){
+ card.querySelectorAll('.tg').forEach(b=>b.classList.toggle('sel',has(id,b.dataset.l)));}
+function refreshClass(card,id){
+ const keep=card.classList.contains('cur');
+ card.className='card'+(has(id,'moved')?' has-moved':'')+(has(id,'invalid')?' has-invalid':'')+(has(id,'good')?' has-none':'')+(keep?' cur':'');}
+function setCur(i){
+ if(i<0||i>=cards.length)return;
+ cards.forEach(c=>c.classList.remove('cur'));cur=i;
+ if(cards[i]){cards[i].classList.add('cur');cards[i].scrollIntoView({block:'center',behavior:'smooth'});}}
+function updCnt(){
+ const n=l=>Object.keys(tags).filter(k=>has(k,l)).length;
+ document.getElementById('cnt').textContent=
+  Object.keys(tags).length+'/'+DATA.length+' — 👁 '+n('sight')+' ◐ '+n('partial')+' ✋ '+n('moved')+' ↻ '+n('fts')+' 🚫 '+n('invalid')+' ✓ '+n('good');}
+document.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{
+ document.querySelectorAll('.pill').forEach(q=>q.classList.remove('on'));
+ p.classList.add('on');filter=p.dataset.f;cur=0;render();});
+document.addEventListener('keydown',e=>{
+ if(e.target.tagName==='TEXTAREA')return;
+ const card=cards[cur];if(!card)return;
+ const v=card.querySelector('video');const id=card.dataset.id;
+ const map={b:'sight',p:'partial',m:'moved',f:'fts',v:'invalid'};
+ if(map[e.key]){toggle(id,map[e.key],card);e.preventDefault();}
+ else if(e.key==='c'){toggle(id,'good',card);setCur(cur+1);e.preventDefault();}
+ else if(e.key===' '){v.paused?v.play():v.pause();e.preventDefault();}
+ else if(e.key===','){v.pause();v.currentTime=Math.max(0,v.currentTime-0.02);e.preventDefault();}
+ else if(e.key==='.'){v.pause();v.currentTime+=0.02;e.preventDefault();}
+ else if(e.key==='j'){setCur(cur-1);e.preventDefault();}
+ else if(e.key==='k'){setCur(cur+1);e.preventDefault();}
+});
+document.getElementById('exp').onclick=()=>{
+ const out={box_not_in_sight_at_start:[],part_of_box_in_sight:[],box_moved_before_grasp:[],failed_then_succeeded:[],not_valid_data:[],good_data:[]};
+ for(const[k,v]of Object.entries(tags)){
+  const r=DATA.find(x=>x.id===k);const rec={id:k,dataset:'psi0/TabletopGrasp-policyON',episode:r&&r.ep};
+  if(v.includes('sight'))out.box_not_in_sight_at_start.push(rec);
+  if(v.includes('partial'))out.part_of_box_in_sight.push(rec);
+  if(v.includes('moved'))out.box_moved_before_grasp.push(rec);
+  if(v.includes('fts'))out.failed_then_succeeded.push(rec);
+  if(v.includes('invalid'))out.not_valid_data.push(rec);
+  if(v.includes('good'))out.good_data.push(rec);}
+ for(const k in out)out[k].sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+ document.getElementById('ta').value=JSON.stringify(out,null,1);
+ document.getElementById('dlg').showModal();};
+document.getElementById('cp').onclick=()=>navigator.clipboard.writeText(document.getElementById('ta').value);
+document.getElementById('dl').onclick=()=>{
+ const a=document.createElement('a');
+ a.href='data:application/json;charset=utf-8,'+encodeURIComponent(document.getElementById('ta').value);
+ a.download='tabletop_annotations.json';a.click();};
+document.getElementById('cls').onclick=()=>document.getElementById('dlg').close();
+document.getElementById('clr').onclick=()=>{
+ if(confirm('Clear ALL tags?')){tags={};save();render();}};
+render();
+</script></body></html>

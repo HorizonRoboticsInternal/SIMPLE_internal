@@ -85,6 +85,7 @@ def _init_replay_exporter(
     obj_names: list[str],
     joint_names: list[str],
     ego_view_shape=None,
+    source_features: dict | None = None,
 ):
     """Create a Gr00tDataExporter for recording replayed Isaac Sim data."""
     from decoupled_wbc.control.robot_model.instantiation.g1 import (
@@ -100,12 +101,25 @@ def _init_replay_exporter(
     features["observation.state"]["names"] = joint_names # state joint names
     modality_config = get_modality_config(robot_model)
 
-    # # Add torso RPY command feature (3D: roll, pitch, yaw)
-    # features["observation.torso_rpy_command"] = {
-    #     "dtype": "float64",
-    #     "shape": (3,),
-    #     "names": ["roll", "pitch", "yaw"],
-    # }
+    # get_dataset_features declares these unconditionally, but a source dataset
+    # recorded before they existed has no such column. Declaring one the source
+    # lacks makes lerobot's validate_frame reject every frame ("Missing
+    # features"), so drop it from the output schema -- and drop any modality
+    # entry that would then point at a column we no longer write.
+    if source_features is not None:
+        for optional_key in (
+            "observation.base_pose",
+            "observation.base_vel",
+            "observation.torso_rpy_command",
+        ):
+            if optional_key in source_features:
+                continue
+            features.pop(optional_key, None)
+            for group in modality_config.values():
+                for name in [
+                    k for k, v in group.items() if v.get("original_key") == optional_key
+                ]:
+                    group.pop(name)
 
     # Add object poses feature: each object has 7D (pos xyz + quat wxyz)
     num_objects = len(obj_names)
@@ -158,10 +172,10 @@ def _build_replay_frame(row, isaac_image, source_features: dict):
         frame["observation.base_vel"] = np.asarray(
             row["observation.base_vel"], dtype=np.float64
         )
-    # if "observation.torso_rpy_command" in source_features:
-    #     frame["observation.torso_rpy_command"] = np.asarray(
-    #         row["observation.torso_rpy_command"], dtype=np.float64
-    #     )
+    if "observation.torso_rpy_command" in source_features:
+        frame["observation.torso_rpy_command"] = np.asarray(
+            row["observation.torso_rpy_command"], dtype=np.float64
+        )
     if "observation.object_poses" in source_features:
         frame["observation.object_poses"] = np.asarray(
             row["observation.object_poses"], dtype=np.float64
@@ -306,6 +320,7 @@ def main(
                     dataset_fps, task_prompt, obj_names_labels,
                     robot.joint_names,
                     obs["head_stereo_left"].shape,
+                    source_features=features,
                 )
                 print(f"[Record] Exporter initialized, saving to {save_dir}")
                 print(f"[Record] Ego view shape: {obs['head_stereo_left'].shape}")

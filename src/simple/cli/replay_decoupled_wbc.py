@@ -55,6 +55,7 @@ def _init_exporter(
     obj_names: list[str],
     joint_names: list[str],
     ego_view_shape=None,
+    source_features: set | None = None,
 ):
     """Create a Gr00tDataExporter for LeRobot-format recording."""
     from decoupled_wbc.data.exporter import Gr00tDataExporter
@@ -66,6 +67,25 @@ def _init_exporter(
     features["observation.state"]["names"] = joint_names # state joint names
 
     modality_config = get_modality_config(robot_model)
+
+    # _build_frame copies columns straight out of the source dataset, so a
+    # feature the source never recorded would arrive missing and lerobot's
+    # validate_frame would reject every frame. Drop such features from the
+    # output schema, along with any modality entry pointing at them.
+    if source_features is not None:
+        for optional_key in (
+            "observation.base_pose",
+            "observation.base_vel",
+            "observation.torso_rpy_command",
+        ):
+            if optional_key in source_features:
+                continue
+            features.pop(optional_key, None)
+            for group in modality_config.values():
+                for name in [
+                    k for k, v in group.items() if v.get("original_key") == optional_key
+                ]:
+                    group.pop(name)
 
     # Add object poses feature: each object has 7D (pos xyz + quat wxyz)
     num_objects = len(obj_names)
@@ -409,6 +429,7 @@ def main(
                     obj_names,
                     robot.joint_names,
                     observation["head_stereo_left"].shape,
+                    source_features=set(ep_data.columns),
                 )
                 print(f"[Record] Exporter initialized, saving to {run_save_dir}")
                 print(f"[Record] Ego view shape: {observation['head_stereo_left'].shape}")

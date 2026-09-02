@@ -208,6 +208,7 @@ def main(
                 "teleop.base_height_command": np.zeros(1, dtype=np.float64),  # height command
                 "action": np.zeros(43, dtype=np.float64),  # no action in eval dataset
                 "action.eef": np.zeros(14, dtype=np.float64),  # EEF action placeholder
+                "observation.torso_rpy_command": np.zeros(3, dtype=np.float64),  # no action in eval dataset
             }
 
             # Add object poses if available, otherwise default
