@@ -350,6 +350,11 @@ def _run_eval_worker(
 
     step_update_every = 5
     stats = defaultdict(bool)
+    configured_eval_seed = os.environ.get("SIMPLE_EVAL_SEED")
+    reset_seed = int(configured_eval_seed) if configured_eval_seed is not None else None
+    if reset_seed is not None:
+        print(f"Evaluation seed: {reset_seed}")
+
     claimed = 0
 
     while True:
@@ -376,7 +381,12 @@ def _run_eval_worker(
         else:
             env = rollout_env
 
-        observation, info = env.reset(options={"state_dict": env_conf})
+        if reset_seed is None:
+            observation, info = env.reset(options={"state_dict": env_conf})
+        else:
+            observation, info = env.reset(
+                seed=reset_seed, options={"state_dict": env_conf}
+            )
 
         # Reset the agent BEFORE stabilization so the WBC pipeline starts the
         # episode fresh and the upper body gets the smooth 2-second ramp to the

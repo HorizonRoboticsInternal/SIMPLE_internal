@@ -310,6 +310,11 @@ def _run_eval_worker(
 
     step_update_every = 5
     stats = defaultdict(bool)
+    configured_eval_seed = os.environ.get("SIMPLE_EVAL_SEED")
+    reset_seed = int(configured_eval_seed) if configured_eval_seed is not None else None
+    if reset_seed is not None:
+        print(f"Evaluation seed: {reset_seed}")
+
     claimed = 0
 
     while True:
@@ -336,7 +341,12 @@ def _run_eval_worker(
         else:
             env = rollout_env
 
-        observation, info = env.reset(options={"state_dict": env_conf})
+        if reset_seed is None:
+            observation, info = env.reset(options={"state_dict": env_conf})
+        else:
+            observation, info = env.reset(
+                seed=reset_seed, options={"state_dict": env_conf}
+            )
         frame_idx = 0
         episode_start_time = time.perf_counter()
         instruction = task.instruction
