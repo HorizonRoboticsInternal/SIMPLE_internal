@@ -17,6 +17,7 @@ from PIL import Image
 from queue import Queue
 from simple.agents.sonic_decoupled_wbc_agent import SonicDecoupledWbcAgent
 import time
+from simple.simulation_clock import controller_time, simulation_timed
 
 STATE_SLICES = [ # shoule be consistent with scripts/postprocess_psi0.py
     ("left_hand_thumb", 29, 32),
@@ -55,6 +56,7 @@ class DpDecoupledWbcAgent(SonicDecoupledWbcAgent):
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
         self.sonic_upper_joint_names = [name for name, idx in self._dwbc_robot_model.joint_to_dof_index.items() if idx in indices]
 
+    @simulation_timed
     def get_action(
         self, 
         observation, 
@@ -122,7 +124,7 @@ class DpDecoupledWbcAgent(SonicDecoupledWbcAgent):
             proprio = self.robot.prepare_obs()
             wbc_obs = self._build_wbc_observation(proprio)
             self._wbc_policy.set_observation(wbc_obs)
-            t_now = time.monotonic()
+            t_now = controller_time(self)
             # goal = self._build_wbc_goal(current_row)
             control_freq = self._control_frequency
             target_time = t_now + 1 / control_freq

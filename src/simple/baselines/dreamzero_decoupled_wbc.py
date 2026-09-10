@@ -23,6 +23,7 @@ Copyright (c) 2025 USC PSI Lab and Contributors.
 
 import os
 import time
+from simple.simulation_clock import controller_time, simulation_timed
 
 import numpy as np
 import requests
@@ -143,6 +144,7 @@ class DreamzeroDecoupledWbcAgent(SonicDecoupledWbcAgent):
     def _make_session_id(self) -> str:
         return f"dreamzero-dwbc-{os.getpid()}-{self._session_idx}"
 
+    @simulation_timed
     def get_action(
         self,
         observation,
@@ -239,7 +241,7 @@ class DreamzeroDecoupledWbcAgent(SonicDecoupledWbcAgent):
             proprio = self.robot.prepare_obs()
             wbc_obs = self._build_wbc_observation(proprio)
             self._wbc_policy.set_observation(wbc_obs)
-            t_now = time.monotonic()
+            t_now = controller_time(self)
 
             control_freq = self._control_frequency
             target_time = t_now + 1 / control_freq

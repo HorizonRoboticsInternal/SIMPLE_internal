@@ -7,6 +7,7 @@ Licensed under the terms in LICENSE file.
 
 import os
 import time
+from simple.simulation_clock import controller_time, simulation_timed
 import numpy as np
 from simple.agents.sonic_decoupled_wbc_agent import SonicDecoupledWbcAgent
 from simple.core.action import ActionCmd
@@ -53,6 +54,7 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
     def _make_session_id(self):
         return f"psi0-decoupled-wbc-{os.getpid()}-{self._session_idx}"
 
+    @simulation_timed
     def get_action(
         self, 
         observation, 
@@ -122,7 +124,7 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
             proprio = self.robot.prepare_obs()
             wbc_obs = self._build_wbc_observation(proprio)
             self._wbc_policy.set_observation(wbc_obs)
-            t_now = time.monotonic()
+            t_now = controller_time(self)
             
             control_freq = self._control_frequency
             target_time = t_now + 1 / control_freq

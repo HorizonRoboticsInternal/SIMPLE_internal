@@ -9,6 +9,8 @@ import copy
 import os
 from typing import Dict, Tuple
 
+from simple.determinism import enabled
+
 import carb
 import carb.settings
 import numpy as np
@@ -255,7 +257,12 @@ class IsaacSimSimulator(Simulator):
             "/exts/isaacsim.core.throttling/enable_async",
             not disable_throttling_async,
         )
-        rep.settings.set_render_rtx_realtime()
+        if enabled("SIMPLE_ISAAC_DETERMINISTIC"):
+            from simple.deterministic_render import configure
+
+            configure()
+        else:
+            rep.settings.set_render_rtx_realtime()
         # rep.orchestrator.set_capture_on_play(False) # Data will be captured manually using step
         # carb.settings.get_settings().set_bool("/omni/replicator/captureMotionBlur", 0)
         # carb.settings.get_settings().set_bool("/rtx/post/motionblur/enabled", 0)   
@@ -670,12 +677,32 @@ class IsaacSimSimulator(Simulator):
                     zero = np.zeros(num_dofs_articulated, dtype=np.float32)
                     self.articulated_objects[obj_name]._articulation_view.set_joint_velocities(zero)
 
-        if mujoco_env is not None:
+        synchronized = mujoco_env is not None and (
+            enabled("SIMPLE_SYNCHRONIZED_RENDERING")
+            or enabled("SIMPLE_ISAAC_DETERMINISTIC")
+        )
+        if synchronized:
+            # Initialize Isaac before restoring MuJoCo-owned poses.
+            self.world.step(render=False)
+            if self.step_id == 0:
+                rep.orchestrator.step(rt_subframes=1, pause_timeline=False)
             self.sync_states(mujoco_env)
+            self.world.physics_sim_view.flush()
+            self.world.physics_sim_view.update_articulations_kinematic()
+            import omni.physx
 
-        self.world.step(render=False)
+            omni.physx.get_physx_interface().update_transformations(
+                True, True, False, False
+            )
+        else:
+            if mujoco_env is not None:
+                self.sync_states(mujoco_env)
+            self.world.step(render=False)
         self.update_visuals()
-        rep.orchestrator.step(rt_subframes=1, pause_timeline=False)
+        if synchronized:
+            rep.orchestrator.step(rt_subframes=1, delta_time=0.0, pause_timeline=False)
+        else:
+            rep.orchestrator.step(rt_subframes=1, pause_timeline=False)
         self._update_collision_spheres()
         self.step_id += 1
 

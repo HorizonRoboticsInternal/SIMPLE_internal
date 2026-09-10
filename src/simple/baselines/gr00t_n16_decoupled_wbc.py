@@ -6,6 +6,7 @@ Licensed under the terms in LICENSE file.
 """
 
 import time
+from simple.simulation_clock import controller_time, simulation_timed
 
 import numpy as np
 
@@ -59,6 +60,7 @@ class Gr00tN16DecoupledWbcAgent(SonicDecoupledWbcAgent):
             if idx in indices
         ]
 
+    @simulation_timed
     def get_action(
         self, observation, instruction=None, info=None, conditions=None, **kwargs
     ):
@@ -130,7 +132,7 @@ class Gr00tN16DecoupledWbcAgent(SonicDecoupledWbcAgent):
             proprio = self.robot.prepare_obs()
             wbc_obs = self._build_wbc_observation(proprio)
             self._wbc_policy.set_observation(wbc_obs)
-            t_now = time.monotonic()
+            t_now = controller_time(self)
 
             control_freq = self._control_frequency
             target_time = t_now + 1 / control_freq

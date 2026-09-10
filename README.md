@@ -610,3 +610,7 @@ This project is licensed under the MIT.
 
 See the [LICENSE](https://www.google.com/search?q=license.md) file for details.
 
+
+## Reproducible evaluation
+
+See [opt-in determinism controls](docs/determinism.md) for simulation clocks, episode RNGs and renderer settings.

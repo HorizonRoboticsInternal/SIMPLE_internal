@@ -281,6 +281,14 @@ def _run_eval_worker(
     if reset_seed is not None:
         print(f"Evaluation seed: {reset_seed}")
 
+    from simple.determinism import enabled, seed_episode
+
+    deterministic = enabled()
+    if deterministic and (reset_seed is None or not 0 <= reset_seed < 2**32):
+        raise ValueError(
+            "Deterministic evaluation requires SIMPLE_EVAL_SEED in [0, 2**32)"
+        )
+
     for eps_idx in episode_indices:
         env_conf, episode = get_episode(dataset, eps_idx)  # type: ignore[arg-type]
         task_id = f"episode_{eps_idx}"
@@ -297,7 +305,10 @@ def _run_eval_worker(
         else:
             env = rollout_env
 
-        if reset_seed is None:
+        if deterministic:
+            seed = seed_episode(reset_seed, int(eps_idx))
+            observation, info = env.reset(seed=seed, options={"state_dict": env_conf})
+        elif reset_seed is None:
             observation, info = env.reset(options={"state_dict": env_conf})
         else:
             observation, info = env.reset(
@@ -322,7 +333,9 @@ def _run_eval_worker(
         while not episode_over:
             try:
                 action = agent.get_action(
-                    observation, info=info, instruction=instruction
+                    observation,
+                    info=({**info, "episode_index": int(eps_idx)} if deterministic else info),
+                    instruction=instruction
                 )
                 observation, reward, terminated, truncated, info = env.step(action)
                 episode_over = terminated or truncated

@@ -52,6 +52,8 @@ def get_eef_pose(isaac):  # room should be an instance of IsaacsimEnv
     # joint_positions = room.robot.get_joint_positions()    
     return np.concatenate([robot_eef_pos, robot_eef_quat]).astype(np.float32)
 
+from simple.deterministic_render import warmed_reset
+
 class TabletopGraspEnv(BaseDualSim):
 
     _success: bool 
@@ -102,6 +104,7 @@ class TabletopGraspEnv(BaseDualSim):
             info[str(k)] = np.concatenate([v.xpos, v.xquat])
         return info
 
+    @warmed_reset
     def reset(
         self, 
         *,
