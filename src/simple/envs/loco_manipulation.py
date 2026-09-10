@@ -22,6 +22,8 @@ from simple.envs.base_dual_env import BaseDualSim
 # from simple.constants import GripperAction
 # from simple.robots.protocols import Graspable
 
+from simple.deterministic_render import warmed_reset
+
 class LocoManipulationEnv(BaseDualSim):
 
     _success: bool 
@@ -58,6 +60,7 @@ class LocoManipulationEnv(BaseDualSim):
             info[str(k)] = np.concatenate([v.xpos, v.xquat])
         return info
 
+    @warmed_reset
     def reset(
         self, 
         *,

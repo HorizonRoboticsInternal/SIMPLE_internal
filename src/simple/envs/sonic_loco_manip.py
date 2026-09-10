@@ -17,6 +17,8 @@ from simple.core.task import Task
 from simple.envs.base_dual_env import BaseDualSim
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
+from simple.deterministic_render import warmed_reset
+
 class SonicLocoManipEnv(BaseDualSim):
 
     _success: bool 
@@ -98,6 +100,7 @@ class SonicLocoManipEnv(BaseDualSim):
         proprio = self.task.robot.prepare_obs()
         return {**info, "proprio": proprio}
     
+    @warmed_reset
     def reset(
         self, 
         *,

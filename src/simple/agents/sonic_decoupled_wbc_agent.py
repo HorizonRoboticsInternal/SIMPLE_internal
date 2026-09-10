@@ -9,6 +9,7 @@ from __future__ import annotations
 
 
 import time
+from simple.simulation_clock import controller_time, simulation_timed
 import numpy as np
 from simple.core.action import ActionCmd
 
@@ -21,6 +22,7 @@ from decoupled_wbc.control.main.teleop.configs.configs import ControlLoopConfig
 
 class SonicDecoupledWbcAgent(WholeBodyControlAgent):
     
+    @simulation_timed
     def __init__(self, robot: G1Sonic, sonic_config: dict):
         self.robot = robot
         self.sim_dt = sonic_config["SIMULATE_DT"]
@@ -60,7 +62,7 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
         self._cached_target_q = None
         self._cached_left_hand_q = None
         self._cached_right_hand_q = None
-        self._t_start = time.monotonic()
+        self._t_start = controller_time(self)
 
     # ------------------------------------------------------------------
     # Observation / goal building
@@ -114,6 +116,7 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
         obs["wrist_pose"] = sim_obs.get("wrist_pose", np.zeros(14))
         return obs
         
+    @simulation_timed
     def get_stabilize_action(self, observation) -> ActionCmd:
         """Run the WBC pipeline ramping to the WBC default pose — used during stabilization.
 
@@ -127,7 +130,7 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
             DEFAULT_NAV_CMD,
         )
 
-        t_now = time.monotonic()
+        t_now = controller_time(self)
         control_freq = self._control_frequency
         proprio = self.robot.prepare_obs()
         wbc_obs = self._build_wbc_observation(proprio)
@@ -177,6 +180,7 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
     def __len__(self):
         return len(self._action_queue)
     
+    @simulation_timed
     def reset(self, **kwargs):
         # Clearing the cached joint targets re-arms get_stabilize_action's
         # 2-second ramp (it keys `is_first_step` off `_cached_target_q is None`),
@@ -186,5 +190,5 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
         self._cached_target_q = None
         self._cached_left_hand_q = None
         self._cached_right_hand_q = None
-        self._wbc_policy.reset(init_time=time.monotonic())
+        self._wbc_policy.reset(init_time=controller_time(self))
         return super().reset(**kwargs)

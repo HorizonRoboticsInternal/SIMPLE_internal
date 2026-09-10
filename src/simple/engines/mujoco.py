@@ -290,6 +290,9 @@ class MujocoSimulator(Simulator):
 
         # TODO primitive types
         collision_meshes = actor.asset.collision_meshes_mujoco
+        from simple.determinism import enabled
+        if enabled("SIMPLE_SORT_COLLISION_MESHES") or enabled():
+            collision_meshes = sorted(collision_meshes)
         num_convex = len(collision_meshes)
 
         label = actor.asset.uid
