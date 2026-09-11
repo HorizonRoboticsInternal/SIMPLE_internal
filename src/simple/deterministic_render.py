@@ -46,8 +46,12 @@ def configure() -> None:
     spp = int(os.environ.get("SIMPLE_ISAAC_SPP", "16"))
     if not 1 <= spp <= 32:
         raise ValueError("Path-tracing spp must be in [1, 32]")
+    render_settings = dict(SETTINGS)
+    render_settings["/rtx/pathtracing/optixDenoiser/enabled"] = enabled(
+        "SIMPLE_ISAAC_OPTIX_DENOISER"
+    )
     effective = {}
-    for key, default in SETTINGS.items():
+    for key, default in render_settings.items():
         value = (
             spp
             if key
