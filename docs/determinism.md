@@ -10,6 +10,7 @@ controller timing, mesh order and renderer behavior retain their existing defaul
 | `SIMPLE_SORT_COLLISION_MESHES=1` | Enable sorted collision meshes independently. |
 | `SIMPLE_SYNCHRONIZED_RENDERING=1` | Update Isaac before synchronizing; forward articulation kinematics and publish transforms; render without advancing time after synchronization. |
 | `SIMPLE_ISAAC_DETERMINISTIC=1` | Enable synchronized rendering, fixed-sample path tracing and renderer initialization/reset warmup. This does not itself enable simulator/model RNG controls. |
+| `SIMPLE_ISAAC_OPTIX_DENOISER=0` | Set to `1` to enable OptiX path-tracing denoising. Default off; requires `SIMPLE_ISAAC_DETERMINISTIC=1`. |
 | `SIMPLE_ISAAC_SPP=16` | Samples per pixel, integer 1–32; used only in path-tracing mode. |
 
 Use all controls with a compatible PSI model server:
@@ -35,7 +36,7 @@ module. Outside enabled controller calls, wall clocks remain real. No installed
 WBC dependency source is edited. Other WBC baselines receive the same clock
 integration, but their model/RNG behavior is not covered by the PSI protocol.
 
-Path tracing disables light/result caching, adaptive sampling, denoising,
+Path tracing disables light/result caching, adaptive sampling, denoising by default,
 auto-exposure and temporal post-processing. The tonemapper is preserved. Settings
 are logged and checked by readback; registration alone does not prove a renderer
 build honors a setting. Reset discards one initial episode setup, restores global
@@ -62,3 +63,16 @@ static frames alone do not prove repeatability after pose changes/resets.
 Run CPU checks with `python -m pytest tests/test_determinism.py`. Full simulator
 validation requires the existing SIMPLE assets, Isaac runtime and a supported GPU.
 Do not run the previous bucket text-patching scripts over this native implementation.
+
+## Optional OptiX denoising
+
+Set `SIMPLE_ISAAC_OPTIX_DENOISER=1` alongside `SIMPLE_ISAAC_DETERMINISTIC=1`
+to denoise path-traced camera images. The SPP setting remains independent.
+The effective `/rtx/pathtracing/optixDenoiser/enabled` value is checked and logged.
+This setting does not control RTX real-time denoisers or model sampling.
+
+Six xMovePick checkpoints evaluated twice each at 4 spp with OptiX enabled,
+Sampling A and seed 0 matched all ten episodes in recorded initial observations,
+physics states, full rollouts and model actions/tokens. This evidence comes from
+the experimental snapshot with the same OptiX switch; it does not establish
+repeatability across all tasks, renderer versions or hardware.
