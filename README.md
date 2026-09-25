@@ -2,7 +2,8 @@
 
 What was built, where it lives, and the one command that runs each. This is the README of the
 `feat/new-simple-eval-tasks` branch; the upstream SIMPLE README is kept as [README_SIMPLE.md](README_SIMPLE.md).
-The served copy of this page, with every video, is at http://10.40.11.11:8899/simple_scenes_readme/index.html.
+The videos open in GitHub's player from `scenes/readme_vid/`; the served copy of this page, with every scene grid, is at
+http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
 
 ## What is on this branch
 
@@ -91,12 +92,12 @@ _Scene: table, 500 ml bottle, trash bin behind the robot's right._
   3. **placed**: released inside the bin's opening, below the rim, and still there 0.5 s later
 - **built from** the user's measurements; bin fitted to the release points of 97 real episodes
 - **run** `cd scenes/bottle_bin && MUJOCO_GL=egl python replay_in_scene.py --session 2026-09-17-02-25-56-G1-sim --episodes 12`
-- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_bottle_bin.mp4),
+- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_bottle_bin.mp4),
   the recorded episode (session 02-25-56 episode 10) replayed in the level-0 scene: left Isaac third person, middle Isaac head
   camera, right the real head camera, in step
 - **deployed model** `chipcan_nativec9` (job `qwen3_2b_posttrain_96d_g1_teleop_chipcantotrash_base_native_tokenizer_norm_20260917_131811`,
   checkpoint_9 of 0..19; stage-2 24-task ckpt4 init, lr 3e-5, pretraining tokenizer quantiles, ChipCanToTrash 02-25-56 session, 97
-  episodes): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_bottle_bin_isaac.mp4). Gating on this episode:
+  episodes): [video](scenes/readme_vid/pipetest_bottle_bin_isaac.mp4). Gating on this episode:
   grasped, at bin, placed all never met. The bottle rose at most 10.3 cm but never counted as grasped (that needs a hand on it,
   the bottle within 60° of upright and 3 cm up for 0.5 s), so it was knocked about rather than held; the robot came within 1.55 m
   of the bin (0.8 m and a 0.4 s stop count as at the bin). Checker evaluated at every one of the 1701 control steps (34 s at
@@ -131,13 +132,13 @@ _Scene: L-shaped kitchen, green bowl at the counter edge, sink on the right._
   4. **placed**: released, bowl inside the basin footprint, below the rim
 - **built from** a hand drawing, corrected on the bench; start pose tuned on 55 real episodes
 - **run** `cd scenes/bowl_sink && MUJOCO_GL=egl REPLAY_FAST=1 python replay_in_scene.py --session psi0/BowlToSink_0918 --episodes 7 --nav-gain 1.3`
-- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_bowl_sink.mp4),
+- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_bowl_sink.mp4),
   the recorded episode (BowlToSink_0918 episode 41, walking gain 1.5, robot start 0.38 m from the counter edge, moved back on
   2026-09-24 so the walk-in stops short of the cabinet) replayed in the level-0 scene: left Isaac third person, middle Isaac head
   camera, right the real head camera, in step
 - **deployed model** `bowltosink_c9` (job `qwen3_2b_posttrain_96d_grouped_diffusion_bowltosink_20260918_103225`, checkpoint_9,
   last of 0..9; stage-2 24-task ckpt4 init, lr 1e-4, BowlToSink_0918, 55 episodes):
-  [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_bowl_sink_isaac.mp4). Gating on this episode: at bowl met at
+  [video](scenes/readme_vid/pipetest_bowl_sink_isaac.mp4). Gating on this episode: at bowl met at
   9.1 s; grasped, at basin, placed never met. The robot was within reach of the bowl from 9.1 s, a hand touched the bowl for 17.4 s
   in total, the bowl rose at most 4.5 cm (below the 5 cm a grasp needs, held 0.3 s); the ladder stalled at grasped. Checker
   evaluated at every one of the 2501 control steps (50 s at 50 Hz, the 5 s stand-up included); no success; closest pelvis-bowl
@@ -172,13 +173,13 @@ _Scene: service cart with a box and a coffee cup, table to deliver to._
   3. **placed**: the cup stands upright on the table, released, for 0.5 s
 - **built from** a hand drawing; tuned on all 97 real episodes
 - **run** `cd scenes/coffee_cart && MUJOCO_GL=egl python replay_in_scene.py --fast --video --episodes 84`
-- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_coffee_cart.mp4),
+- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_coffee_cart.mp4),
   the recorded episode (CartCoffeeCup_0919 episode 64) replayed in the level-0 scene (room hssd:scene31 with its furniture hidden
   since 2026-09-24: open floor between the cart and the desk and beyond it, no wall at the end of the push): left Isaac third
   person, middle Isaac head camera, right the real head camera, in step
 - **deployed model** `cart_c19` (job `qwen3_2b_posttrain_96d_grouped_diffusion_cartcoffeecup_20260920_122057`, checkpoint_19, last
   of 0..19; stage-2 24-task ckpt4 init, no camera model, lr 1e-4, CartCoffeeCup_0919, 97 episodes):
-  [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_coffee_cart_isaac.mp4). Gating on this episode: cart pushed,
+  [video](scenes/readme_vid/pipetest_coffee_cart_isaac.mp4). Gating on this episode: cart pushed,
   cup lifted, placed all never met. Hand contact with the cup from 7.5 s, the cup rose at most 4.1 cm (5 cm counts as lifted) and
   ended on its side (tilt 87°) off its rest on the cart, not on the table; the cart moved 0.05 m (0.5 m counts as pushed). Checker
   evaluated at every one of the 3201 control steps (64 s at 50 Hz, the 5 s stand-up included); no success.
