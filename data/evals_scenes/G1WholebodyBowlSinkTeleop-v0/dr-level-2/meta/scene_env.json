@@ -1,0 +1,15 @@
+{
+ "kit": "bowl_sink",
+ "level": 2,
+ "description": "+ new object pose",
+ "episodes": 10,
+ "seed": 0,
+ "robot_starts": null,
+ "table_dz": null,
+ "threshold": null,
+ "env": {
+  "BOWL_SINK_NUM_DISTRACTORS": "3",
+  "BOWL_SINK_TARGET_JITTER": "0,0.08"
+ },
+ "eval": "python sim/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_decoupled_wbc train --data-format lerobot --data-dir /home/Horizon/wrk/SIMPLE/data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-2 --port 21000 --headless --num-episodes 10"
+}

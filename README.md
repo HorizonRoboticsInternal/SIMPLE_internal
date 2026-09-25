@@ -1,637 +1,213 @@
-<h1 align="center">SIMPLE: Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation
-</h1>
-
-<div align="center">
-
-[![arXiv](https://img.shields.io/badge/arXiv-2606.08278-df2a2a.svg)](https://arxiv.org/abs/2606.08278)
-[![Static Badge](https://img.shields.io/badge/Project-Page-a)](https://psi-lab.ai/SIMPLE)
-[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/USC-PSI-Lab/psi-model)
-[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/datasets/USC-PSI-Lab/psi-data)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-
-</div>
-
-
-<p align="center">
-  <img src="assets/teaser.webp" alt="SIMPLE teaser image" />
-</p>
-
-
-Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://nizhenhao-3.github.io/)\*, [Jie Liu](https://jie0530.github.io/)\*, [Zhenyu Zhao](https://zhenyuzhao.com/)\*, [Junjie Ye](https://junjieye.com/), [Hongyi Jing](https://hongyijing.me/), Junkai Xia, [Xiawei Liu](https://www.xiaweiliu.com/), [Michael Leong](https://leongmichael.github.io/), [Liang Heng](https://liangheng121.github.io/), Di Huang, [Yue Wang](https://yuewang.xyz/)†
-
-> 
-
-
-## 📢 News & Updates
-+ [2026-07-14] We released support for World Action Models: [Cosmos3](https://github.com/songlin/cosmos-framework/blob/main/docs/action_policy_simple_posttrain.md) and [DreamZero](https://github.com/physical-superintelligence-lab/Psi0/blob/main/baselines/dreamzero/README.md). 
-+ [ ] Integrate SONIC whole-body controller.
-
-## Table of Contents
-- [What is SIMPLE?](#what～is～SIMPLE)
-- [System Requirements](#system-requirements)
-- [Installation](#installation)
-  - [[Option 1] UV setup (Quickest)](#option-1-uv-setup-quickest)
-  - [[Option 2] Nix setup](#option-2-nix-setup)
-  - [[Option 3] Docker setup](#option-3-docker-setup)
-- [Data Generation & Pipeline](#-data-generation--pipeline)
-  - [1. Data Collection ](#1-data-collection-methods)
-  - [2. Data Post-processing](#2-post-processing)
-  - [3. Fine-Tuning](#3-fine-tuning)
-- [Evaluation in SIMPLE](#-evaluation-in-simple)
-- [📊 Simulation Benchmarking Results](#-simulation-benchmarking-results)
-- [Citation](#citation)
-- [License](#license)
-
-## What is SIMPLE?
-
-SIMPLE stands for SIMulation-based Policy Learning and Evaluation.
-
-It is a `simple` simulation environment supports:
-  + multiple agents: (franka arm/aloha bimanual arms/dexmate wheeled robot and unitree g1 humanoid!)
-  + 1000+ Objaverse assets
-  + 50+ Habitat HSSD scenes
-  + 50+ humanoid wholebody loco-manipulation tasks
-
-## System Requirements
-
-SIMPLE is built on top of `IsaacSim 4.5` and `MuJoCo 3.3`.
-
-| Component | Minimum | Recommended |
-| :--- | :--- | :--- |
-| **OS** | Ubuntu 22.04 | Ubuntu 22.04 |
-| **CPU** | Intel Core i7 / AMD Ryzen 7 | Intel Core i9 / AMD Ryzen 9 |
-| **RAM** | 32 GB | 64 GB |
-| **GPU** | NVIDIA RTX 2070 (8 GB VRAM) | NVIDIA RTX 3080 Ti / 4090 (16+ GB VRAM) |
-| **NVIDIA Driver** | 535.x | Latest |
-| **CUDA** | 12.x | 12.x |
-| **Python** | 3.10 | 3.10 |
-| **Storage** | 50 GB SSD | 100+ GB NVMe SSD |
-
-> An RTX-class NVIDIA GPU is required. GTX and older architectures are not supported.
-
-
-## Installation
-
-Clone the project:
-
-
-```
-
-git clone git@github.com:physical-superintelligence-lab/SIMPLE.git
-
-```
-
-Change directory to the project root:
-
-
-```
-
-cd SIMPLE
-
-```
-
-Pull all submodules
-
-```
-
-git submodule update --init --recursive
-
-```
-
-We offer three options for setting up SIMPLE:
-
-## [Option 1] UV setup (Quickest)
-
-
-Prerequisits:
-```
-sudo apt-get update
-sudo apt-get install curl cmake python3-dev ffmpeg
-sudo apt-get install gstreamer1.0-libav
-sudo apt-get install git-lfs && git lfs install && git lfs pull
-```
-
-Install `uv` if not already done
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-```
-
-Install all dependencies at once
-
-```
-UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
-
-```
-
-> **If the sync fails with** `Unable to uninstall lerobot==0.3.3. distutils-installed
-> distributions do not include the metadata required to uninstall safely.` — the `lerobot`
-> wheel ships a stray top-level `lerobot-<ver>.egg-info` file next to its `.dist-info`, and
-> uv reads it as a second, legacy copy of the package. Delete it and re-run the sync:
->
-> ```
-> rm -f .venv/lib/python3.10/site-packages/lerobot-*.egg-info
-> ```
-
-Install CuRobo
-
-```
-bash scripts/install_curobo.sh
-
-```
-
-Activate the environment:
-
-```
-source .venv/bin/activate
-
-```
-
-Verify the installation by printing the version number
-
-```
-python -c "import simple; print(simple.__version__)"
-
-```
-
-[Optional] Build the docs.
-
-```
-make live
-
-```
-
-Open http://127.0.0.1:8005 in a browser to view the documentation.
-
-> See [Installation Troubleshootings](docs/source/troubleshooting.md)
-
-
-> The document are working in progress. Feel free to raise questions using github issue, we will try to complete the document construction as soon as possible.
-
-## [Option 2] Nix setup
-
-We recommend using [nix](https://nixos.org/) on fresh new linux host, otherwise, if you alread have install NVIDIA driver and CUDA, it will be faster to setup SIMPLE through `uv`.
-
-> [Nix](https://nixos.org/) is a modern package manager and build system that focuses on reproducibility, isolation, and declarative system configuration.
-
-> Instead of installing software directly into your system (like apt or pip), Nix builds everything in isolated environments and stores them in the /nix/store, where each package version is uniquely identified by a hash.
-
-1. Install Nix first, for all interactive questions, enter `y`:
+# Scenes for the G1: new level 0–3 scenes, three real kitchens, and the HoloMotion controller
+
+What was built, where it lives, and the one command that runs each. This is the README of the
+`feat/new-simple-eval-tasks` branch; the upstream SIMPLE README is kept as [README_SIMPLE.md](README_SIMPLE.md).
+The served copy of this page, with every video, is at http://10.40.11.11:8899/simple_scenes_readme/index.html.
+
+## What is on this branch
+
+| where | what |
+|---|---|
+| `scenes/bottle_bin/`, `scenes/bowl_sink/`, `scenes/coffee_cart/` | the three real-world scenes as SIMPLE tasks (`<kit>_task.py` registers `simple/G1Wholebody{BottleBin,BowlSink,CoffeeCart}Teleop-v0` on import), their MuJoCo scene (`build_scene.py` → `scene.xml`, `layout.json`, `assets/`), the replay tool (`replay_in_scene.py`, scored by the same gates as the task), renders and a README each |
+| `scenes/make_levels.py` | writes the level 0–3 evaluation sets of a kit (LeRobot format, one `environment_config` per scene) into `data/evals_scenes/<env>/dr-level-<N>/`, plus `meta/scene_env.json` with the kit knobs the set was generated with |
+| `scenes/eval_scene.py` | runs SIMPLE's `eval_decoupled_wbc` on a kit's task: registers the task, re-applies `scene_env.json`, then the standard evaluator |
+| `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
+| `data/evals_scenes/…/dr-level-{0,1,2,3}/` | the twelve level sets (ten scenes each), committed so the evaluator runs without regeneration |
+| `scenes/readme_img/` | the pictures of this README |
+| `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`, `src/simple/cli/{teleop_holomotion,holomotion_replay}.py` | the HoloMotion v1.4.1 controller (section 3) |
+| `docs/TELEOP_CONTROL_LOOP_SPEC.md`, `docs/holomotion_teleop.md`, `REAL_ROBOT_RUNBOOK.md` | the teleop stack's control-loop spec, the HoloMotion guide, the real-robot runbook |
+
+Setup notes: the scene robot is the `g1comp` G1 (D455 head camera, Dex3 hands) in `scenes/bottle_bin/robot/g1_comp_45dof.xml`; its
+`robot/meshes` is a symlink to `data/robots/g1/meshes`, which comes from SIMPLE's `robots_g1.zip` like every other robot asset
+(the other two kits' `robot/` links point at bottle_bin's). The replay tools read the real recordings from `data/real_recordings/`,
+which are not in the repository. `make_report.py` in each kit rebuilds that kit's report page and still points at the drawings
+and the ffmpeg of the workstation it was written on.
+
+Rebuild a kit's level sets (Isaac; `frames/ep<i>.png` previews are written next to them but not committed) and replay a
+recorded episode inside a level scene:
 
 ```bash
-sh <(curl --proto '=https' --tlsv1.2 -L [https://nixos.org/nix/install](https://nixos.org/nix/install)) --daemon
-
+python scenes/make_levels.py bowl_sink --levels 0 1 2 3 --episodes 20 --out data/evals_scenes
+python scenes/replay_isaac.py bowl_sink --episode 41 --nav-gain 1.5 --out scenes/bowl_sink/replay/isaac_level0_ep41.mp4
 ```
 
-2. After Nix installation, open up a new shell to proceed.
-
-If you encounter issues with `nix` command not found, try
+Evaluate a kit's task the standard way (the Psi-0 server on `--port`, Isaac rendering, one level set):
 
 ```bash
-export PATH=/nix/var/nix/profiles/default/bin:$PATH
-
-
+python scenes/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_decoupled_wbc train \
+    --data-format lerobot --data-dir data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-0 \
+    --port 21000 --headless --num-episodes 10
 ```
 
-3. Pull git modules recursively
-
-```bash
-git submodule update --init --recursive
-
-```
-
-Run the prerequisite check once on a new host:
-
-```bash
-./scripts/nix/prereq-check.sh
-
-```
-
-`nix develop` auto-booststraps dependencies on first entry (or when `uv.lock` / `pyproject.toml` changes).
-
-Start the dev shell:
-
-```bash
-nix --extra-experimental-features "nix-command flakes" develop
-
-```
-
-Or run a single command inside the dev shell:
-
-```bash
-env -u LD_LIBRARY_PATH nix --extra-experimental-features "nix-command flakes" develop -c <command>
-
-```
-
-Do not activate the virtual environment directly with `source .venv/bin/activate` or `source .venv-nix/bin/activate`.
-This repo expects the Nix shell and the Python environment to be used together. The virtual environment alone is not a supported runtime.
-If your IDE terminal auto-sources `.venv-nix/bin/activate`, disable that behavior for this workspace or `deactivate` before entering through `nix develop`.
-
-Check if install successfully.
-
-```
-python -c "import simple; print(simple.__version__)"
-
-```
-
-You should see version number printed.
-
-* If encouter installtion or running issues, please checkout `Troubleshootings` in the Docs
-
-
-### Nix Notes
-
-The Nix runtime is documented in detail in [`docs/source/nix-runtime.md`](https://www.google.com/search?q=./docs/source/nix-runtime.md).
-
-Short version:
-
-* Mutually exclusive with Docker.
-* Intended host baseline: Linux with NVIDIA drivers already installed, especially Ubuntu hosts.
-* Run `./scripts/nix/prereq-check.sh` first on a new host.
-* Nix owns userspace; the host only owns the NVIDIA driver boundary.
-* The shell fails early on runtime pollution from `LD_LIBRARY_PATH`, `PYTHONPATH`, `PYTHONHOME`, or `LD_PRELOAD`.
-* The default Python environment is `.venv-nix`.
-* Bootstrap entry points are `./scripts/nix/bootstrap-python.sh`, `./scripts/nix/bootstrap-gpu.sh`, and `./scripts/nix/bootstrap.sh`.
-* Prefer importing `simple` as a library from inside the dev shell; treat the CLI as a thin convenience layer.
-
-Operational notes:
-
-* Remove a root-owned `.venv` left by older Docker runs with `sudo rm -rf .venv`.
-* Use `SIMPLE_AUTO_BOOTSTRAP=0` to skip auto-setup, or `SIMPLE_FORCE_BOOTSTRAP=1` to force re-bootstrap.
-* If you need to run `nix` from inside the dev shell, prefer `env -u LD_LIBRARY_PATH nix --extra-experimental-features "nix-command flakes" ...`.
-
-### [Option 3] Docker setup
-
-We also support building and running SIMPLE in docker. Please refer to the documents for [docker setup](https://www.google.com/search?q=docs/source/tutorials/docker.md).
-
----
-
-## ⚙️ Data Generation & Pipeline
-
-SIMPLE provides a scalable pipeline to generate, process, and train policies using synthesized simulation data.
-
-### 1. Data Collection 
-
-We support two primary interfaces for gathering  data: **Teleoperation (human-in-the-loop)** and **Automated Motion Planning**. 
-
-Before running, adjust your environment variables to match your system topology.
-```bash
-# Example configurations (Adjust CUDA_VISIBLE_DEVICES and DISPLAY based on your host)
-export MUJOCO_GL="egl"
-export CUDA_VISIBLE_DEVICES="0" 
-export DISPLAY=":1"
-```
-
-
-
-
-##### Stage 1: Teleoperation in MuJoCo
-
-We perform the initial human-in-the-loop teleoperation inside the lightweight MuJoCo engine. This ensures minimal control loop latency and high-frequency physical interactions during the demonstration tracking.
-
-**Example Usage:**
-
-```bash
-export TASK_NAME=G1WholebodyOpenTrashCanTeleop-v0
-
-python -m simple.cli.teleop_decoupled_wbc \
-  simple/$TASK_NAME \
-  --target=graspnet1b:0 \
-  --sim-mode=mujoco \
-  --record \
-  --no-headless \
-  --success-criteria=2
-
-
-```
-> 🥽 **Hardware Setup:** We utilize **Pico VR headsets** for immersive human-in-the-loop teleoperation. For specific hardware configuration, controller mapping, and connection details, please refer to the [Teleoperation Setup Guide](docs/source/tutorials/teleop.md).
-
-
-> 💡 *To explore additional customizable options for teleoperation, run:*
-> `python -m simple.cli.teleop_decoupled_wbc --help`
-
-Supported Wholebody Teleop Tasks Include:
-
-* `simple/G1WholebodyOpenTrashCanTeleop-v0`
-* `simple/G1WholebodyBendPickTeleop-v0`
-* `simple/G1WholebodyBendPickAndPlaceTeleop-v0`
-* `simple/G1WholebodyBendHandoverTeleop-v0`
-* `simple/G1WholebodyPushOfficeChairTeleop-v0`
-* `simple/G1WholebodyOpenFaucetTeleop-v0`
-* `simple/G1WholebodyOpenOvenTeleop-v0`
-* `simple/G1WholebodyCloseDoorTeleop-v0`
-* `simple/G1WholebodyXMovePickTeleop-v0`
-* `simple/G1WholebodyXMoveBendPickTeleop-v0`
-* `simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0`
-* `simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0`
-* `simple/G1WholebodyHandoverTeleop-v0`
-
-
-##### Stage 2: Photorealistic Replay & Isaac Sim Rendering
-
-Once raw trajectories are successfully captured, pass them into the `replay_decoupled_wbc` suite. By specifying `--sim-mode=mujoco_isaac`, this stage replays the actions in MuJoCo while driving **Isaac Sim** simultaneously as a synchronized rendering engine. This step processes the raw stream into standard dataset structures (LeRobot format).
-
-**Example Usage:**
-
-```bash
-# Ensure $TASK_NAME matches the task used in Stage 1
-python -m simple.cli.replay_decoupled_wbc \
-  simple/$TASK_NAME \
-  --data-dir=data/teleop_decoupled_wbc/simple/$TASK_NAME/level-0/ \
-  --sim-mode=mujoco_isaac \
-  --no-headless \
-  --render-hz=50 \
-  --save-dir=data/replay_decoupled_wbc_output \
-  --record \
-  --resume \
-  --success-criteria=0.2
-
-```
-
-> 💡 **Tip:** If the replay success rate is low, try lowering the `--success-criteria` first.
-
-
-
-#### B. Automated Motion Planning 
-
-To bypass manual human interaction and scale up synthetic data generation, the `simple.cli.datagen` pipeline directly integrates **CuRobo for automated motion planning**. This allows us to procedurally batch-produce optimal demonstration trajectories without human teleop.
-
-Unlike the two-stage teleoperation process, **Motion Planning can be executed in a single step**. By setting `--sim-mode=mujoco_isaac`, the pipeline resolves the fast contact physics and motion planning within MuJoCo, while simultaneously driving Isaac Sim for photorealistic rendering. This directly outputs the final dataset in the standard LeRobot format.
-
-**Example Usage:**
-
-```bash
-export TASK_NAME=G1WholebodyTabletopHandoverMP-v0
-
-python -m simple.cli.datagen \
-  simple/$TASK_NAME \
-  --sim-mode=mujoco_isaac \
-  --render-hz=50 \
-  --no-headless \
-  --num-episodes=10
-
-```
-
-
-
-
-
-### 2. Post-processing
-
-To prepare the generated datasets for policy learning, we need to post-process the raw output data to be strictly compatible with the training pipeline of our foundation model, [Psi-0](https://github.com/physical-superintelligence-lab/Psi0).
-
-We provide two distinct post-processing scripts depending on how the data was collected:
-
-#### A. Post-processing Motion Planning Data
-For data generated via the automated motion planning pipeline (`datagen.py`), use `postprocess_psi0.py`. **This script supports wildcard matching (`*`)** to seamlessly merge data from multiple parallel generation batches into a single unified dataset.
-
-**Example Usage:**
-```bash
-python scripts/postprocess_psi0.py \
-  --sim-root="data/datagen*/simple/G1WholebodyXMoveBendPickMP-v0/level-0/" \
-  --out-dir=data/processed_psi0/G1WholebodyXMoveBendPickMP-v0 \
-  --skip=60
-
-```
-
-#### B. Post-processing Teleoperation Data
-
-For data captured through human teleoperation and rendered via Isaac Sim , use `postprocess_psi0_sonic.py`. Similarly, this script utilizes wildcard matching (`*`) to merge data from multiple teleop replay sessions.
-
-**Example Usage:**
-
-```bash
-python scripts/postprocess_psi0_sonic.py \
-  --sim-root="data/replay_decoupled_wbc_output*/simple/G1WholebodyPushOfficeChairTeleop-v0/level-0/" \
-  --out-dir=data/processed_psi0/G1WholebodyPushOfficeChairTeleop-v0 \
-  --skip=0 \
-  --total_episodes=100
-
-```
-
-**Key Arguments:**
-
-* `--sim-root`: The input directory containing the generated dataset. Note that quotes `""` are highly recommended when using wildcards (`*`) to prevent premature shell expansion.
-* `--out-dir`: The output directory where the Psi-0 compatible dataset will be saved.
-* `--skip`: Number of initial frames to skip (useful for bypassing static setup or initialization frames).
-* `--total_episodes`: Limits the total number of valid episodes to process and merge.
-
-
-
-### 3. Fine-Tuning
-
-To train or fine-tune foundation models directly using the structured datasets generated from the pipeline, we provide seamless integration with the **Psi-0** training stack.
-
-> 👉 **Quick Start:** You can skip fine-tuning entirely and evaluate right away by downloading our pre-trained [checkpoints for SIMPLE](https://huggingface.co/USC-PSI-Lab/psi-model/tree/main/psi0/simple-checkpoints).
-
-**Data Preparation:**
-If you wish to train from scratch or fine-tune, download the required [SIMPLE task data](https://huggingface.co/datasets/USC-PSI-Lab/psi-data/tree/main/simple) and extract it to your local workspace:
-
-```bash
-export TASK_NAME=G1WholebodyXMovePickTeleop-v0
-
-hf download USC-PSI-Lab/psi-data \
-  simple/$TASK_NAME.zip \
-  --local-dir=data \
-  --repo-type=dataset
-
-unzip data/simple/$TASK_NAME.zip -d data/simple
-
-```
-
-**Training Integration:**
-
-> 💡 **For full training instructions, please refer to the [Psi-0 Project README](https://github.com/physical-superintelligence-lab/Psi0).** >
-> The Psi-0 repository contains comprehensive, up-to-date documentation on setting up training environment variables, visualizing episodes, and launching the training scripts (e.g., `bash scripts/train/psi0/finetune-simple-psi0.sh`).
-
-
-
-## 🎯 Evaluation in SIMPLE
-
-To rigorously evaluate the robustness and generalization of learned policies, we benchmark our foundation model [Psi-0](https://github.com/physical-superintelligence-lab/Psi0) using a decoupled **Client-Server architecture**. The server hosts the model inference, while the SIMPLE client runs the simulation environment.
-
----
-
-### 🖥️ Server Side: Model Inference (Executed in the Psi-0 Repository)
-
-#### Step 1: Environment & Checkpoint Setup
-Configure the evaluation environment variables and paths within your **Psi-0** project workspace.
-
-1. **Configure Environment Variables:** Inside the **Psi-0** project root, create and source your `.env` file based on the sample:
-```bash
-  cp .env.sample .env
-  # Edit .env to include your HF_TOKEN, WANDB variables, and PSI_HOME path
-  source .env
-  echo $PSI_HOME # Verify the path is correctly set
-```
-
-2. **Download Pre-trained Weights:** Pull the Psi-0 checkpoints for the SIMPLE benchmark from our Hugging Face repository. Psi0's pre-trained weights for the SIMPLE benchmark are hosted on the Hugging Face Model Hub at [USC-PSI-Lab/psi-model](https://huggingface.co/USC-PSI-Lab/psi-model).
-
-```bash
-hf download USC-PSI-Lab/psi-model \
-  --include="psi0/simple-checkpoints/*" \
-  --local-dir=$PSI_HOME/.runs \
-  --repo-type=model
-
-```
-
-### Step 2: Start the Psi-0 Inference Server
-
-Before launching the simulation, initialize the model inference server.
-
-```bash
-# Set your target run directory and checkpoint step
-export RUN_DIR=xxxx
-export CKPT_STEP=40000
-
-# Start the server (Listens on port 22085 by default)
-bash scripts/deploy/serve_psi0_simple.sh $RUN_DIR $CKPT_STEP
-
-```
-
-> ⚠️ **Important:** Keep this terminal window open. The server must remain active for the duration of the evaluation.
-
-### Step 3: Run the SIMPLE Simulation Client
-
-Open a **new terminal window** to launch the environment. The execution parameters differ slightly based on the data source of the task:
-
-* **For Teleop Tasks (suffix `*Teleop-v0`):** Use decoupled Whole-Body Control.
-* `export entry=eval_decoupled_wbc`
-* `export agent=psi0_decoupled_wbc`
-
-
-* **For Motion Planning Tasks (suffix `*MP-v0`):** Use standard evaluation.
-* `export entry=eval`
-* `export agent=psi0`
-
-
-
-**Execution Example (Teleop Task):**
-
-
-#### Option A: UV Environment
-
-```bash
-export task=G1WholebodyXMovePickTeleop-v0
-export agent=psi0_decoupled_wbc
-export dr=level-0
-
-TASK_NAME=$task uv run eval-decoupled-wbc \
-    simple/$task \
-    $agent \
-    train \
-    --data-format lerobot \
-    --data-dir data/evals/simple-eval/$task/$dr \
-    --host 127.0.0.1 \
-    --port 21000 \
-    --headless
-```
-
-#### Option B: Nix Environment
-
-```bash
-export task=G1WholebodyXMovePickTeleop-v0
-export entry=eval_decoupled_wbc
-export agent=psi0_decoupled_wbc
-export dr=level-0
-
-env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' develop -c \
-  python -m simple.cli.$entry \
-  simple/$task \
-  $agent \
-  train \
-  --data-format lerobot \
-  --data-dir data/evals/simple-eval/$task/$dr \
-  --host 127.0.0.1 \
-  --port 21000 \
-  --headless
-```
-
-### Step 4: View Evaluation Results & Videos
-
-**Task Success Rate Statistics:**
-Upon completion, the terminal will display a summary of the results. A detailed log is also preserved automatically:
-
-```bash
-cat data/evals_decoupled_wbc/eval_stats.txt
-
-```
-
-**Execution Videos:**
-Visual records of each episode are automatically rendered and saved. The files are named using the pattern `episode_id/cam_name_{success_flag}.mp4` (e.g., `success` or `failed`).
-
-```bash
-# Example: Play a successful teleop evaluation video
-mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/level-0/episode_0/head_stereo_left_success.mp4
-
-# Example: Play a successful motion planning evaluation video
-mpv data/evals/psi0/G1WholebodyBendPickMP-v0/level-0/episode_0/front_stereo_left_success.mp4
-
-```
-
-
-
-
-## 📊 Simulation Benchmarking Results
-
-> This is a preliminary benchmark with 6 tasks accompanying the [Psi-0](https://github.com/physical-superintelligence-lab/Psi0) project. Please also checkout Psi-0 for more details of intergrating Psi-0 with SIMPLE.
-
-To rigorously evaluate the robustness and generalization of the learned policies, we design three evaluation levels with progressive out-of-distribution variations applied to the training environment:
-
-> The evaluation environments are provided in the huggingface repository [USC-PSI-Lab/psi-data](https://huggingface.co/datasets/USC-PSI-Lab/psi-data/tree/main/simple-eval).
-
-* **Level 0 (Visual & Distractors):** Randomizes table materials and the types/initial positions of distractor objects.
-* **Level 1 (Lighting):** Includes Level 0 variations + extreme changes in lighting conditions.
-* **Level 2 (Spatial pose):** Includes Level 1 variations + perturbations to the initial positions of the target objects.
-
-_Success rates are reported out of 10 evaluation trials per level (**Level 0 | Level 1 | Level 2**)._
-| Baseline / Task | G1Wholebody<br>XMove<br>PickTeleop-v0 | G1Wholebody<br>BendPickMP-v0 | G1Wholebody<br>Handover<br>Teleop-v0 | G1Wholebody<br>Locomotion<br>PickBetweenTables<br>Teleop-v0 | G1Wholebody<br>Tabletop<br>GraspMP-v0 | G1Wholebody<br>XMove<br>BendPick<br>Teleop-v0 |
-| :--------------- | :-----------------------------------: | :--------------------------: | :----------------------------------: | :---------------------------------------------------------: | :-----------------------------------: | :-------------------------------------------: |
-| **Psi0** | 10 &#124; 10 &#124; 6 | 10 &#124; 10 &#124; 10 | 7 &#124; 7 &#124; 10 | 7 &#124; 5 &#124; 6 | 10 &#124; 10 &#124; 8 | 10 &#124; 9 &#124; 9 |
-| **GR00T N1.6** | 10 &#124; 10 &#124; 7 | 7 &#124; 7 &#124; 6 | 1 &#124; 3 &#124; 3 | 0 &#124; 0 &#124; 0 | 9 &#124; 9 &#124; 7 | 4 &#124; 4 &#124; 1 |
-| **OpenPi π0.5** | 7 &#124; 5 &#124; 1 | 10 &#124; 10 &#124; 8 | 5 &#124; 4 &#124; 5 | 3 &#124; 3 &#124; 3 | 10 &#124; 10 &#124; 8 | 0 &#124; 0 &#124; 0 |
-| **InternVLA-M1** | 0 &#124; 0 &#124; 0 | 5 &#124; 5 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 3 &#124; 5 &#124; 7 |
-| **H-RDT** | 0 &#124; 0 &#124; 2 | 0 &#124; 0 &#124; 1 | 0 &#124; 1 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 |
-| **DreamZero** | 10 &#124; 10 &#124; 10 | 9 &#124; 9 &#124; 8 | 7 &#124; 8 &#124; 9 | 5 &#124; 3 &#124; 3 | 9 &#124; 10 &#124; 7 | 0 &#124; 0 &#124; 1 |
-| **EgoVLA** | 0 &#124; 1 &#124; 2 | 7 &#124; 5 &#124; 8 | 0 &#124; 4 &#124; 3 | 0 &#124; 0 &#124; 0 | 10 &#124; 10 &#124; 7 | 3 &#124; 5 &#124; 4 |
-| **Diff. Policy** | 3 &#124; 3 &#124; 2 | 10 &#124; 8 &#124; 6 | 3 &#124; 2 &#124; 4 | 4 &#124; 0 &#124; 0 | 8 &#124; 9 &#124; 8 | 0 &#124; 0 &#124; 0 |
-| **ACT** | 10 &#124; 9 &#124; 6 | 10 &#124; 9 &#124; 9 | 4 &#124; 4 &#124; 6 | 6 &#124; 5 &#124; 7 | 10 &#124; 10 &#124; 8 | 6 &#124; 8 &#124; 8 |
-
-_More interesting tasks, including articulated objects._
-
-| Baseline / Task | G1Wholebody<br>CloseDoor<br>Teleop-v0 | G1Wholebody<br>OpenOven<br>Teleop-v0 | G1Wholebody<br>OpenFaucet<br>Teleop-v0 | G1Wholebody<br>PickAndPlace<br>AndHugContainer<br>Teleop-v0 | 
-| :--------------- | :-----------------------------------: | :--------------------------: | :----------------------------------: | :---------------------------------------------------------: | 
-| **Psi0** | 10 &#124; 10 &#124; 10 | 7 &#124; 5 &#124; 4 | 3 &#124; 3 &#124; 4 | 7 &#124; 6 &#124; 3 | 
-
-## Citation
-
-> Please also consider citing `Psi-0` if you use its training code.
-
-```
-@article{wei2026simple,
-  title={SIMPLE: Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation},
-  author={Wei, Songlin and Ni, Zhenhao and Liu, Jie and Zhao, Zhenyu and Ye, Junjie and Jing, Hongyi and Xia, Junkai and Liu, Xiawei and Leong, Michael and Heng, Liang and Huang, Di and Wang, Yue},
-  journal={arXiv preprint arXiv:2606.08278},
-  year={2026}
-}
-```
-
-```
-@article{wei2026psi0,
-  title={{$\Psi_0$}: An Open Foundation Model Towards Universal Humanoid Loco-Manipulation},
-  author={Wei, Songlin and Jing, Hongyi and Li, Boqian and Zhao, Zhenyu and Mao, Jiageng and Ni, Zhenhao and He, Sicheng and Liu, Jie and Liu, Xiawei and Kang, Kaidi and others},
-  journal={arXiv preprint arXiv:2603.12263},
-  year={2026}
-}
-```
-
-## License
-
-This project is licensed under the MIT.
-
-See the [LICENSE](https://www.google.com/search?q=license.md) file for details.
-
-
-## Reproducible evaluation
-
-See [opt-in determinism controls](docs/determinism.md) for simulation clocks, episode RNGs and renderer settings.
+## 1 · New level 0/1/2/3 scenes for SIMPLE
+
+The six original tasks in new scenes: ten at each of the four levels, rendered in Isaac and evaluated once with the official
+Ψ0 checkpoints. Each level adds to the one before it; every level is ten scenes per task:
+
+1. **Level 0**, new scene: new distractors and a new table material
+2. **Level 1**: + new lighting
+3. **Level 2**: + new object poses
+4. **Level 3**: + new layout, on top of levels 0–2 re-randomised in every scene, as the report's alternative layouts did:
+   table top height (ten offsets inside ±4 cm, one per scene) and robot start (ten offsets inside ±10 cm forward/back and
+   ±5 cm sideways, one per scene)
+
+**149 / 220** completed over the four levels (level 3 not evaluated for 2 of the 6 tasks). Levels 0–2: 137/180, level 3: 12/40;
+levels 0–2 are the first ten of the 20-scene sets ([20-scene report with every video](http://10.40.11.11:8899/psi0_new20_report/index.html)).
+
+| task | level 0 | level 1 | level 2 | level 3 | the ten scenes of each level |
+|---|---|---|---|---|---|
+| TabletopGrasp | 9/10 | 7/10 | 6/10 | 2/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv3.jpg) |
+| BendPick | 9/10 | 9/10 | 8/10 | 3/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv3.jpg) |
+| XMovePick | 10/10 | 10/10 | 9/10 | 4/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv3.jpg) |
+| Handover | 10/10 | 7/10 | 4/10 | 3/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv3.jpg) |
+| LocoPickBetweenTables | 3/10 | 9/10 | 4/10 | not evaluated | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv3.jpg) |
+| XMoveBendPick | 7/10 | 8/10 | 8/10 | not evaluated | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv3.jpg) |
+
+Level 0 is new distractors + table material, level 1 adds lighting, level 2 adds object poses, level 3 is levels 0+1+2 combined
+plus table top z (±4 cm) and robot start (±10 / ±5 cm) in every scene.
+
+## 2 · Real-world scenes rebuilt in MuJoCo
+
+Each is a SIMPLE task plus a replay tool: the real teleop recordings are played back inside the scene and scored by **gates**,
+ordered checks that latch when met, each only after the one before. Reward grows per gate; the last gate is success. One success
+each below. Each scene also ships as SIMPLE evaluation sets at **levels 0–3**, rendered in Isaac (20 scenes at levels 0–2, 10 at
+level 3), the same ladder as section 1. The same gate code scores the replays and the SIMPLE task.
+
+On 2026-09-24 each scene was also run once with its deployed HoloBrain model through the standard evaluator
+(`simple.cli.eval_decoupled_wbc` with SIMPLE's `psi0_decoupled_wbc` agent, HTTP `/act`, a whole chunk per query, 8 demasking
+steps, horizon 15, level-0 set, Isaac rendering). None succeeded, which was expected; the gate readings below show the checker
+responding to what actually happened. Those runs used `sim/pipeline_test.sh` of the `holobrain_g1_deploy` package, which starts the
+model server.
+
+### Bottle → bin
+
+![bottle_bin scene](scenes/readme_img/scene_bottle_bin.jpg)
+_Scene: table, 500 ml bottle, trash bin behind the robot's right._
+
+- **task** Pick up the bottle, turn, drop it in the trash bin. `simple/G1WholebodyBottleBinTeleop-v0`
+- **gates**
+  1. **grasped**: the right hand touches the bottle and it is 3 cm off the table, upright, for 0.5 s
+  2. **at the bin**: after the grasp, walked ≥ 0.5 m, within 0.8 m of the bin, standing still 0.4 s
+  3. **placed**: released inside the bin's opening, below the rim, and still there 0.5 s later
+- **built from** the user's measurements; bin fitted to the release points of 97 real episodes
+- **run** `cd scenes/bottle_bin && MUJOCO_GL=egl python replay_in_scene.py --session 2026-09-17-02-25-56-G1-sim --episodes 12`
+- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_bottle_bin.mp4),
+  the recorded episode (session 02-25-56 episode 10) replayed in the level-0 scene: left Isaac third person, middle Isaac head
+  camera, right the real head camera, in step
+- **deployed model** `chipcan_nativec9` (job `qwen3_2b_posttrain_96d_g1_teleop_chipcantotrash_base_native_tokenizer_norm_20260917_131811`,
+  checkpoint_9 of 0..19; stage-2 24-task ckpt4 init, lr 3e-5, pretraining tokenizer quantiles, ChipCanToTrash 02-25-56 session, 97
+  episodes): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_bottle_bin_isaac.mp4). Gating on this episode:
+  grasped, at bin, placed all never met. The bottle rose at most 10.3 cm but never counted as grasped (that needs a hand on it,
+  the bottle within 60° of upright and 3 cm up for 0.5 s), so it was knocked about rather than held; the robot came within 1.55 m
+  of the bin (0.8 m and a 0.4 s stop count as at the bin). Checker evaluated at every one of the 1701 control steps (34 s at
+  50 Hz, the 5 s stand-up included); no success.
+
+Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
+Level 2: + new object pose, the bottle moved ±3 cm across and ±8 cm along the table. Level 3: + new layout, everything above
+re-randomised in every scene and the table top height and the robot's start change per scene.
+
+| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
+| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
+| table top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
+
+Starts are inside ±10 cm forward/back and ±5 cm sideways (+ = forward / left); heights inside ±4 cm. The ten offsets are spread
+evenly over each range and shuffled by the seed, so every scene gets a distinct pair.
+
+![bottle_bin levels](scenes/readme_img/grid_bottle_bin_rows.jpg)
+_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_bottle_bin_scene/index.html)
+
+### Bowl → sink
+
+![bowl_sink scene](scenes/readme_img/scene_bowl_sink.jpg)
+_Scene: L-shaped kitchen, green bowl at the counter edge, sink on the right._
+
+- **task** Pick up the bowl, turn right, walk to the sink, place it in the basin. `simple/G1WholebodyBowlSinkTeleop-v0`
+- **gates**
+  1. **at the bowl**: moved ≥ 5 cm, bowl within 0.6 m and 60° ahead, standing still 0.4 s
+  2. **grasped**: hand on the bowl, lifted 5 cm and held 0.3 s
+  3. **at the sink**: walked ≥ 0.2 m since the grasp, basin within 0.8 m and 75°, still 0.4 s
+  4. **placed**: released, bowl inside the basin footprint, below the rim
+- **built from** a hand drawing, corrected on the bench; start pose tuned on 55 real episodes
+- **run** `cd scenes/bowl_sink && MUJOCO_GL=egl REPLAY_FAST=1 python replay_in_scene.py --session psi0/BowlToSink_0918 --episodes 7 --nav-gain 1.3`
+- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_bowl_sink.mp4),
+  the recorded episode (BowlToSink_0918 episode 41, walking gain 1.5, robot start 0.38 m from the counter edge, moved back on
+  2026-09-24 so the walk-in stops short of the cabinet) replayed in the level-0 scene: left Isaac third person, middle Isaac head
+  camera, right the real head camera, in step
+- **deployed model** `bowltosink_c9` (job `qwen3_2b_posttrain_96d_grouped_diffusion_bowltosink_20260918_103225`, checkpoint_9,
+  last of 0..9; stage-2 24-task ckpt4 init, lr 1e-4, BowlToSink_0918, 55 episodes):
+  [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_bowl_sink_isaac.mp4). Gating on this episode: at bowl met at
+  9.1 s; grasped, at basin, placed never met. The robot was within reach of the bowl from 9.1 s, a hand touched the bowl for 17.4 s
+  in total, the bowl rose at most 4.5 cm (below the 5 cm a grasp needs, held 0.3 s); the ladder stalled at grasped. Checker
+  evaluated at every one of the 2501 control steps (50 s at 50 Hz, the 5 s stand-up included); no success; closest pelvis-bowl
+  0.268 m, closest pelvis-basin 0.865 m.
+
+Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
+Level 2: + new object pose, the bowl moved ±8 cm along the counter edge, never toward it. Level 3: + new layout, everything above
+re-randomised in every scene and the counter top height and the robot's start change per scene.
+
+| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
+| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
+| counter top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
+
+Same ranges and shuffling as above.
+
+![bowl_sink levels](scenes/readme_img/grid_bowl_sink_rows.jpg)
+_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html) ·
+[Success videos](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html#success) ·
+[The four gates](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html#gates)
+
+### Coffee cart → desk
+
+![coffee_cart scene](scenes/readme_img/scene_coffee_cart.jpg)
+_Scene: service cart with a box and a coffee cup, table to deliver to._
+
+- **task** Push the cart to the desk, take the cup, put it on the desk. `simple/G1WholebodyCoffeeCartTeleop-v0`
+- **gates**
+  1. **cart pushed**: the cart has travelled ≥ 0.5 m from its start
+  2. **cup lifted**: the cup is 5 cm above its rest on the box
+  3. **placed**: the cup stands upright on the table, released, for 0.5 s
+- **built from** a hand drawing; tuned on all 97 real episodes
+- **run** `cd scenes/coffee_cart && MUJOCO_GL=egl python replay_in_scene.py --fast --video --episodes 84`
+- **success, rendered in Isaac** (level 0, scene 0): [video](http://10.40.11.11:8899/simple_scenes_readme/vid/isaac_coffee_cart.mp4),
+  the recorded episode (CartCoffeeCup_0919 episode 64) replayed in the level-0 scene (room hssd:scene31 with its furniture hidden
+  since 2026-09-24: open floor between the cart and the desk and beyond it, no wall at the end of the push): left Isaac third
+  person, middle Isaac head camera, right the real head camera, in step
+- **deployed model** `cart_c19` (job `qwen3_2b_posttrain_96d_grouped_diffusion_cartcoffeecup_20260920_122057`, checkpoint_19, last
+  of 0..19; stage-2 24-task ckpt4 init, no camera model, lr 1e-4, CartCoffeeCup_0919, 97 episodes):
+  [video](http://10.40.11.11:8899/simple_scenes_readme/vid/pipetest_coffee_cart_isaac.mp4). Gating on this episode: cart pushed,
+  cup lifted, placed all never met. Hand contact with the cup from 7.5 s, the cup rose at most 4.1 cm (5 cm counts as lifted) and
+  ended on its side (tilt 87°) off its rest on the cart, not on the table; the cart moved 0.05 m (0.5 m counts as pushed). Checker
+  evaluated at every one of the 3201 control steps (64 s at 50 Hz, the 5 s stand-up included); no success.
+
+Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
+Level 2: + new object pose, the cup placed anywhere on the near half of the box top. Level 3: + new layout, everything above
+re-randomised in every scene and the cart-box top height and the robot's start change per scene.
+
+| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
+| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
+| cart-box top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
+
+Same ranges and shuffling as above.
+
+![coffee_cart levels](scenes/readme_img/grid_coffee_cart_rows.jpg)
+_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_coffee_cart_scene/index.html)
+
+## 3 · HoloMotion v1.4.1 controller
+
+A second way to drive the G1 in SIMPLE: the HoloMotion motion-tracking policy instead of the decoupled whole-body controller,
+with the publisher vendored so no separate checkout is needed.
+
+PICO headset → HoloRetarget publisher → reference stream, 50 Hz → HoloMotion ONNX → 29 joint targets
+
+- **teleop and record**: `third_party/holomotion/run_publisher.sh` then
+  `teleop-holomotion simple/G1WholebodyLocomotionPickBetweenTablesHoloMotionTeleop-v0`
+- **replay without a headset**: `holomotion-replay --hand-demo` or `holomotion-replay path/to/recording.npz`
+
+Lives in `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`.
+Full guide: [docs/holomotion_teleop.md](docs/holomotion_teleop.md).

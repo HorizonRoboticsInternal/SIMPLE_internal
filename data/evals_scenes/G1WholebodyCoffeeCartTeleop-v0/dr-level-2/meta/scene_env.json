@@ -1,0 +1,16 @@
+{
+ "kit": "coffee_cart",
+ "level": 2,
+ "description": "+ new object pose",
+ "episodes": 10,
+ "seed": 0,
+ "robot_starts": null,
+ "table_dz": null,
+ "threshold": null,
+ "env": {
+  "COFFEE_CART_NUM_DISTRACTORS": "3",
+  "COFFEE_CART_TARGET_JITTER": "0.02,0.03",
+  "COFFEE_CART_TARGET_REGION": "0.475,0.65,-0.115,0.115"
+ },
+ "eval": "python sim/eval_scene.py coffee_cart simple/G1WholebodyCoffeeCartTeleop-v0 psi0_decoupled_wbc train --data-format lerobot --data-dir /home/Horizon/wrk/SIMPLE/data/evals_scenes/G1WholebodyCoffeeCartTeleop-v0/dr-level-2 --port 21000 --headless --num-episodes 10"
+}

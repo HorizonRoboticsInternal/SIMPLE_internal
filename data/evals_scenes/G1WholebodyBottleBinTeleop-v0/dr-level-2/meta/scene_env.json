@@ -1,0 +1,14 @@
+{
+ "kit": "bottle_bin",
+ "level": 2,
+ "description": "+ new object pose",
+ "episodes": 10,
+ "seed": 0,
+ "robot_starts": null,
+ "threshold": null,
+ "env": {
+  "BOTTLE_BIN_NUM_DISTRACTORS": "3",
+  "BOTTLE_BIN_TARGET_JITTER": "0.03,0.08"
+ },
+ "eval": "python sim/eval_scene.py bottle_bin simple/G1WholebodyBottleBinTeleop-v0 psi0_decoupled_wbc train --data-format lerobot --data-dir /home/Horizon/wrk/SIMPLE/data/evals_scenes/G1WholebodyBottleBinTeleop-v0/dr-level-2 --port 21000 --headless --num-episodes 10"
+}
