@@ -46,7 +46,7 @@ class Pi05DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._global_step_idx = 0
 
         # last command (high level input to lower policy)
-        self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74]) # FIXME hardcoded for g1 wholebody, need to be more general in the future
+        self._last_base_height_cmd = 0.74  # FIXME hardcoded for g1 wholebody, need to be more general in the future
         self._reset_history = True
 
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
@@ -68,10 +68,11 @@ class Pi05DecoupledWbcAgent(SonicDecoupledWbcAgent):
             # send query to server
 
             proprio = observation["joint_qpos"][None]
-            waist_rpy = [proprio[:,13:15],proprio[:,12:13]]
+            waist_rpy = proprio[:, [13, 14, 12]]
             states = np.concatenate(
-                [proprio[:, s:e] for _, s, e in STATE_SLICES] + waist_rpy + [
-                    self._last_cmd_torso_rpyh[None][:, -1:]
+                [proprio[:, s:e] for _, s, e in STATE_SLICES] + [
+                    waist_rpy,
+                    np.array([[self._last_base_height_cmd]], dtype=np.float32),
                 ],
                 axis=1,
             ).astype(np.float32) # (1, 32)
@@ -144,6 +145,7 @@ class Pi05DecoupledWbcAgent(SonicDecoupledWbcAgent):
                 "timestamp": t_now,
             }
             self._wbc_policy.set_goal(goal)
+            self._last_base_height_cmd = float(action_cmd["base_height_command"][0])
             wbc_action = self._wbc_policy.get_action(time=t_now)
             self._cached_target_q = self._dwbc_robot_model.get_body_actuated_joints(wbc_action["q"])
             self._cached_left_hand_q = self._dwbc_robot_model.get_hand_actuated_joints(wbc_action["q"], side="left")
@@ -156,7 +158,6 @@ class Pi05DecoupledWbcAgent(SonicDecoupledWbcAgent):
                 left_hand_q=self._cached_left_hand_q,
                 right_hand_q=self._cached_right_hand_q,
             )
-            self._last_cmd_torso_rpyh = np.array([0, 0, 0, goal["base_height_command"][0]])
         else:
             raise ValueError(f"Unexpected action type {action_cmd.type} from queue.")
 
@@ -172,4 +173,4 @@ class Pi05DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._last_observation = None
         self._last_pred_action = None
         self._reset_history = True
-        self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74])
+        self._last_base_height_cmd = 0.74

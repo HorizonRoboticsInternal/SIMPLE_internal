@@ -45,7 +45,7 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._session_id = self._make_session_id()
 
         # last command (high level input to lower policy)
-        self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74]) # FIXME hardcoded for g1 wholebody, need to be more general in the future
+        self._last_base_height_cmd = 0.74  # FIXME hardcoded for g1 wholebody, need to be more general in the future
         self._reset_history = True
 
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
@@ -73,9 +73,11 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
             }
 
             proprio = observation["joint_qpos"][None]
+            waist_rpy = proprio[:, [13, 14, 12]]
             states = np.concatenate(
                 [proprio[:, s:e] for _, s, e in STATE_SLICES] + [
-                    self._last_cmd_torso_rpyh[None]
+                    waist_rpy,
+                    np.array([[self._last_base_height_cmd]], dtype=np.float32),
                 ],
                 axis=1,
             ).astype(np.float32) # (1, 32)
@@ -148,6 +150,7 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
                 action_cmd["base_height_command"][0],
             ], dtype=np.float32)
             self._wbc_policy.set_goal(goal)
+            self._last_base_height_cmd = float(action_cmd["base_height_command"][0])
             wbc_action = self._wbc_policy.get_action(time=t_now)
             self._cached_target_q = self._dwbc_robot_model.get_body_actuated_joints(wbc_action["q"])
             self._cached_left_hand_q = self._dwbc_robot_model.get_hand_actuated_joints(wbc_action["q"], side="left")
@@ -177,4 +180,5 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._last_observation = None
         self._last_pred_action = None
         self._reset_history = True
+        self._last_base_height_cmd = 0.74
         self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74])

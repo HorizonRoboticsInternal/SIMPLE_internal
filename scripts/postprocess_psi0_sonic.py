@@ -371,8 +371,9 @@ def main():
             # episode_index = np.asarray(table["episode_index"].to_pylist(), dtype=np.int64)
             episode_index = np.asarray([episode_idx]*n, dtype=np.int64)
 
-            # index = np.asarray(table["index"].to_pylist(), dtype=np.int64)
-            index = np.asarray(table["index"].to_pylist(), dtype=np.int64) + last_index
+            # Recomputed rather than taken from the source: exporter `index` is already
+            # globally cumulative within its dataset, so `+ last_index` would double-count.
+            index = last_index + np.arange(n, dtype=np.int64)
             
             # timesteps = np.asarray([round(ts * original_fps) for ts in table["timestamp"].to_pylist()], dtype=np.float32)
             timestamp = frame_index * 1.0 / args.fps 
@@ -393,7 +394,7 @@ def main():
                 "timestamp": timestamp,
                 "frame_index": frame_index,
                 "episode_index": episode_index,
-                "index": index[args.skip:][::args.downsample],
+                "index": index,
                 "task_index": task_index,
                 "next.done": done,
             })
@@ -427,7 +428,7 @@ def main():
                 "dataset_to_index": total_frames - 1,
                 "robot_type": "g1",
                 "instruction": all_tasks[task_index[0]],
-                "environment_config": episodes_info[ep_index]["environment_config"]
+                "environment_config": episodes_info[ep_index].get("environment_config")
             })
 
             ep_stats = {

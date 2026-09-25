@@ -1,0 +1,607 @@
+diff --git a/control/envs/g1/utils/joint_safety.py b/control/envs/g1/utils/joint_safety.py
+index 06c9134..aa59fb4 100644
+--- a/control/envs/g1/utils/joint_safety.py
++++ b/control/envs/g1/utils/joint_safety.py
+@@ -19,7 +19,10 @@ class JointSafetyMonitor:
+ 
+     # Velocity limits in rad/s
+     ARM_VELOCITY_LIMIT = 6.0  # rad/s for arm joints
+-    HAND_VELOCITY_LIMIT = 50.0  # rad/s for finger joints
++    # Raised 50 -> 80: measured Dex3 finger snaps of 60-65 rad/s during normal
++    # grasp closes / safe-goal resets tripped the old limit. 80 clears every
++    # observed peak while still catching genuine runaways.
++    HAND_VELOCITY_LIMIT = 80.0  # rad/s for finger joints
+ 
+     def __init__(self, robot_model, enable_viz: bool = False, env_type: str = "real"):
+         """Initialize joint safety monitor.
+diff --git a/control/main/teleop/configs/configs.py b/control/main/teleop/configs/configs.py
+index 43ab2b1..9a56e01 100644
+--- a/control/main/teleop/configs/configs.py
++++ b/control/main/teleop/configs/configs.py
+@@ -303,6 +303,11 @@ class DataExporterConfig(BaseConfig, ComposedCameraClientConfig):
+     add_stereo_camera: bool = True
+     """Whether to add stereo camera for data collection. If False, only use a signle ego view camera."""
+ 
++    skip_stale_rows: bool = False
++    """If True, a camera frame that arrives before any new state/action message has been
++    delivered is not written (the row would repeat the previous state/action). If False
++    (default) the row is written as before and the occurrence is counted and reported."""
++
+ 
+ @dataclass
+ class SyncSimDataCollectionConfig(ControlLoopConfig, TeleopConfig):
+diff --git a/control/main/teleop/run_g1_control_loop.py b/control/main/teleop/run_g1_control_loop.py
+index 12aab0c..8ccc9e4 100644
+--- a/control/main/teleop/run_g1_control_loop.py
++++ b/control/main/teleop/run_g1_control_loop.py
+@@ -35,6 +35,14 @@ from decoupled_wbc.control.utils.telemetry import Telemetry
+ CONTROL_NODE_NAME = "ControlPolicy"
+ 
+ 
++def _recorded_navigate_cmd(last_teleop_cmd, wbc_action):
++    nav = list(last_teleop_cmd.get("navigate_cmd", DEFAULT_NAV_CMD))
++    synced = wbc_action.get("navigate_cmd") if isinstance(wbc_action, dict) else None
++    if synced is not None and len(synced) >= 4 and len(nav) >= 4:
++        nav[3] = float(synced[3])
++    return nav
++
++
+ def main(config: ControlLoopConfig):
+     backend = config.messaging_backend
+ 
+@@ -203,9 +211,17 @@ def main(config: ControlLoopConfig):
+                             "base_height_command": last_teleop_cmd.get(
+                                 "base_height_command", DEFAULT_BASE_HEIGHT
+                             ),
+-                            "navigate_command": last_teleop_cmd.get(
+-                                "navigate_cmd", DEFAULT_NAV_CMD
+-                            ),
++                            # vx, vy, turn flag as commanded by the operator; target_yaw is the
++                            # re-anchored dial the lower-body policy actually steered toward
++                            # (see G1GearWbcPolicy.yaw_dial_offset), not the streamer's raw
++                            # never-reset integrator.
++                            "navigate_command": _recorded_navigate_cmd(last_teleop_cmd, wbc_action),
++                            # Commanded torso orientation (roll, pitch, yaw) that the
++                            # lower-body policy was actually driven with this tick. It is
++                            # NOT recoverable from "action": the leg/waist slots of the
++                            # 43-DOF q are the measured configuration echoed back, not a
++                            # command. Synced with navigate_cmd/base_height_command above.
++                            "torso_rpy_command": wbc_action["torso_rpy_cmd"],
+                             "timestamps": {
+                                 "main_loop": time.time(),
+                                 "proprio": time.time(),
+diff --git a/control/main/teleop/run_g1_data_exporter.py b/control/main/teleop/run_g1_data_exporter.py
+index aae1fe0..1a8828b 100644
+--- a/control/main/teleop/run_g1_data_exporter.py
++++ b/control/main/teleop/run_g1_data_exporter.py
+@@ -1,5 +1,6 @@
+ from collections import deque
+ from datetime import datetime
++import queue
+ import threading
+ import time
+ 
+@@ -83,11 +84,13 @@ class Gr00tDataCollector:
+         text_to_speech=None,
+         frequency=20,
+         state_act_msg_frequency=50,
++        skip_stale_rows=False,
+     ):
+ 
+         self.text_to_speech = text_to_speech
+         self.frequency = frequency
+         self.data_exporter = data_exporter
++        self.skip_stale_rows = skip_stale_rows
+ 
+         self.node = node
+ 
+@@ -111,8 +114,56 @@ class Gr00tDataCollector:
+         self.telemetry = Telemetry(window_size=100)
+         self.timing_threshold_monitor = TimingThresholdMonitor()
+ 
++        # Whether the state/action grabbed for the current loop iteration is new.
++        # False means no message reached the shelf since the previous grab, so a row
++        # written now would repeat the previous state/action (a "duplicate row").
++        self._proprio_is_fresh = False
++        self._episode_rows = 0
++        self._episode_stale_rows = 0
++        self._episode_skipped_rows = 0
++
++        # The expensive part of a row (deep copy, validation, hand-off to the video
++        # writers) runs on this worker so the main loop stays light: grab the shelf,
++        # wait for the camera, enqueue. The subscriber's spin thread then gets the
++        # CPU it needs to keep the shelf stocked instead of being starved while the
++        # main loop is busy writing.
++        self._write_queue: "queue.Queue" = queue.Queue(maxsize=300)
++        self._writer_error = None
++        self._writer_thread = threading.Thread(target=self._writer_worker, daemon=True)
++        self._writer_thread.start()
++
+         print(f"Recording to {self.data_exporter.meta.root}")
+ 
++    def _writer_worker(self):
++        while True:
++            frame_data = self._write_queue.get()
++            try:
++                if frame_data is None:
++                    return
++                self.data_exporter.add_frame(frame_data)
++            except Exception as e:  # surfaced on the main loop
++                self._writer_error = e
++            finally:
++                self._write_queue.task_done()
++
++    def _flush_writes(self):
++        """Block until every queued frame has been handed to the exporter."""
++        self._write_queue.join()
++        if self._writer_error is not None:
++            err, self._writer_error = self._writer_error, None
++            raise err
++
++    def _report_episode_rows(self):
++        if self._episode_rows + self._episode_skipped_rows == 0:
++            return
++        self._print_and_say(
++            f"episode rows: {self._episode_rows} written, "
++            f"{self._episode_stale_rows} arrived with no new state/action"
++            + (f" ({self._episode_skipped_rows} skipped)" if self.skip_stale_rows else " (written as duplicates)"),
++            say=False,
++        )
++        self._episode_rows = self._episode_stale_rows = self._episode_skipped_rows = 0
++
+     @property
+     def current_episode_index(self):
+         return self.data_exporter.episode_buffer["episode_index"]
+@@ -129,6 +180,7 @@ class Gr00tDataCollector:
+         if key == "c":
+             self._episode_state.change_state()
+             if self._episode_state.get_state() == self._episode_state.RECORDING:
++                self._episode_rows = self._episode_stale_rows = self._episode_skipped_rows = 0
+                 self._print_and_say(f"Started recording {self.current_episode_index}")
+             elif self._episode_state.get_state() == self._episode_state.NEED_TO_SAVE:
+                 self._print_and_say("Stopping recording, preparing to save")
+@@ -136,6 +188,8 @@ class Gr00tDataCollector:
+                 self._print_and_say("Saved episode and back to idle state")
+         elif key == "x":
+             if self._episode_state.get_state() == self._episode_state.RECORDING:
++                self._flush_writes()
++                self._report_episode_rows()
+                 self.data_exporter.save_episode_as_discarded()
+                 self._episode_state.reset_state()
+                 self._print_and_say("Discarded episode")
+@@ -153,6 +207,11 @@ class Gr00tDataCollector:
+             return False
+ 
+         if self._episode_state.get_state() == self._episode_state.RECORDING:
++            if not self._proprio_is_fresh:
++                self._episode_stale_rows += 1
++                if self.skip_stale_rows:
++                    self._episode_skipped_rows += 1
++                    return True
+ 
+             # Calculate max time delta between images and proprio
+             max_time_delta = 0
+@@ -181,6 +240,25 @@ class Gr00tDataCollector:
+                 "teleop.base_height_command": np.array(
+                     [self.latest_proprio_msg["base_height_command"]], dtype=np.float64
+                 ),
++                # get_dataset_features declares these unconditionally, but this
++                # frame builder never filled them in (fork drift) -> lerobot's
++                # validate_frame rejected every frame with "Missing features".
++                # The control loop publishes them as floating_base_pose/_vel.
++                "observation.base_pose": np.asarray(
++                    self.latest_proprio_msg.get("floating_base_pose", np.zeros(7)),
++                    dtype=np.float64,
++                ).reshape(-1)[:7],
++                "observation.base_vel": np.asarray(
++                    self.latest_proprio_msg.get("floating_base_vel", np.zeros(6)),
++                    dtype=np.float64,
++                ).reshape(-1)[:6],
++                # Commanded torso rpy, published by the control loop alongside
++                # navigate_command. .get() keeps this tolerant of a control loop
++                # running an older build that does not publish the key yet.
++                "observation.torso_rpy_command": np.asarray(
++                    self.latest_proprio_msg.get("torso_rpy_command", np.zeros(3)),
++                    dtype=np.float64,
++                ).reshape(-1)[:3],
+             }
+ 
+             # Add images based on dataset features
+@@ -197,13 +275,20 @@ class Gr00tDataCollector:
+                         )
+                     frame_data[feature_name] = images[image_key]
+ 
+-            self.data_exporter.add_frame(frame_data)
++            # Hand the row to the writer thread; the main loop does not block on
++            # the deep copy / validation / video-writer work.
++            if self._writer_error is not None:
++                self._flush_writes()
++            self._write_queue.put(frame_data)
++            self._episode_rows += 1
+ 
+         t_end = time.monotonic()
+         if t_end - t_start > (1 / self.frequency):
+             print(f"DataExporter Missed: {t_end - t_start} sec")
+ 
+         if self._episode_state.get_state() == self._episode_state.NEED_TO_SAVE:
++            self._flush_writes()
++            self._report_episode_rows()
+             self.data_exporter.save_episode()
+             self.timing_threshold_monitor.reset()
+             self._print_and_say("Finished saving episode")
+@@ -215,6 +300,8 @@ class Gr00tDataCollector:
+         try:
+             self._print_and_say("saving episode done")
+             # save on going episode if any
++            self._flush_writes()
++            self._report_episode_rows()
+             buffer_size = self.data_exporter.episode_buffer.get("size", 0)
+             if buffer_size > 0:
+                 self.data_exporter.save_episode()
+@@ -234,6 +321,7 @@ class Gr00tDataCollector:
+                     # 1. poll proprio msg
+                     with self.telemetry.timer("poll_state"):
+                         msg = self._state_subscriber.get_msg()
++                        self._proprio_is_fresh = msg is not None
+                         if msg is not None:
+                             self.latest_proprio_msg = msg
+ 
+@@ -326,6 +414,7 @@ def main(config: DataExporterConfig):
+         camera_host=config.camera_host,
+         camera_port=config.camera_port,
+         text_to_speech=text_to_speech,
++        skip_stale_rows=config.skip_stale_rows,
+     )
+     data_collector.run()
+ 
+diff --git a/control/policy/g1_gear_wbc_policy.py b/control/policy/g1_gear_wbc_policy.py
+index 42a6ebf..4d4d18b 100644
+--- a/control/policy/g1_gear_wbc_policy.py
++++ b/control/policy/g1_gear_wbc_policy.py
+@@ -52,6 +52,12 @@ class G1GearWbcPolicy(Policy):
+         self.pitch_cmd = self.config["rpy_cmd"][1]
+         self.yaw_cmd = self.config["rpy_cmd"][2]
+         self.target_yaw_cmd = 0
++        # The streamer's target_yaw is an integrator that is never reset, so its value at
++        # the start of an episode is whatever earlier turning left on it. This offset
++        # re-anchors the dial to the robot's actual heading whenever data collection is
++        # toggled ("c" / PICO A), so every episode starts with zero yaw error.
++        self.yaw_dial_offset = 0.0
++        self._rearm_yaw_dial = True
+         self.gait_indices = torch.zeros((1), dtype=torch.float32)
+         # self.control_dt = 1.0 / 50.0  # Control frequency at 50Hz
+ 
+@@ -77,6 +83,8 @@ class G1GearWbcPolicy(Policy):
+         self.pitch_cmd = self.config["rpy_cmd"][1]
+         self.yaw_cmd = self.config["rpy_cmd"][2]
+         self.target_yaw_cmd = 0
++        self.yaw_dial_offset = 0.0
++        self._rearm_yaw_dial = True
+         # Gait state
+         self.gait_indices = torch.zeros((1), dtype=torch.float32)
+ 
+@@ -248,7 +256,7 @@ class G1GearWbcPolicy(Policy):
+         if interpolated_navigate_cmd is not None and self.use_teleop_policy_cmd:
+             self.cmd[0:2] = interpolated_navigate_cmd[0:2]  # vx, vy unchanged
+             vyaw_flag = interpolated_navigate_cmd[2]  # Turning flag (raw controller input)
+-            target_yaw = interpolated_navigate_cmd[3]  # Integrated target yaw
++            raw_target_yaw = interpolated_navigate_cmd[3]  # Streamer's integrated dial (never reset)
+ 
+             # Extract current yaw from base quaternion using scipy
+             quat_raw = self.observation["floating_base_pose"][3:7]
+@@ -256,6 +264,20 @@ class G1GearWbcPolicy(Policy):
+             rot = R.from_quat(quat)
+             current_yaw = rot.as_euler("xyz")[2]  # Extract yaw (Z-axis rotation)
+ 
++            if self._rearm_yaw_dial:
++                # Re-anchor: effective dial == robot heading right now, so the stale
++                # integrator value cannot pull the robot toward an old heading.
++                self.yaw_dial_offset = float(
++                    np.arctan2(np.sin(current_yaw - raw_target_yaw), np.cos(current_yaw - raw_target_yaw))
++                )
++                self._rearm_yaw_dial = False
++            target_yaw = float(
++                np.arctan2(
++                    np.sin(raw_target_yaw + self.yaw_dial_offset),
++                    np.cos(raw_target_yaw + self.yaw_dial_offset),
++                )
++            )
++
+             # Compute yaw error with wrap-around
+             yaw_error = np.arctan2(np.sin(target_yaw - current_yaw), np.cos(target_yaw - current_yaw))
+ 
+@@ -324,7 +346,11 @@ class G1GearWbcPolicy(Policy):
+         }
+ 
+     def handle_keyboard_button(self, key):
+-        if key == "]":
++        if key == "c":
++            # Data collection toggled (keyboard "c" or PICO A): re-anchor the yaw dial
++            # to the robot's current heading on the next control tick.
++            self._rearm_yaw_dial = True
++        elif key == "]":
+             self.use_policy_action = True
+         elif key == "o":
+             self.use_policy_action = False
+diff --git a/control/utils/ros_utils.py b/control/utils/ros_utils.py
+index f24890f..415dba5 100644
+--- a/control/utils/ros_utils.py
++++ b/control/utils/ros_utils.py
+@@ -1,3 +1,4 @@
++import array
+ import base64
+ import signal
+ import threading
+@@ -9,7 +10,7 @@ import rclpy
+ from rclpy.executors import SingleThreadedExecutor
+ from rclpy.node import Node
+ from sensor_msgs.msg import Image
+-from std_msgs.msg import ByteMultiArray
++from std_msgs.msg import UInt8MultiArray
+ from std_srvs.srv import Trigger
+ 
+ _signal_registered = False
+@@ -88,13 +89,17 @@ class ROSMsgPublisher:
+     def __init__(self, topic_name: str):
+         ros_manager = ROSManager()
+         self.node = ros_manager.node
+-        self.publisher = self.node.create_publisher(ByteMultiArray, topic_name, 1)
++        self.publisher = self.node.create_publisher(UInt8MultiArray, topic_name, 1)
+ 
+     def publish(self, msg: dict):
++        # One uint8 array per message. The previous ByteMultiArray encoding built one
++        # Python bytes object per payload byte (thousands per message at 50 Hz), and
++        # rclpy converted each of them individually on both the publishing and the
++        # receiving thread -- that per-byte work is what starved the subscriber's
++        # spin thread and produced duplicate rows in the recordings.
+         payload = msgpack.packb(msg, default=mnp.encode)
+-        payload = tuple(bytes([a]) for a in payload)
+-        msg = ByteMultiArray()
+-        msg.data = payload
++        msg = UInt8MultiArray()
++        msg.data = array.array("B", payload)
+         self.publisher.publish(msg)
+ 
+ 
+@@ -107,19 +112,23 @@ class ROSMsgSubscriber:
+         ros_manager = ROSManager()
+         self.node = ros_manager.node
+         self._msg = None
++        self.seq = 0  # number of messages delivered to the shelf so far
+         self.subscription = self.node.create_subscription(
+-            ByteMultiArray, topic_name, self._callback, 1
++            UInt8MultiArray, topic_name, self._callback, 1
+         )
+ 
+-    def _callback(self, msg: ByteMultiArray):
++    def _callback(self, msg: UInt8MultiArray):
++        # The shelf: keeps only the newest message. Runs on the spin thread.
+         self._msg = msg
++        self.seq += 1
+ 
+     def get_msg(self) -> Optional[dict]:
++        """Take the newest message off the shelf (None if nothing arrived since the last take)."""
+         msg = self._msg
+         if msg is None:
+             return None
+         self._msg = None
+-        return msgpack.unpackb(bytes([ab for a in msg.data for ab in a]), object_hook=mnp.decode)
++        return msgpack.unpackb(bytes(msg.data), object_hook=mnp.decode)
+ 
+ 
+ class ROSImgMsgSubscriber:
+diff --git a/control/utils/sync_sim_utils.py b/control/utils/sync_sim_utils.py
+index ab02db5..4aed396 100644
+--- a/control/utils/sync_sim_utils.py
++++ b/control/utils/sync_sim_utils.py
+@@ -417,6 +417,9 @@ def generate_frame(
+         ).reshape(
+             1,
+         ),
++        "observation.torso_rpy_command": np.array(
++            wbc_action["torso_rpy_cmd"], dtype=np.float64
++        ).reshape(3),
+         "observation.sim.seed": np.array([seed], dtype=np.int32),
+         "observation.sim.mujoco_state_len": np.array([mujoco_state_len], dtype=np.int32),
+         "observation.sim.max_mujoco_state_len": np.array([max_mujoco_state_len], dtype=np.int32),
+diff --git a/data/utils.py b/data/utils.py
+index 39cbe0e..10f56bc 100644
+--- a/data/utils.py
++++ b/data/utils.py
+@@ -75,6 +75,11 @@ def get_modality_config(robot_model: RobotModel, add_stereo_camera: bool = False
+                 "original_key": "teleop.base_height_command",
+             },
+             "navigate_command": {"start": 0, "end": 4, "original_key": "teleop.navigate_command"},
++            "torso_rpy_command": {
++                "start": 0,
++                "end": 3,
++                "original_key": "observation.torso_rpy_command",
++            },
+         },
+         "video": {"ego_view": {"original_key": "observation.images.ego_view"}},
+         "annotation": {"human.task_description": {"original_key": "task_index"}},
+@@ -155,11 +160,11 @@ def get_dataset_features(robot_model: RobotModel, add_stereo_camera: bool = Fals
+             "shape": (6,),
+             "names": ["lin_vel_x", "lin_vel_y", "lin_vel_z", "ang_vel_x", "ang_vel_y", "ang_vel_z"],
+         },
+-        # "observation.torso_rpy_command": {
+-        #     "dtype": "float64",
+-        #     "shape": (3,),
+-        #     "names": ["roll", "pitch", "yaw"],
+-        # },
++        "observation.torso_rpy_command": {
++            "dtype": "float64",
++            "shape": (3,),
++            "names": ["roll", "pitch", "yaw"],
++        },
+     }
+     if add_stereo_camera:
+         dataset_features.update(
+diff --git a/scripts/deploy_g1.py b/scripts/deploy_g1.py
+index b2fa6be..2dac31f 100644
+--- a/scripts/deploy_g1.py
++++ b/scripts/deploy_g1.py
+@@ -209,6 +209,11 @@ class G1Deployment:
+             "None" if self.config.sim_in_single_process else self.config.simulator,
+             "--control_frequency",
+             str(self.config.control_frequency),
++            # Forward the interpolator rate limit: without this the control loop
++            # falls back to its own default (1000 rad/s), which exceeds the
++            # joint safety limits (6 arm / 50 hand rad/s) on any fast target.
++            "--upper_body_joint_speed",
++            str(self.config.upper_body_joint_speed),
+         ]
+ 
+         # Handle boolean flag using presence/absence pattern
+@@ -322,6 +327,11 @@ class G1Deployment:
+             self.config.camera_host,
+             "--camera_port",
+             str(self.config.camera_port),
++            # Our ego camera is a RealSense publishing only 'ego_view'. The
++            # exporter's add_stereo_camera default (True) additionally demands
++            # OAK-style ego_view_left_mono/right_mono channels and crashes with
++            # "Required image 'ego_view_left_mono' ... not found" otherwise.
++            "--no-add_stereo_camera",
+         ]
+ 
+         if not self._run_in_tmux("data", cmd, pane_index=1):
+diff --git a/control/sensor/realsense.py b/control/sensor/realsense.py
+new file mode 100644
+index 0000000..c28022a
+--- /dev/null
++++ b/control/sensor/realsense.py
+@@ -0,0 +1,134 @@
++"""RealSense camera sensor for the composed camera server.
++
++composed_camera.py lazily imports ``RealSenseSensor`` from this module, but the
++file was never included in the SONIC fork (upstream GR00T-WholeBodyControl lacks
++it as well), so ``--ego-view-camera realsense`` crashed with ModuleNotFoundError.
++
++Minimal implementation matching the OAKSensor contract used by
++ComposedCameraSensor's camera threads:
++
++    read() -> {"timestamps": {mount_position: unix_seconds},
++               "images":     {mount_position: HxWx3 RGB uint8}}   (or None)
++    observation_space() -> gym.spaces.Dict
++    close()
++
++Frame size defaults to 640x360 to match RS_VIEW_CAMERA_HEIGHT/WIDTH in
++data/constants.py (the shape the data exporter declares); that is a native
++D4xx color mode. Falls back to 640x480 + resize if the mode is unavailable.
++"""
++import time
++from typing import Any, Dict, Optional
++
++import gymnasium as gym
++import numpy as np
++
++from decoupled_wbc.control.base.sensor import Sensor
++
++try:
++    import pyrealsense2 as rs
++except ImportError as exc:  # pragma: no cover
++    raise ImportError(
++        "pyrealsense2 is required for RealSenseSensor (pip install pyrealsense2)"
++    ) from exc
++
++
++class RealSenseSensor(Sensor):
++    WIDTH = 640
++    HEIGHT = 360
++    FPS = 30
++    FALLBACK_WIDTH = 640
++    FALLBACK_HEIGHT = 480
++
++    def __init__(self, mount_position: str = "ego_view", device_id: Optional[str] = None):
++        self.mount_position = mount_position
++        self._resize = None  # (w, h) to resize to when using the fallback mode
++        self._started = False
++
++        self.pipeline = rs.pipeline()
++        config = rs.config()
++        if device_id:
++            config.enable_device(device_id)
++
++        try:
++            config.enable_stream(
++                rs.stream.color, self.WIDTH, self.HEIGHT, rs.format.rgb8, self.FPS
++            )
++            self.profile = self.pipeline.start(config)
++        except RuntimeError:
++            # 640x360 not offered by this device/firmware: use a common mode and resize
++            config = rs.config()
++            if device_id:
++                config.enable_device(device_id)
++            config.enable_stream(
++                rs.stream.color,
++                self.FALLBACK_WIDTH,
++                self.FALLBACK_HEIGHT,
++                rs.format.rgb8,
++                self.FPS,
++            )
++            self.profile = self.pipeline.start(config)
++            self._resize = (self.WIDTH, self.HEIGHT)
++
++        self._started = True
++        dev = self.profile.get_device()
++        name = dev.get_info(rs.camera_info.name)
++        serial = dev.get_info(rs.camera_info.serial_number)
++        mode = f"{self.FALLBACK_WIDTH}x{self.FALLBACK_HEIGHT}->" if self._resize else ""
++        print(
++            f"[RealSense] {name} (S/N {serial}) streaming "
++            f"{mode}{self.WIDTH}x{self.HEIGHT}@{self.FPS} for '{mount_position}'"
++        )
++
++    def read(self) -> Optional[Dict[str, Any]]:
++        try:
++            frames = self.pipeline.wait_for_frames(timeout_ms=1000)
++        except RuntimeError as e:
++            print(f"[ERROR] RealSense read failed for {self.mount_position}: {e}")
++            return None
++
++        color = frames.get_color_frame()
++        if not color:
++            return None
++
++        image = np.asanyarray(color.get_data())  # already RGB (rs.format.rgb8)
++        if self._resize is not None:
++            import cv2
++
++            image = cv2.resize(image, self._resize, interpolation=cv2.INTER_AREA)
++
++        # RealSense timestamps are milliseconds; in the global/system clock
++        # domain they are epoch-based. If this one clearly is not (hardware
++        # clock domain), fall back to wall time so the exporter's image/state
++        # delta check stays meaningful.
++        ts = color.get_timestamp() / 1000.0
++        now = time.time()
++        if abs(ts - now) > 60.0:
++            ts = now
++
++        return {
++            "timestamps": {self.mount_position: ts},
++            "images": {self.mount_position: image},
++        }
++
++    def observation_space(self) -> gym.Space:
++        return gym.spaces.Dict(
++            {
++                "color_image": gym.spaces.Box(
++                    low=0,
++                    high=255,
++                    shape=(self.HEIGHT, self.WIDTH, 3),
++                    dtype=np.uint8,
++                )
++            }
++        )
++
++    def close(self):
++        if self._started:
++            try:
++                self.pipeline.stop()
++            except RuntimeError:
++                pass
++            self._started = False
++
++    def __del__(self):
++        self.close()

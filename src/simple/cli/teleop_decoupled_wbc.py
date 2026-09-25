@@ -49,6 +49,39 @@ class RecordingState(enum.Enum):
 LIFT_THRESHOLD = 0.10  # metres above initial target z to end episode
 
 
+class _ManualEpisodeControl:
+    """Edge-detected PICO combos for manual episode control.
+
+    left_menu + A  -> start recording, or save the episode already recording
+    left_menu + X  -> abandon the episode already recording
+
+    Bare A/X are left alone: A is the streamer's own toggle_data_collection and
+    X drives base height, so both combos are gated on left_menu to disambiguate.
+    Manual control runs *alongside* the automatic start/stop, it does not replace
+    it -- whichever fires first wins.
+    """
+
+    def __init__(self, agent):
+        self._xr = getattr(getattr(agent, "_pico_streamer", None), "xr_client", None)
+        self._save_last = False
+        self._abort_last = False
+
+    def poll(self) -> tuple[bool, bool]:
+        """Return (save_pressed, abort_pressed) as one-shot edges."""
+        if self._xr is None:
+            return False, False
+        try:
+            menu = bool(self._xr.get_button_state_by_name("left_menu_button"))
+            save_now = menu and bool(self._xr.get_button_state_by_name("A"))
+            abort_now = menu and bool(self._xr.get_button_state_by_name("X"))
+        except Exception:
+            return False, False
+        save_edge = save_now and not self._save_last
+        abort_edge = abort_now and not self._abort_last
+        self._save_last, self._abort_last = save_now, abort_now
+        return save_edge, abort_edge
+
+
 def _save_episode_env_config(exporter, task, episode_index: int):
     """Write the task state_dict as environment_config into episodes.jsonl."""
     from simple.utils import NumpyArrayEncoder
@@ -81,13 +114,6 @@ def _init_exporter(
     validate_existing_ego_view_feature_shape(save_dir, ego_view_shape)
     features["observation.state"]["names"] = joint_names # state joint names
     modality_config = get_modality_config(robot_model)
-
-    # # Add torso RPY command feature (3D: roll, pitch, yaw)
-    # features["observation.torso_rpy_command"] = {
-    #     "dtype": "float64",
-    #     "shape": (3,),
-    #     "names": ["roll", "pitch", "yaw"],
-    # }
 
     # Add object poses feature: each object has 7D (pos xyz + quat wxyz)
     num_objects = len(obj_names)
@@ -125,11 +151,6 @@ def _build_frame(agent, obj_names: list[str], observation, privileged_info, acti
         right_hand_actuated_joint_values=action["right_hand_q"],
     )
 
-    # # Extract torso RPY command directly from waist joints (waist_yaw, waist_roll, waist_pitch)
-    # # These three joints fully determine the torso orientation relative to pelvis
-    # waist_indices = rm.get_joint_group_indices("waist")
-    # torso_rpy_command = action_q[waist_indices]
-
     mjcf_to_natural_order = lambda q: np.concatenate([q[:3], q[5:7], q[3:5]])
     proprio_q = rm.get_configuration_from_actuated_joints(
         body_actuated_joint_values=proprio["body_q"],
@@ -163,6 +184,13 @@ def _build_frame(agent, obj_names: list[str], observation, privileged_info, acti
         ),
         "observation.base_vel": np.asarray(
             proprio["floating_base_vel"],
+            dtype=np.float64
+        ),
+        # Commanded torso orientation fed to the lower-body policy, synced with
+        # navigate_cmd/base_height_command. Not derivable from action_q: its
+        # waist slots are overridden with target_waist (IK input) just above.
+        "observation.torso_rpy_command": np.asarray(
+            action["torso_rpy_cmd"],
             dtype=np.float64
         ),
     }
@@ -228,6 +256,7 @@ def main(
 
     # --- Recording setup ---
     exporter = None
+    manual_ctl = None
     rec_state = RecordingState.WAITING_FOR_LANDING
     initial_target_z = None
     episodes_saved = 0
@@ -281,6 +310,7 @@ def main(
         run_save_dir = (
             f"{os.path.abspath(save_dir)}/{sonic_env.spec.id}/level-{dr_level}" #_{timestamp}
         )
+        manual_ctl = _ManualEpisodeControl(agent)
         exporter = _init_exporter(
             run_save_dir,
             task.instruction, 
@@ -359,6 +389,27 @@ def main(
             with telemetry.timer("recode_data"):
                 # --- Recording logic (runs at 50Hz) ---
                 if exporter is not None:
+                    # Manual overrides sit alongside the automatic transitions
+                    # below: left_menu+A starts/saves, left_menu+X abandons.
+                    manual_save, manual_abort = (
+                        manual_ctl.poll() if manual_ctl is not None else (False, False)
+                    )
+
+                    if manual_abort and rec_state == RecordingState.RECORDING:
+                        if step_pbar is not None:
+                            step_pbar.close()
+                            step_pbar = None
+                        exporter.skip_and_start_new_episode()
+                        rec_state = RecordingState.WAITING_FOR_LANDING
+                        initial_target_z = None
+                        print("[Record] Episode abandoned (left_menu+X)")
+                        manual_save = False
+
+                    elif manual_save and rec_state == RecordingState.RECORDING:
+                        # second press: close out and save this episode
+                        rec_state = RecordingState.EPISODE_DONE
+                        print("[Record] Manual save requested (left_menu+A)")
+
                     if rec_state == RecordingState.WAITING_FOR_LANDING:
                         # Check if robot has landed (elastic band done) AND
                         # teleop policy is active (operator has re-aligned and
@@ -368,14 +419,25 @@ def main(
                             and (robot.elastic_band is None or not robot.elastic_band.enable)
                         )
                         teleop_active = agent._teleop_policy.is_active
-                        if elastic_done and teleop_active and robot.stabilized and agent._cached_target_q is not None:
+                        auto_ready = (
+                            elastic_done
+                            and teleop_active
+                            and robot.stabilized
+                            and agent._cached_target_q is not None
+                        )
+                        # manual start only needs a usable WBC target
+                        manual_ready = manual_save and agent._cached_target_q is not None
+                        if auto_ready or manual_ready:
                             rec_state = RecordingState.RECORDING
                             initial_target_z = None
                             sim_cnt = 0  # Reset sim counter for new episode
                             # Create progress bar for this recording episode
                             step_pbar = tqdm(desc=f"Recording episode {episodes_saved + 1}", unit="frame",
                                             leave=False, position=1, bar_format="{desc} {n_fmt} {rate_fmt}")
-                            print("[Record] Teleop active, starting episode recording")
+                            print(
+                                "[Record] Manual start (left_menu+A)" if manual_ready and not auto_ready
+                                else "[Record] Teleop active, starting episode recording"
+                            )
 
                     if rec_state == RecordingState.RECORDING:
                         frame = _build_frame(agent, obj_names, **data_frame)
