@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import subprocess
 import json
 import math
@@ -200,7 +201,7 @@ def stats_block(arr):
 
 # default history command for the initial state
 initial_command = np.array([0, 0, 0, 0, 0, 0, 0.75, 0.75, 0.75], dtype=np.float32) 
-default_fps=50
+default_fps=None  # None: keep the source dataset's fps (real recordings are 30 Hz since the 2026-09-17 relabel)
 
 
 def write_downsampled_video(src_video: Path, dst_video: Path, skip: int, downsample: int, fps: int):
@@ -259,6 +260,12 @@ def main():
     parser.add_argument("--fps", type=int, default=default_fps)
     parser.add_argument("--video-key", default="observation.images.ego_view")
     parser.add_argument("--chunks-size", type=int, default=1000)
+    parser.add_argument("--skip-discarded", action="store_true",
+                        help="skip episodes listed in the source info.json 'discarded_episode_indices' (the real-rig exporter's QC list)")
+    parser.add_argument("--task", default=None, help="override the task string for every episode")
+    parser.add_argument("--episodes", default=None, help="comma-separated source episode indices to export (default: all)")
+    parser.add_argument("--exclude", default=None, help="comma-separated <session_dir_name>:<source_episode_index> pairs to leave out")
+    parser.add_argument("--keep-source-index", action="store_true", help="name exported episodes by their source index instead of renumbering from 0")
     args = parser.parse_args()
 
     # last_episode_idx = 0
@@ -287,19 +294,23 @@ def main():
 
     sim_info = None
 
-    all_sim_roots = sorted(Path(p).resolve() for p in glob.glob(args.sim_root))
+    all_sim_roots = [Path(p).resolve() for p in sorted(glob.glob(args.sim_root))]  # sort by the given (staged) path, not the resolved one
     for sim_root in all_sim_roots:
         if episode_idx >= args.total_episodes:
             print(f"Reached total_episodes={args.total_episodes}, stopping further processing.")
             break
 
         print(f"Merging data: {sim_root}")
+        src_session_name = Path(os.path.realpath(sim_root)).name  # staging symlinks may carry an order prefix; provenance uses the real folder name
 
         sim_info = json.loads((sim_root / "meta" / "info.json").read_text())
         sim_tasks = load_jsonl(sim_root / "meta" / "tasks.jsonl")
         episodes_info = load_jsonl(sim_root / "meta" / "episodes.jsonl")
 
         original_fps = float(sim_info["fps"])
+        if args.fps is None:
+            args.fps = int(round(original_fps)) // max(int(args.downsample), 1)
+            print(f"fps not given: using the source fps {original_fps:g} / downsample {args.downsample} -> {args.fps}")
         if args.fps / original_fps != args.downsample:
             print(f"Warning: The specified fps {args.fps} is not consistent with the original fps {original_fps} and downsample factor {args.downsample}." 
                   f"The timestamps will be computed based on the specified fps.")
@@ -318,8 +329,14 @@ def main():
 
         for t in sim_tasks:
             task_index = t["task_index"]
-            task = t["task"]
+            task = args.task if args.task else t["task"]
             curr_task_index_to_new_task_index[task_index] = merge_task(task, all_tasks)
+
+        discarded = set(sim_info.get("discarded_episode_indices") or []) if args.skip_discarded else set()
+        only_eps = set(int(x) for x in args.episodes.split(",")) if args.episodes else None
+        excl = set((t.rsplit(":", 1)[0], int(t.rsplit(":", 1)[1])) for t in args.exclude.split(",")) if args.exclude else set()
+        if args.skip_discarded:
+            print(f"Skipping {len(discarded)} discarded episodes: {sorted(discarded)}")
 
         data_files = sorted((sim_root / "data").glob("chunk-*/episode_*.parquet"))
         for data_path in tqdm(data_files): # for each episode
@@ -328,6 +345,14 @@ def main():
                 break
 
             ep_index = int(data_path.stem.split("_")[-1]) 
+            if ep_index in discarded:
+                continue
+            if only_eps is not None and ep_index not in only_eps:
+                continue
+            if (src_session_name, ep_index) in excl:
+                continue
+            if args.keep_source_index:
+                episode_idx = ep_index
             chunk_id = episode_idx // args.chunks_size
 
             table = pq.read_table(data_path)
@@ -428,7 +453,8 @@ def main():
                 "dataset_to_index": total_frames - 1,
                 "robot_type": "g1",
                 "instruction": all_tasks[task_index[0]],
-                "environment_config": episodes_info[ep_index].get("environment_config")
+                "environment_config": episodes_info[ep_index].get("environment_config"),
+                "source": {"session": src_session_name, "episode_index": ep_index},
             })
 
             ep_stats = {

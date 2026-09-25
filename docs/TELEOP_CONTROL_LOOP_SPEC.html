@@ -1,0 +1,597 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G1 Teleop Control Loop Spec</title>
+<meta name="description" content="Control loop, thresholds and data conventions of the ChipCanToTrash teleop recordings, for the G1 deployment stack.">
+<style>
+:root{color-scheme:light only;--bg:#ffffff;--fg:#1b1f24;--muted:#57606a;--line:#d0d7de;--code:#f3f5f7;--accent:#0b5cad}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
+main{max-width:1080px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:1.6em;margin:0 0 10px} h2{font-size:1.2em;margin:34px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line);color:var(--accent)}
+p,li{max-width:100ch} code{background:var(--code);padding:1px 4px;border-radius:4px;font-size:0.92em}
+pre{background:var(--code);padding:12px;border-radius:6px;overflow-x:auto;font-size:0.88em;line-height:1.4} pre code{background:none;padding:0}
+table{border-collapse:collapse;margin:10px 0 16px;font-size:0.92em;display:block;overflow-x:auto;max-width:100%}
+th,td{border:1px solid var(--line);padding:5px 9px;vertical-align:top;text-align:left} th{background:#f6f8fa}
+a{color:var(--accent)} .meta{color:var(--muted);font-size:0.9em;margin-bottom:18px}
+</style></head><body><main>
+<div class="meta">Source: <code>SIMPLE/docs/TELEOP_CONTROL_LOOP_SPEC.md</code> (rendered copy). Generated 2026-09-17.</div>
+<h1 id="g1-teleop-control-loop-spec-chipcantotrash-recordings-for-the-deployment-stack">G1 teleop control loop spec — ChipCanToTrash recordings (for the deployment stack)</h1>
+<p>Written 2026-09-17 for the agent that maintains <code>robot_orchard_deploy/holobrain_g1_deploy</code>. It describes the
+control loop, every threshold and every convention that produced session <code>2026-09-17-02-25-56-G1-sim</code>
+(102 episodes of <em>"pick up the chip can, move towards the trash bin, and place the chip can in the trash bin"</em>,
+exported as <code>data/real_recordings/psi0/ChipCanToTrash_0225</code>, 99 episodes, and <code>ChipCanToTrash_0225_keep97</code>).
+Every number is read from the code or measured on that session. Section 10 is the list of things the deployment
+must match or knowingly change.</p>
+<p>Code: <code>SIMPLE/third_party/decoupled_wbc</code> = upstream <code>5b304e4</code> + <code>SIMPLE/third_party/patches/decoupled_wbc_local.patch</code>
+(all local changes live in the patch; <code>git -C third_party/decoupled_wbc apply ../patches/decoupled_wbc_local.patch</code>).
+Paths below are relative to <code>third_party/decoupled_wbc</code> unless they start with <code>SIMPLE/</code>.</p>
+<p>Launch used for the session (runbook <code>SIMPLE/REAL_ROBOT_RUNBOOK.md</code>):</p>
+<pre><code class="language-bash">python scripts/deploy_g1.py --interface real --robot-ip 192.168.123.164 \
+  --body-control-device pico --hand-control-device pico \
+  --upper-body-joint-speed 5 \
+  --camera-host 192.168.123.164 --camera-port 5555 \
+  --data-collection-frequency 30 --root-output-dir /home/Horizon/outputs \
+  --home-randomize --home-random-arms
+# defaults in effect: --init-pose elbows_raised, --enable-gravity-compensation (arms, 10 Nm clip),
+# --home-after-save, --control-frequency 50, teleop 20 Hz, no height randomization (0.74 m)
+</code></pre>
+<h2 id="1-processes-and-rates">1. Processes and rates</h2>
+<table>
+<thead>
+<tr>
+<th>Process</th>
+<th>Rate</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Control loop <code>control/main/teleop/run_g1_control_loop.py</code></td>
+<td><strong>50 Hz</strong></td>
+<td>reads the robot state over DDS, runs the decoupled WBC (upper body = interpolated teleop targets, lower body = RL policy), sends <strong>position targets + feed-forward torque</strong> for the 29 body motors and position targets for the 14 Dex3 hand joints, publishes state + action for the recorder</td>
+</tr>
+<tr>
+<td>Lower-body RL policy <code>control/policy/g1_gear_wbc_policy.py</code> (inside the control loop)</td>
+<td>50 Hz</td>
+<td>GR00T-WholeBodyControl <code>Balance.onnx</code> / <code>Walk.onnx</code> (policy dt 5 ms × decimation 4 = 20 ms); 15 outputs = 12 leg + 3 waist joint targets = default + 0.25 × action; observation 516 = 76 × 6 history; command scale [2, 2, 0.5] on [vx, vy, vyaw]; gait period 0.9 s. <strong>Walk network when ‖[vx, vy, turn flag]‖ ≥ 0.1, Balance otherwise</strong></td>
+</tr>
+<tr>
+<td>Teleop policy <code>control/main/teleop/run_teleop_policy_loop.py</code></td>
+<td><strong>20 Hz</strong></td>
+<td>polls the Pico (XRoboToolkit), retargeting IK → 14 arm + 14 hand targets, navigation / height commands, park–release state machine; publishes the goal to the control loop</td>
+</tr>
+<tr>
+<td>Recorder <code>control/main/teleop/run_g1_data_exporter.py</code></td>
+<td><strong>30 Hz, camera-paced</strong></td>
+<td>one row per D455 frame (blocking ZMQ receive on the robot's 30 fps stream); each row = the newest 50 Hz state/action message + that frame</td>
+</tr>
+<tr>
+<td>Camera server (on the robot)</td>
+<td>30 fps</td>
+<td>D455 colour, 640 × 360, JPEG over ZMQ</td>
+</tr>
+<tr>
+<td>Motor PD (robot side)</td>
+<td>per 50 Hz command</td>
+<td><code>q_target</code>, <code>dq_target = 0</code>, <code>tau_ff</code>, kp / kd of section 2</td>
+</tr>
+</tbody>
+</table>
+<p>Consequences: <strong>one recorded row = 33.3 ms</strong>; a 24-row action chunk is 0.8 s. The upper-body targets are
+refreshed every 50 ms (20 Hz) and interpolated to 50 Hz, so consecutive rows differ by at most one teleop step.
+Datasets recorded before 2026-09-17 were labelled <code>fps = 50</code>; they were relabelled to 30 in place
+(<code>SIMPLE/scripts/relabel_fps30.py</code>, content unchanged), so every dataset now carries the true rate.</p>
+<h2 id="2-motor-gains-every-command-actuator-order">2. Motor gains (every command; actuator order)</h2>
+<p><code>MOTOR_KP / MOTOR_KD</code> in <code>control/main/teleop/configs/g1_29dof_gear_wbc.yaml</code>. Deployment <code>ARM_GAINS=teleop-all</code>
+loads exactly these from the SIMPLE checkout (that is already the launcher default).</p>
+<table>
+<thead>
+<tr>
+<th>Motors</th>
+<th>kp</th>
+<th>kd</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hip pitch / roll / yaw (each leg)</td>
+<td>150 / 150 / 150</td>
+<td>2 / 2 / 2</td>
+</tr>
+<tr>
+<td>knee</td>
+<td>200</td>
+<td>4</td>
+</tr>
+<tr>
+<td>ankle pitch / roll</td>
+<td>40 / 40</td>
+<td>2 / 2</td>
+</tr>
+<tr>
+<td>waist yaw / roll / pitch</td>
+<td>250 / 250 / 250</td>
+<td>5 / 5 / 5</td>
+</tr>
+<tr>
+<td>shoulder pitch / roll / yaw (each arm)</td>
+<td>100 / 100 / 40</td>
+<td>5 / 5 / 2</td>
+</tr>
+<tr>
+<td>elbow</td>
+<td>40</td>
+<td>2</td>
+</tr>
+<tr>
+<td>wrist roll / pitch / yaw</td>
+<td>20 / 20 / 20</td>
+<td>2 / 2 / 2</td>
+</tr>
+</tbody>
+</table>
+<p>Hands: Dex3 position control through the hand SDK, no feed-forward torque.</p>
+<h2 id="3-init-home-pose-init-pose-elbows_raised-the-default-since-2026-09-16">3. Init / home pose (<code>--init-pose elbows_raised</code>, the default since 2026-09-16)</h2>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>14 arm joints</td>
+<td>0, except <strong>both elbows −0.66 rad</strong></td>
+</tr>
+<tr>
+<td>14 hand joints</td>
+<td>0 (open)</td>
+</tr>
+<tr>
+<td>base height command</td>
+<td><strong>0.74 m</strong></td>
+</tr>
+<tr>
+<td>torso roll / pitch / yaw command</td>
+<td>0 / 0 / 0</td>
+</tr>
+<tr>
+<td>navigation</td>
+<td>vx = vy = flag = 0, target yaw 0</td>
+</tr>
+</tbody>
+</table>
+<p>Legs and waist are owned by the balance policy (its reference joint offsets: hip pitch −0.1, knee 0.3, ankle pitch
+−0.2, others 0). JSON: <code>control/main/teleop/configs/init_pose_elbows_raised.json</code>; presets in
+<code>control/robot_model/instantiation/g1.py</code>. The shoulder-roll limit was widened to [0, 2.25] (L) / [−2.25, 0] (R) so
+roll 0 is inside the range. Spec page: <code>http://10.40.11.11:8899/g1_initial_pose_spec.html</code>.</p>
+<p>Measured on the session (row 0 of each episode, mean over 102 episodes):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>commanded (<code>action</code>)</th>
+<th>measured (<code>observation.state</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>left / right elbow</td>
+<td>−0.66 / −0.65</td>
+<td>−0.64 / −0.62</td>
+</tr>
+<tr>
+<td>all other arm joints</td>
+<td>0.00 ± 0.02</td>
+<td>0.00 ± 0.02</td>
+</tr>
+<tr>
+<td>std of the elbow command over episodes</td>
+<td>0.06 / 0.05 (home randomization, section 5)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The 0.02–0.03 rad elbow sag is what remains with the gravity feed-forward on; without it the sag was ~0.09 rad.</p>
+<h2 id="4-gravity-feed-forward-default-on-since-2026-09-16">4. Gravity feed-forward (default ON since 2026-09-16)</h2>
+<p><code>control/envs/g1/g1_env.py</code> + <code>control/envs/g1/utils/gravity_ff.py</code>: every command, in every phase (tracking,
+ramp home, parked), carries <code>tau_ff</code> = pinocchio generalized gravity g(q) of the <strong>14 arm joints, evaluated at the
+commanded pose, clipped to ±10 Nm per joint</strong>. Legs, waist, hands get 0. At the init pose the values per arm are
+shoulder pitch −3.07 Nm, elbow −2.82 Nm, wrist pitch −0.97 Nm (others ≈ 0). Flags:
+<code>--enable-gravity-compensation</code> / <code>--no-enable-gravity-compensation</code>, <code>--gravity-compensation-joints</code>,
+<code>--gravity-compensation-max-torque 10</code>.</p>
+<h2 id="5-episode-protocol-park-release-home-after-save-default-on">5. Episode protocol (park / release, <code>--home-after-save</code> default ON)</h2>
+<pre><code>left menu + right trigger  -&gt; activation: min-jerk ramp to the home pose over 6 s, per-joint speed ≤ 0.5 rad/s  [homing]
+                              held there; operator hands ignored, calibration origin re-snapped every tick      [parked]
+A                          -&gt; recording starts NOW: row 0 = the parked pose; 0.5 s min-jerk blend into
+                              live tracking                                                                     [release -&gt; tracking]
+A                          -&gt; episode saved; ramp back home (6 s)                                               [homing -&gt; parked]
+B                          -&gt; episode discarded; ramp back home
+left menu + left trigger   -&gt; toggles the lower-body policy action (must be on before walking)
+</code></pre>
+<ul>
+<li>The <strong>first 15 rows (0.5 s)</strong> of every episode are the blend from the parked pose into the operator's pose.</li>
+<li>Row 0 always has nav = [0, 0, 0, 0] and height 0.74 (verified on all 102 episodes).</li>
+<li><strong>Home randomization</strong> (<code>--home-randomize --home-random-arms</code>, ON for this session): every return home draws a
+  per-joint arm offset N(0, σ²) clipped to ±2.5 σ. σ per joint = spread of the first frame of Psi's real data
+  (<code>PSI_REAL_INIT_POSE_STD</code> in <code>control/policy/teleop_policy.py</code>):</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>joint</th>
+<th>σ left / right (rad)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>shoulder pitch</td>
+<td>0.047 / 0.055</td>
+</tr>
+<tr>
+<td>shoulder roll</td>
+<td>0.028 / 0.019</td>
+</tr>
+<tr>
+<td>shoulder yaw</td>
+<td>0.015 / 0.017</td>
+</tr>
+<tr>
+<td>elbow</td>
+<td>0.064 / 0.051</td>
+</tr>
+<tr>
+<td>wrist roll</td>
+<td>0.026 / 0.024</td>
+</tr>
+<tr>
+<td>wrist pitch</td>
+<td>0.024 / 0.020</td>
+</tr>
+<tr>
+<td>wrist yaw</td>
+<td>0.018 / 0.020</td>
+</tr>
+</tbody>
+</table>
+<p>Hands stay open. Height stays 0.74 (<code>--home-random-height</code> would draw 0.68–0.74 m; OFF here).
+  <code>--home-random-scale</code> multiplies σ, <code>--home-random-seed</code> makes the sequence repeatable.</p>
+<h2 id="6-upper-body-pico-joint-targets">6. Upper body: Pico → joint targets</h2>
+<ul>
+<li>Wrist targets = controller poses relative to the headset (calibrated at activation), retargeting IK
+  (<code>control/teleop/teleop_retargeting_ik.py</code>) → 14 arm joint targets. The <strong>waist is not teleoperated</strong>: the 3
+  waist joints are outputs of the RL policy, so the recorded waist columns are the policy's, not the operator's.</li>
+<li>The control loop interpolates the 20 Hz targets and <strong>rate-limits every upper-body joint to 5 rad/s</strong>
+  (<code>--upper-body-joint-speed 5</code>; the config default is 1000 = off, the flag is required).</li>
+<li>Safety monitor <code>control/envs/g1/utils/joint_safety.py</code>: arm joint velocity limit <strong>6 rad/s</strong>, finger joints
+  <strong>80 rad/s</strong> (raised from 50), safety margin 1.0 (position limits unshrunk, position violations are warnings
+  only). A velocity violation latches safe mode (kp = 0, tau = 0) and the stack must be restarted.</li>
+<li><strong>Hands</strong> (<code>control/teleop/solver/hand/g1_gripper_ik_solver.py</code>): controller buttons select one of three fixed
+  Dex3 target vectors; the joint vector order is [thumb_0, thumb_1, thumb_2, index_0, index_1, middle_0, middle_1].
+  Right hand = −(left hand). While the <strong>left menu button is held, both hands are forced open</strong>.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>gesture</th>
+<th>right-hand target</th>
+<th>left-hand target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>none</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>trigger only</strong> (used for the chip can)</td>
+<td>thumb −0.5 / −0.7 / −0.7, index +1.5 / +1.5, middle +0.6 / +1.5</td>
+<td>thumb_0 −0.5, thumb_1/2 +0.7, index −1.5 / −1.5, middle −0.6 / −1.5</td>
+</tr>
+<tr>
+<td>trigger + grip</td>
+<td>thumb 0 / −0.7 / −0.7, index +1.0 / +1.5, middle +1.0 / +1.5</td>
+<td>negated</td>
+</tr>
+<tr>
+<td>grip only</td>
+<td>thumb +0.5 / −0.7 / −0.7, index +0.6 / +1.5, middle +1.5 / +1.5</td>
+<td>negated</td>
+</tr>
+</tbody>
+</table>
+<p>What the session contains: right hand only the <em>trigger-only</em> pattern (action maxima exactly 1.5 / 1.5 / 0.6 / 1.5,
+  thumb −0.5 / −0.7 / −0.7); the measured hand stops on the can at index_0 0.80, index_1 1.49, middle_0 0.47,
+  middle_1 1.42, thumb −0.48 / −0.49 / −0.62. Left hand never closes (action 0 throughout), although the left arm
+  does move (left elbow range [−0.90, 1.41]).</p>
+<h2 id="7-navigation-height-torso">7. Navigation, height, torso</h2>
+<p>Stick processing (<code>control/teleop/streamers/pico_streamer.py</code>): <code>n = sign(s) · (|s| − 0.1) / 0.9</code> for |s| &gt; 0.1,
+else 0 (dead zone 0.1, then renormalised to [−1, 1]).</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Source</th>
+<th>Formula</th>
+<th>Recorded as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vx</td>
+<td>left stick Y</td>
+<td>n × <strong>0.5 m/s</strong></td>
+<td><code>nav[0]</code> (session: 0 … +0.50, never negative)</td>
+</tr>
+<tr>
+<td>vy</td>
+<td>−left stick X</td>
+<td>n × 0.5 m/s</td>
+<td><code>nav[1]</code> (session: −0.34 … +0.45, 2.6 % of rows)</td>
+</tr>
+<tr>
+<td>turn flag</td>
+<td>−right stick X</td>
+<td>n × <strong>1.0</strong></td>
+<td><code>nav[2]</code>; negative = clockwise (right turn); session −0.91 … +1.0</td>
+</tr>
+<tr>
+<td>target yaw</td>
+<td>integrated dial</td>
+<td>dial += flag × (1/50) per teleop tick, ticks at 20 Hz → <strong>0.40 rad/s per unit flag</strong> (measured 0.403 on the session); continuous, never wrapped</td>
+<td><code>nav[3]</code> = <strong>turn since the A press</strong> = wrap(dial − dial_at_A) ∈ [−π, π], exactly 0 on row 0; session −2.05 … 0</td>
+</tr>
+<tr>
+<td>base height</td>
+<td>Y (+) / X (−) buttons</td>
+<td>±0.01 m per teleop tick, clipped to [0.20, 0.74]</td>
+<td><code>base_height_command</code>; <strong>0.74 on every row of the session</strong></td>
+</tr>
+<tr>
+<td>torso rpy</td>
+<td>not teleoperated</td>
+<td></td>
+<td><code>observation.torso_rpy_command</code> = 0 (unused by the export, see section 8)</td>
+</tr>
+</tbody>
+</table>
+<p>Yaw controller in the lower-body policy (<code>G1GearWbcPolicy</code>): <code>err = wrap(target_heading − heading)</code>;
+commanded yaw rate = <code>clip(err / 0.5, ±1.0 rad/s)</code> <strong>only while |flag| ≥ 0.1 and |err| &gt; 0.01 rad, else 0</strong>. The
+robot therefore turns only while the stick is pushed, toward a target that leads the heading by whatever the dial
+accumulated. The dial is re-anchored to the current heading at every A press (<code>yaw_dial_offset</code>), which is what
+makes <code>nav[3]</code> relative to the heading at episode start.</p>
+<p>Fixed on 2026-09-17: the dial used to wrap at ±π and the 5 rad/s interpolator smeared the 2π jump into a ~1 s
+sweep of the recorded target yaw (episodes 4, 5, 9, 12 of <code>2026-09-17-00-16-29</code> and 6, 7 of
+<code>2026-09-16-22-08-53</code>: drop them). Now flag and dial bypass the interpolator (zero-order hold) and the dial is
+continuous; the largest per-row change of <code>nav[3]</code> on the session is 0.037 rad (two teleop ticks in one row).</p>
+<h2 id="8-recorded-data">8. Recorded data</h2>
+<p>Raw session (<code>data/real_recordings/2026-09-17-02-25-56-G1-sim</code>, LeRobot v2.1, <strong>fps 30</strong>, 102 episodes,
+64 218 rows):</p>
+<table>
+<thead>
+<tr>
+<th>column</th>
+<th>dim</th>
+<th>content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>observation.state</code></td>
+<td>43</td>
+<td>measured joints in <strong>actuator order</strong>: legs 0:12 (L hip p/r/y, knee, ankle p/r, then R), waist 12:15 (yaw, roll, pitch), L arm 15:22, <strong>L hand 22:29 (index_0, index_1, middle_0, middle_1, thumb_0, thumb_1, thumb_2)</strong>, R arm 29:36, R hand 36:43 (same order)</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>43</td>
+<td>the WBC's commanded joint targets, same order (legs / waist = policy output, arms / hands = interpolated teleop targets)</td>
+</tr>
+<tr>
+<td><code>teleop.navigate_command</code></td>
+<td>4</td>
+<td>[vx, vy, turn flag, target_yaw_rel] as in section 7</td>
+</tr>
+<tr>
+<td><code>teleop.base_height_command</code></td>
+<td>1</td>
+<td>0.74</td>
+</tr>
+<tr>
+<td><code>observation.torso_rpy_command</code></td>
+<td>3</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>observation.base_pose</code></td>
+<td>7</td>
+<td>position <strong>not recorded (zeros)</strong>, quaternion (w, x, y, z) valid</td>
+</tr>
+<tr>
+<td><code>observation.base_vel</code></td>
+<td>6</td>
+<td>base twist</td>
+</tr>
+<tr>
+<td><code>observation.eef_state</code>, <code>action.eef</code></td>
+<td>14</td>
+<td>wrist poses (measured / commanded)</td>
+</tr>
+<tr>
+<td><code>observation.img_state_delta</code></td>
+<td>1</td>
+<td>image-stamp minus state-stamp, 18–93 ms on the session (different clocks, use only relatively)</td>
+</tr>
+<tr>
+<td><code>observation.images.ego_view</code></td>
+<td>640 × 360</td>
+<td>D455 colour, head mounted, 30 fps</td>
+</tr>
+</tbody>
+</table>
+<p>psi0 export (<code>SIMPLE/scripts/postprocess_psi0_sonic.py</code>, fps taken from the source): joints are <strong>re-indexed by
+name</strong> into the SIMPLE order (legs, waist, L arm, R arm, L hand thumb/index/middle, R hand thumb/index/middle)
+and then sliced:</p>
+<table>
+<thead>
+<tr>
+<th>psi0 <code>states</code> (32)</th>
+<th></th>
+<th>psi0 <code>action</code> (36)</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0:3</td>
+<td>L thumb 0-2 (state)</td>
+<td>0:28</td>
+<td>same slices, from <code>action</code></td>
+</tr>
+<tr>
+<td>3:5</td>
+<td>L middle 0-1</td>
+<td>28:30</td>
+<td><strong>waist roll, pitch — the WBC's commanded waist joints</strong></td>
+</tr>
+<tr>
+<td>5:7</td>
+<td>L index 0-1</td>
+<td>30:31</td>
+<td><strong>waist yaw (commanded)</strong></td>
+</tr>
+<tr>
+<td>7:14</td>
+<td>R hand: thumb 0-2, index 0-1, middle 0-1</td>
+<td>31:32</td>
+<td>base height command (0.74)</td>
+</tr>
+<tr>
+<td>14:21</td>
+<td>L arm</td>
+<td>32:34</td>
+<td>vx, vy</td>
+</tr>
+<tr>
+<td>21:28</td>
+<td>R arm</td>
+<td>34:35</td>
+<td>turn flag</td>
+</tr>
+<tr>
+<td>28:31</td>
+<td>waist roll, pitch, yaw <strong>measured joint angles</strong></td>
+<td>35:36</td>
+<td>target_yaw_rel</td>
+</tr>
+<tr>
+<td>31:32</td>
+<td>base height command of the previous row (0.74)</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Extra columns: <code>observation.prev_torso_rpy</code> (3), <code>observation.prev_height</code> (1), image key
+<code>observation.images.egocentric</code>, task string as above. The "rpy" rows are <strong>not zero</strong>: they are the balance
+policy's waist joints. Session ranges, action: roll [−0.13, 0.15], pitch [−0.03, 0.18], yaw [−0.06, 0.12];
+state: roll [−0.11, 0.14], pitch [0.05, 0.19], yaw [−0.07, 0.12].</p>
+<p>Quality on the session: <strong>0 duplicate (stale) rows</strong> in all 102 episodes (buffered state shelf + camera-first
+ordering, <code>control/utils/state_shelf.py</code>, fixed 2026-09-17; earlier sessions have 3–20 % isolated duplicates),
+timestamps exactly 1/30 s apart, measured row rate 30.0 Hz per the recorder's per-episode log.</p>
+<h2 id="9-what-the-model-saw-session-statistics-102-episodes">9. What the model saw (session statistics, 102 episodes)</h2>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>episode length</td>
+<td>480–786 rows (16–26 s), mean 630 rows (21 s); one 138-row (4.6 s) episode</td>
+</tr>
+<tr>
+<td>walking (vx &gt; 0)</td>
+<td>16 % of rows, vx ≤ 0.50 m/s, never backwards; vy ≠ 0 on 2.6 % of rows</td>
+</tr>
+<tr>
+<td>turning (flag ≠ 0)</td>
+<td>55 % of rows: 49 % clockwise (flag −0.4 … −0.91, median −0.41), 6 % counter-clockwise corrections; target_yaw_rel ∈ [−2.05, 0]</td>
+</tr>
+<tr>
+<td>base height</td>
+<td>0.74 constant</td>
+</tr>
+<tr>
+<td>right arm (action)</td>
+<td>shoulder pitch [−1.07, 0.21], roll [−0.54, 0], yaw [−0.68, 0.74], elbow [−0.93, 1.43], wrist roll [−0.67, 0.55], pitch [−1.18, 0.58], yaw [−0.47, 0.13]</td>
+</tr>
+<tr>
+<td>left arm (action)</td>
+<td>shoulder pitch [−1.05, 0.66], elbow [−0.90, 1.41], wrist yaw [−0.44, 1.09]</td>
+</tr>
+<tr>
+<td>waist (policy output)</td>
+<td>roll [−0.13, 0.15], pitch [−0.03, 0.18], yaw [−0.06, 0.12]</td>
+</tr>
+<tr>
+<td>hands</td>
+<td>right: trigger-only pattern (section 6); left: open</td>
+</tr>
+</tbody>
+</table>
+<h2 id="10-deployment-checklist-match-or-change-knowingly">10. Deployment checklist (match, or change knowingly)</h2>
+<ol>
+<li><strong>Rate</strong>: rows are 30 Hz; execute model rows at 30 Hz (24-row chunk = 0.8 s). The WBC itself keeps its own rate.</li>
+<li><strong>Init pose</strong>: <code>deploy_client.sh</code> defaults to <code>INIT_POSE=3</code>; pass <strong><code>INIT_POSE=5</code></strong> and change its elbows from
+   <strong>−0.65 to −0.66</strong> (<code>INIT_POSES["5"]</code> in <code>patches/psi0_client_delta.patch</code>, preset
+   <code>scripts/presets/init_pose5_user_20260916.json</code>); hands open, height 0.74, torso 0 / 0 / 0 (<code>INIT_TORSO=0,0,0</code>;
+   the launcher default is −0.019, 0.057, 0). Park there between episodes; optionally jitter the arms with the σ
+   table of section 5 (training start poses vary by up to ±0.15 rad).</li>
+<li><strong>Gravity feed-forward on the arms</strong>: <code>ARM_GRAVITY_COMP=on</code> (launcher default is off). The data has the
+   0.02–0.03 rad sag of section 3, not the ~0.09 rad sag of a pure-PD start.</li>
+<li><strong>Gains</strong>: <code>ARM_GAINS=teleop-all</code> (launcher default, section 2).</li>
+<li><strong>Row 35 (target yaw) is relative to the heading at episode start, wrapped to ±π.</strong> The Psi-0 master uses the
+   same anchor: <code>yaw_offset := IMU yaw</code> when <code>reset_yaw_offset</code> is set, and the patched client sets it right before
+   the control thread starts an episode; <code>dyaw = wrap(imu_yaw − yaw_offset − row35)</code> goes to the lower-body
+   policy as (sin, cos). Keep that reset at every episode start (SPACE), not only at pose init, and never add an
+   absolute heading to row 35.</li>
+<li><strong>Row 34 (turn flag) semantics differ between the two WBCs.</strong> The teleop's gear WBC turns <em>only while</em>
+   |row 34| ≥ 0.1 (then at <code>clip(err / 0.5, ±1)</code> rad/s); the Psi-0 WBC turns whenever <code>dyaw ≠ 0</code>, regardless of
+   row 34. In the data the flag is non-zero whenever the target moves, so both behave alike during a turn; they
+   differ only after the model drops the flag with a residual heading error (the deployed robot finishes aligning,
+   the teleop robot would stop). Passing rows 32:35 through unchanged (<code>WALK_GATE=off</code>, the default) is correct;
+   the original Ψ₀ gate (vx &gt; 0.25 → 0.35 m/s, |vy| &lt; 0.3 → 0) would distort the 0.5 m/s walking rows.</li>
+<li><strong>Rows 28:31 are waist joint angles from the balance policy, not zero</strong> (section 8). The client maps them to the
+   master's torso roll / pitch / yaw command. Expect roll ±0.15, pitch up to 0.18, yaw ±0.12.</li>
+<li><strong>Row 31 (height)</strong> = 0.74 always in this task.</li>
+<li><strong>Hands (rows 0:14)</strong>: the closed targets of section 6 are what the model outputs; the Dex3 stops earlier on the
+   object (state ≠ action, normal). The left-hand rows stay 0.</li>
+<li><strong>Episode start</strong>: the first 0.5 s of every training episode is the blend out of the parked pose; a small
+    settling motion at the start of a rollout is expected.</li>
+<li><strong>Upper-body limits</strong>: the teleop rate-limited joints to 5 rad/s and shut down above 6 rad/s (arms) /
+    80 rad/s (fingers). The client's per-step arm clip (<code>clip_arm_q_target</code>, 30 rad/s) is looser; a model step
+    larger than 5 rad/s never occurred in the data.</li>
+<li>Do not run a second XRoboToolkit client or PC service on the workstation while the teleop is up (shared
+    stream; the teleop refuses to start if two services listen on 127.0.0.1:60061).</li>
+</ol>
+<h2 id="11-files">11. Files</h2>
+<ul>
+<li>Teleop policy, park / release, home randomization: <code>control/policy/teleop_policy.py</code></li>
+<li>Stick processing, dial, hand gestures: <code>control/teleop/streamers/pico_streamer.py</code>; Dex3 gesture targets:
+  <code>control/teleop/solver/hand/g1_gripper_ik_solver.py</code></li>
+<li>Yaw controller, Balance / Walk switch, <code>target_yaw_rel</code>: <code>control/policy/g1_gear_wbc_policy.py</code>; zero-order hold
+  of flag + dial: <code>control/policy/g1_decoupled_whole_body_policy.py</code>; interpolation / rate limit:
+  <code>control/policy/interpolation_policy.py</code></li>
+<li>Gravity feed-forward: <code>control/envs/g1/g1_env.py</code>, <code>control/envs/g1/utils/gravity_ff.py</code></li>
+<li>Init pose presets: <code>control/robot_model/instantiation/g1.py</code>, <code>control/main/teleop/configs/init_pose_elbows_raised.json</code></li>
+<li>Config defaults and flags: <code>control/main/teleop/configs/configs.py</code>, <code>scripts/deploy_g1.py</code></li>
+<li>Recorder: <code>control/main/teleop/run_g1_data_exporter.py</code>, <code>control/utils/state_shelf.py</code>, <code>control/utils/navigate_cmd.py</code></li>
+<li>Export: <code>SIMPLE/scripts/postprocess_psi0_sonic.py</code>; relabel: <code>SIMPLE/scripts/relabel_fps30.py</code></li>
+<li>Tests: <code>SIMPLE/tests/test_target_yaw_relative.py</code>, <code>test_home_randomize.py</code>, <code>test_gravity_feedforward.py</code>,
+  <code>test_init_pose.py</code>, <code>test_state_shelf.py</code></li>
+<li>Runbook: <code>SIMPLE/REAL_ROBOT_RUNBOOK.md</code>; deploy side: <code>holobrain_g1_deploy/scripts/deploy_client.sh</code>,
+  <code>patches/psi0_client_delta.patch</code>, Ψ₀ master <code>Psi0/real/teleop/master_whole_body.py</code></li>
+</ul>
+</main></body></html>

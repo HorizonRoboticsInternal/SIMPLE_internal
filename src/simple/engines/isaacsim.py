@@ -376,6 +376,7 @@ class IsaacSimSimulator(Simulator):
             env_url = os.path.abspath(f"{data_dir}/{scene.name}.usd")
             isaacsim_stage.add_reference_to_stage(usd_path=env_url, prim_path=scene_prim_path)
             scene_prim = self.world.stage.GetPrimAtPath(scene_prim_path)
+            self.__hide_scene_groups(scene_prim_path)
 
             surface_prim = self.world.stage.GetPrimAtPath(surface_prim_path)
             surface_prim.GetAttribute("visibility").Set("invisible")
@@ -523,10 +524,7 @@ class IsaacSimSimulator(Simulator):
         obj_xform = XFormPrim(prim_path=object_prim_path)
         geom_prim_path = f'{object_prim_path}/Meshes'
         obj_geom = GeometryPrim(prim_path=geom_prim_path)
-        obj_rigid = RigidPrim(prim_path=geom_prim_path)
-        obj_rigid.disable_rigid_body_physics()
-        obj_collision_geom = GeometryPrim(f"{geom_prim_path}/collision")
-        obj_collision_geom.set_collision_enabled(False)
+        self.__disable_object_physics(geom_prim_path)
 
         usd_prim = isaacsim_prims.get_prim_at_path(object_prim_path)
         semantics=[("prim", f"{obj_id}")]
@@ -546,6 +544,30 @@ class IsaacSimSimulator(Simulator):
         }
 
         self.objects[object_info.asset.label] = obj
+
+    def __disable_object_physics(self, geom_prim_path: str) -> None:
+        """MuJoCo owns the physics: in Isaac every object is a posed visual, so its rigid body and its collision
+        mesh are switched off at creation. Before the first world.reset the RigidPrim / GeometryPrim wrappers do
+        that by authoring two USD attributes. Once the physics tensor view is live (a task that adds an asset at a
+        later reset, e.g. a scene kit's height-variant furniture at DR level 3) RigidPrim.__init__ instead registers
+        the brand-new body with that view and raises "Failed to get rigid body velocities from backend", so the
+        same two attributes are written directly (2026-09-24)."""
+        from isaacsim.core.simulation_manager import SimulationManager
+
+        if SimulationManager.get_physics_sim_view() is None:
+            obj_rigid = RigidPrim(prim_path=geom_prim_path)
+            obj_rigid.disable_rigid_body_physics()
+            obj_collision_geom = GeometryPrim(f"{geom_prim_path}/collision")
+            obj_collision_geom.set_collision_enabled(False)
+            return
+
+        prim = isaacsim_prims.get_prim_at_path(geom_prim_path)
+        rigid_api = UsdPhysics.RigidBodyAPI(prim) if prim.HasAPI(UsdPhysics.RigidBodyAPI) else UsdPhysics.RigidBodyAPI.Apply(prim)
+        rigid_api.GetRigidBodyEnabledAttr().Set(False)
+        collision = isaacsim_prims.get_prim_at_path(f"{geom_prim_path}/collision")
+        if collision.IsValid() and collision.HasAPI(UsdPhysics.CollisionAPI):
+            UsdPhysics.CollisionAPI(collision).GetCollisionEnabledAttr().Set(False)
+        print(f"[isaacsim] {geom_prim_path}: created while physics is live; rigid body and collision disabled through USD")
 
     def __update_object(self, obj_name, obj_info: ObjectActor):
         obj = self.objects[obj_info.asset.label] # obj_info["name"]
@@ -590,6 +612,26 @@ class IsaacSimSimulator(Simulator):
             # shader.SetSourceAsset('OmniPBR.mdl')
             for key in ['reflection_roughness_constant', 'metallic_constant', 'specular_level']:
                 shader.CreateInput(key, Sdf.ValueTypeNames.Float).Set(obj_info.material[key]) # type:ignore object_shader_param[key]
+
+    def _sync_cameras_from_mujoco(self, mujoco_env) -> None:
+        """Tasks that place a camera through the MuJoCo engine only (the scene kits patch the head camera to the
+        measured D455 pose) opt in with `task.isaac_cameras_follow_mujoco = True`: every Isaac camera then takes
+        the world pose of the MuJoCo camera of the same name each step (both conventions look along -z, +y up),
+        so the two engines render the same view. Off by default: the stock tasks keep their own Isaac mount."""
+        if not getattr(self.task, "isaac_cameras_follow_mujoco", False):
+            return
+        import mujoco as _mj
+        m, d = mujoco_env.mjModel, mujoco_env.mjData
+        for cname, cam in self.cameras.items():
+            cid = _mj.mj_name2id(m, _mj.mjtObj.mjOBJ_CAMERA, cname)
+            if cid < 0:
+                continue
+            pos = np.asarray(d.cam_xpos[cid], dtype=np.float64)
+            quat = t3d.quaternions.mat2quat(np.asarray(d.cam_xmat[cid], dtype=np.float64).reshape(3, 3))
+            try:
+                cam.set_world_pose(pos, quat, camera_axes="usd")
+            except TypeError:
+                cam.set_world_pose(pos, quat)
 
     def step(self, mujoco_env = None):
         if not self.is_isaac_reset:
@@ -687,6 +729,7 @@ class IsaacSimSimulator(Simulator):
             if self.step_id == 0:
                 rep.orchestrator.step(rt_subframes=1, pause_timeline=False)
             self.sync_states(mujoco_env)
+            self._sync_cameras_from_mujoco(mujoco_env)
             self.world.physics_sim_view.flush()
             self.world.physics_sim_view.update_articulations_kinematic()
             import omni.physx
@@ -697,6 +740,7 @@ class IsaacSimSimulator(Simulator):
         else:
             if mujoco_env is not None:
                 self.sync_states(mujoco_env)
+                self._sync_cameras_from_mujoco(mujoco_env)
             self.world.step(render=False)
         self.update_visuals()
         if synchronized:
@@ -979,6 +1023,18 @@ class IsaacSimSimulator(Simulator):
             render_products[cam_name] = raw_rgb
         return render_products
     
+    def __hide_scene_groups(self, scene_prim_path: str) -> None:
+        """Opt-in per task: `task.isaac_hidden_scene_groups = ("furniture", ...)` hides those top-level groups of the
+        HSSD room (its furniture / openings / walls / ceilings Xforms) in Isaac. Visual only: MuJoCo has no room, so the
+        physics and the stored scene states are untouched. A scene kit whose route runs through the room's own
+        furniture (coffee_cart: a 1 m high island across the 2.8 m cart push) uses it (2026-09-24)."""
+        groups = tuple(getattr(self.task, "isaac_hidden_scene_groups", ()) or ())
+        for g in groups:
+            prim = self.world.stage.GetPrimAtPath(f"{scene_prim_path}/{g}")
+            if prim and prim.IsValid():
+                prim.GetAttribute("visibility").Set("invisible")
+
+
     def calc_surface_center(self, surface_prim):
         from omni.isaac.core.utils.bounds import (compute_combined_aabb,
                                                   create_bbox_cache)

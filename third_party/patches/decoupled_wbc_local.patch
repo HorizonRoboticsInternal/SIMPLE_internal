@@ -1,3 +1,80 @@
+diff --git a/control/envs/g1/g1_env.py b/control/envs/g1/g1_env.py
+index 2025420..c675ce8 100644
+--- a/control/envs/g1/g1_env.py
++++ b/control/envs/g1/g1_env.py
+@@ -45,11 +45,14 @@ class G1Env(HumanoidEnv):
+ 
+         # Gravity compensation settings
+         self.enable_gravity_compensation = config.get("enable_gravity_compensation", False)
+-        self.gravity_compensation_joints = config.get("gravity_compensation_joints", ["arms"])
++        self.gravity_compensation_joints = config.get("gravity_compensation_joints") or ["arms"]
++        self.gravity_compensation_max_torque = float(config.get("gravity_compensation_max_torque", 10.0) or 10.0)
++        self._gravity_ff_warned = False
+ 
+         if self.enable_gravity_compensation:
+             print(
+-                f"Gravity compensation enabled for joint groups: {self.gravity_compensation_joints}"
++                f"Gravity compensation enabled for joint groups: {self.gravity_compensation_joints} "
++                f"(feed-forward tau at the commanded pose, clipped to +-{self.gravity_compensation_max_torque:.1f} Nm)"
+             )
+         if self.with_hands:
+             self._hands = Hands()
+@@ -229,11 +232,27 @@ class G1Env(HumanoidEnv):
+         # Map action from joint order to actuator order
+         body_actuator_q = self.robot_model.get_body_actuated_joints(action["q"])
+ 
++        body_tau = np.zeros_like(body_actuator_q)
++        if self.enable_gravity_compensation:
++            # Feed-forward gravity torque (arms by default) so the PD does not have to hold the arms
++            # against gravity: no sag at the init/parked pose, same as ARM_GRAVITY_COMP=on in deployment.
++            try:
++                from decoupled_wbc.control.envs.g1.utils.gravity_ff import gravity_feedforward_actuated
++                body_tau = gravity_feedforward_actuated(
++                    self.robot_model, np.asarray(action["q"], dtype=float),
++                    self.gravity_compensation_joints, self.gravity_compensation_max_torque,
++                )
++            except Exception as exc:  # never let a model error stop the control loop: fall back to tau = 0
++                if not self._gravity_ff_warned:
++                    print(f"[g1_env] gravity feed-forward failed, sending tau=0: {exc}")
++                    self._gravity_ff_warned = True
++                body_tau = np.zeros_like(body_actuator_q)
++
+         self.body().queue_action(
+             {
+                 "body_q": body_actuator_q,
+                 "body_dq": np.zeros_like(body_actuator_q),
+-                "body_tau": np.zeros_like(body_actuator_q),
++                "body_tau": body_tau,
+             }
+         )
+ 
+diff --git a/control/envs/g1/utils/gravity_ff.py b/control/envs/g1/utils/gravity_ff.py
+new file mode 100644
+index 0000000..dd4b94c
+--- /dev/null
++++ b/control/envs/g1/utils/gravity_ff.py
+@@ -0,0 +1,21 @@
++"""Feed-forward gravity torque for the real G1 (ROS/SDK-free, unit-testable).
++
++The teleop stack used to send tau = 0 to every motor (pure PD), so the arms sag under gravity
++(elbow ~+0.09 rad, wrist ~+0.05 rad at rest). With `enable_gravity_compensation` the env adds the
++generalized gravity torque g(q) of the selected joint groups (default: arms) as the motor
++feed-forward, computed at the COMMANDED target pose, the same thing the Psi-0 deploy client does
++when ARM_GRAVITY_COMP=on. Torques are clipped per joint for safety.
++"""
++from typing import List, Optional, Sequence
++
++import numpy as np
++
++
++def gravity_feedforward_actuated(robot_model, q_joint_order: np.ndarray, joint_groups: Optional[Sequence[str]] = ("arms",),
++                                 max_torque: float = 10.0) -> np.ndarray:
++    """Return the body-actuator-order (29,) feed-forward torque for `joint_groups` at pose q (joint order, num_dofs)."""
++    groups: List[str] = list(joint_groups) if joint_groups else ["arms"]
++    tau_joint = robot_model.compute_gravity_compensation_torques(np.asarray(q_joint_order, dtype=float), joint_groups=groups)
++    tau_act = np.asarray(robot_model.get_body_actuated_joints(tau_joint), dtype=float)
++    lim = abs(float(max_torque))
++    return np.clip(np.nan_to_num(tau_act), -lim, lim)
 diff --git a/control/envs/g1/utils/joint_safety.py b/control/envs/g1/utils/joint_safety.py
 index 06c9134..aa59fb4 100644
 --- a/control/envs/g1/utils/joint_safety.py
@@ -15,10 +92,105 @@ index 06c9134..aa59fb4 100644
      def __init__(self, robot_model, enable_viz: bool = False, env_type: str = "real"):
          """Initialize joint safety monitor.
 diff --git a/control/main/teleop/configs/configs.py b/control/main/teleop/configs/configs.py
-index 43ab2b1..9a56e01 100644
+index 43ab2b1..e1149ea 100644
 --- a/control/main/teleop/configs/configs.py
 +++ b/control/main/teleop/configs/configs.py
-@@ -303,6 +303,11 @@ class DataExporterConfig(BaseConfig, ComposedCameraClientConfig):
+@@ -47,6 +47,7 @@ def override_wbc_config(
+         "keyboard_dispatcher_type": config.keyboard_dispatcher_type,
+         "enable_gravity_compensation": config.enable_gravity_compensation,
+         "gravity_compensation_joints": config.gravity_compensation_joints,
++        "gravity_compensation_max_torque": config.gravity_compensation_max_torque,
+         "high_elbow_pose": config.high_elbow_pose,
+     }
+ 
+@@ -111,6 +112,56 @@ class BaseConfig(ArgsConfigTemplate):
+     high_elbow_pose: bool = False
+     """Enable high elbow pose configuration for default joint positions."""
+ 
++    init_pose: str = "elbows_raised"
++    """Upper-body init / home pose: the pose the robot boots to, parks at (home_after_save) and
++    every recording starts from. Presets: "elbows_raised" (default since 2026-09-16: every joint 0
++    except both elbows -0.66 rad), "canonical" (old: shoulder roll +-0.2), "high_elbow"; or a path
++    to a JSON file {joint_name: rad} (see configs/init_pose_elbows_raised.json). Legs/waist are
++    owned by the lower-body policy and are ignored in the file."""
++
++    home_after_save: bool = True
++    """(default ON since 2026-09-16) Every recording starts from the same pose. On activation, and after every saved (A)
++    or discarded (B) episode, the upper body glides back to the parked pose (IK at zero
++    operator displacement, hands open) along a min-jerk ramp and is then held there: the
++    calibration origin follows the operator's hands, so their motion is ignored (a clutch).
++    The next A press starts the recording at that pose and releases the robot into tracking
++    with a short blend. Approach motion becomes part of each episode; no pre-positioning."""
++
++    home_duration: float = 6.0
++    """Seconds the return-to-home ramp takes (min-jerk profile, zero start/end velocity)."""
++
++    home_max_joint_speed: float = 0.5
++    """Per-joint speed clip applied on top of the ramp (rad/s). Stays well under the arm
++    safety limit; raise with care."""
++
++    home_randomize: bool = False
++    """With home_after_save: master switch for randomizing the home pose every time the robot
++    returns to it (activation, after every save/discard). Pick what varies with home_random_arms
++    and/or home_random_height; with neither, the home pose is the canonical one (arms hanging,
++    shoulder roll +-0.2, hands open, base height 0.74 m)."""
++
++    home_random_arms: bool = False
++    """With home_randomize: also jitter the arm joints of the home pose. Per-joint sigma = spread
++    of the initial arm pose in Psi's real-robot data (~0.02-0.06 rad), clipped to +-2.5 sigma
++    and the joint limits; hands stay open."""
++
++    home_random_scale: float = 1.0
++    """Multiplier on the per-joint sigma of home_random_arms (0.5 = half the real-data spread)."""
++
++    home_random_seed: Optional[int] = None
++    """Seed for the home-pose jitter (None = different every run)."""
++
++    home_random_hands: bool = False
++    """Also jitter the hand joints (sigma 0.05 rad) instead of keeping them fully open."""
++
++    home_random_height: bool = False
++    """With home_randomize: draw the base height of the home pose uniformly in
++    [home_random_height_min, home_random_height_max] (m), ramped with the arms and held while
++    parked. Off by default: the home height stays at 0.74 m."""
++
++    home_random_height_min: float = 0.68
++    home_random_height_max: float = 0.74
++
+     verbose: bool = True
+     """Whether to print verbose output."""
+ 
+@@ -143,11 +194,17 @@ class BaseConfig(ArgsConfigTemplate):
+     """ZMQ host for subscriber connections (zmq backend only)."""
+ 
+     # Gravity Compensation Configuration
+-    enable_gravity_compensation: bool = False
+-    """Enable gravity compensation using pinocchio dynamics."""
++    enable_gravity_compensation: bool = True
++    """(default ON since 2026-09-16) Feed-forward gravity torque on the motors of
++    gravity_compensation_joints (arms), applied EVERY control tick in EVERY phase: while tracking
++    the operator, during the ramp back to the init pose after a save/discard, and while parked
++    at the init pose. --no-enable-gravity-compensation restores pure PD (tau = 0)."""
+ 
+     gravity_compensation_joints: Optional[list[str]] = None
+-    """Joint groups to apply gravity compensation to (e.g., ['arms', 'left_arm', 'right_arm'])."""
++    """Joint groups to apply gravity compensation to (e.g., ['arms', 'left_arm', 'right_arm']). None = ['arms']."""
++
++    gravity_compensation_max_torque: float = 10.0
++    """Per-joint clip (Nm) on the gravity feed-forward torque sent to the motors."""
+     # Teleop/Device Configuration
+     body_control_device: str = "dummy"
+     """Device to use for body control. Options: dummy, vive, iphone, leapmotion, joycon."""
+@@ -195,7 +252,7 @@ class BaseConfig(ArgsConfigTemplate):
+ 
+     def __post_init__(self):
+         # Resolve interface (handles sim/real shortcuts, platform differences, and error handling)
+-        self.interface, self.env_type = resolve_interface(self.interface)
++        self.interface, self.env_type = resolve_interface(self.interface, getattr(self, "robot_ip", None))
+ 
+     def load_wbc_yaml(self) -> dict:
+         """Load and merge wbc yaml with dataclass overrides"""
+@@ -303,6 +360,11 @@ class DataExporterConfig(BaseConfig, ComposedCameraClientConfig):
      add_stereo_camera: bool = True
      """Whether to add stereo camera for data collection. If False, only use a signle ego view camera."""
  
@@ -30,26 +202,74 @@ index 43ab2b1..9a56e01 100644
  
  @dataclass
  class SyncSimDataCollectionConfig(ControlLoopConfig, TeleopConfig):
+diff --git a/control/main/teleop/configs/init_pose_elbows_raised.json b/control/main/teleop/configs/init_pose_elbows_raised.json
+new file mode 100644
+index 0000000..1ee0c69
+--- /dev/null
++++ b/control/main/teleop/configs/init_pose_elbows_raised.json
+@@ -0,0 +1,10 @@
++{
++  "left_shoulder_pitch_joint": 0, "left_shoulder_roll_joint": 0, "left_shoulder_yaw_joint": 0, "left_elbow_joint": -0.66,
++  "left_wrist_roll_joint": 0, "left_wrist_pitch_joint": 0, "left_wrist_yaw_joint": 0,
++  "right_shoulder_pitch_joint": 0, "right_shoulder_roll_joint": 0, "right_shoulder_yaw_joint": 0, "right_elbow_joint": -0.66,
++  "right_wrist_roll_joint": 0, "right_wrist_pitch_joint": 0, "right_wrist_yaw_joint": 0,
++  "left_hand_thumb_0_joint": 0, "left_hand_thumb_1_joint": 0, "left_hand_thumb_2_joint": 0, "left_hand_index_0_joint": 0,
++  "left_hand_index_1_joint": 0, "left_hand_middle_0_joint": 0, "left_hand_middle_1_joint": 0,
++  "right_hand_thumb_0_joint": 0, "right_hand_thumb_1_joint": 0, "right_hand_thumb_2_joint": 0, "right_hand_index_0_joint": 0,
++  "right_hand_index_1_joint": 0, "right_hand_middle_0_joint": 0, "right_hand_middle_1_joint": 0
++}
 diff --git a/control/main/teleop/run_g1_control_loop.py b/control/main/teleop/run_g1_control_loop.py
-index 12aab0c..8ccc9e4 100644
+index 12aab0c..b6c632f 100644
 --- a/control/main/teleop/run_g1_control_loop.py
 +++ b/control/main/teleop/run_g1_control_loop.py
-@@ -35,6 +35,14 @@ from decoupled_wbc.control.utils.telemetry import Telemetry
+@@ -31,6 +31,7 @@ from decoupled_wbc.control.utils.messaging import (
+     create_subscriber,
+ )
+ from decoupled_wbc.control.utils.telemetry import Telemetry
++from decoupled_wbc.control.utils.navigate_cmd import recorded_navigate_cmd as _recorded_navigate_cmd
+ 
  CONTROL_NODE_NAME = "ControlPolicy"
  
+@@ -60,7 +61,7 @@ def main(config: ControlLoopConfig):
  
-+def _recorded_navigate_cmd(last_teleop_cmd, wbc_action):
-+    nav = list(last_teleop_cmd.get("navigate_cmd", DEFAULT_NAV_CMD))
-+    synced = wbc_action.get("navigate_cmd") if isinstance(wbc_action, dict) else None
-+    if synced is not None and len(synced) >= 4 and len(nav) >= 4:
-+        nav[3] = float(synced[3])
-+    return nav
-+
-+
- def main(config: ControlLoopConfig):
-     backend = config.messaging_backend
+     waist_location = "lower_and_upper_body" if config.enable_waist else "lower_body"
+     robot_model = instantiate_g1_robot_model(
+-        waist_location=waist_location, high_elbow_pose=config.high_elbow_pose
++        waist_location=waist_location, high_elbow_pose=config.high_elbow_pose, init_pose=config.init_pose
+     )
  
-@@ -203,9 +211,17 @@ def main(config: ControlLoopConfig):
+     env = G1Env(
+@@ -129,6 +130,14 @@ def main(config: ControlLoopConfig):
+                         )
+                         wbc_policy.set_goal(wbc_goal)
+ 
++                # Start/stop/abort toggles are dispatched BEFORE the action so the yaw dial
++                # re-arms on this very tick; previously it took effect one tick later and
++                # the first recorded rows of an episode carried the previous anchor.
++                if wbc_goal.get("toggle_data_collection", False):
++                    dispatcher.handle_key("c")
++                if wbc_goal.get("toggle_data_abort", False):
++                    dispatcher.handle_key("x")
++
+                 # Measure policy action calculation time
+                 with telemetry.timer("policy_action"):
+                     wbc_action = wbc_policy.get_action(time=t_now)
+@@ -162,14 +171,6 @@ def main(config: ControlLoopConfig):
+                     }
+                     joint_safety_status_pub.publish(joint_safety_status_msg)
+ 
+-                # Start or Stop data collection
+-                if wbc_goal.get("toggle_data_collection", False):
+-                    dispatcher.handle_key("c")
+-
+-                # Abort the current episode
+-                if wbc_goal.get("toggle_data_abort", False):
+-                    dispatcher.handle_key("x")
+-
+                 if env.use_sim and wbc_goal.get("reset_env_and_policy", False):
+                     print("Resetting sim environment and policy")
+                     # Reset teleop policy & sim env
+@@ -203,9 +204,17 @@ def main(config: ControlLoopConfig):
                              "base_height_command": last_teleop_cmd.get(
                                  "base_height_command", DEFAULT_BASE_HEIGHT
                              ),
@@ -71,7 +291,7 @@ index 12aab0c..8ccc9e4 100644
                                  "main_loop": time.time(),
                                  "proprio": time.time(),
 diff --git a/control/main/teleop/run_g1_data_exporter.py b/control/main/teleop/run_g1_data_exporter.py
-index aae1fe0..1a8828b 100644
+index aae1fe0..b3f2dd8 100644
 --- a/control/main/teleop/run_g1_data_exporter.py
 +++ b/control/main/teleop/run_g1_data_exporter.py
 @@ -1,5 +1,6 @@
@@ -95,7 +315,7 @@ index aae1fe0..1a8828b 100644
  
          self.node = node
  
-@@ -111,8 +114,56 @@ class Gr00tDataCollector:
+@@ -111,9 +114,88 @@ class Gr00tDataCollector:
          self.telemetry = Telemetry(window_size=100)
          self.timing_threshold_monitor = TimingThresholdMonitor()
  
@@ -106,6 +326,14 @@ index aae1fe0..1a8828b 100644
 +        self._episode_rows = 0
 +        self._episode_stale_rows = 0
 +        self._episode_skipped_rows = 0
++        # how long to wait for a fresher state before writing a row that would otherwise duplicate
++        self.state_wait_s = 0.04
++        self._episode_waited_rows = 0
++        self._episode_max_arrival_gap = 0.0      # s between arrivals of consecutive used messages
++        self._episode_max_pub_gap = 0.0          # s between their publisher stamps (control-loop pauses)
++        self._last_state_arrival = None
++        self._last_state_stamp = None
++        self._episode_t0 = None
 +
 +        # The expensive part of a row (deep copy, validation, hand-off to the video
 +        # writers) runs on this worker so the main loop stays light: grab the shelf,
@@ -119,6 +347,7 @@ index aae1fe0..1a8828b 100644
 +
          print(f"Recording to {self.data_exporter.meta.root}")
  
+-    @property
 +    def _writer_worker(self):
 +        while True:
 +            frame_data = self._write_queue.get()
@@ -138,38 +367,66 @@ index aae1fe0..1a8828b 100644
 +            err, self._writer_error = self._writer_error, None
 +            raise err
 +
++    def _zero_stale_target_yaw_rows(self, max_lead: int = 10):
++        """The recorded target_yaw is relative to the heading at the A press, so it must be
++        exactly 0 at episode start. The exporter can begin a row or two before the control
++        loop's re-armed value arrives; those leading rows still carry the previous episode's
++        value. Zero every row before the first 0 within the first `max_lead` rows."""
++        try:
++            buf = self.data_exporter.episode_buffer.get("teleop.navigate_command")
++            if not buf:
++                return
++            first_zero = next((i for i, r in enumerate(buf[:max_lead]) if abs(float(r[3])) < 1e-9), None)
++            if first_zero:
++                for i in range(first_zero):
++                    buf[i] = np.array(buf[i], dtype=np.float64); buf[i][3] = 0.0
++                print(f"[exporter] zeroed {first_zero} stale target_yaw row(s) at episode start")
++        except Exception as exc:  # never block a save on this
++            print(f"[exporter] stale target_yaw check skipped: {exc}")
++
 +    def _report_episode_rows(self):
 +        if self._episode_rows + self._episode_skipped_rows == 0:
 +            return
++        wall = (time.monotonic() - self._episode_t0) if self._episode_t0 else float("nan")
++        rate = self._episode_rows / wall if wall and wall > 0 else float("nan")
++        fps = getattr(self.data_exporter, "fps", None)
 +        self._print_and_say(
 +            f"episode rows: {self._episode_rows} written, "
 +            f"{self._episode_stale_rows} arrived with no new state/action"
-+            + (f" ({self._episode_skipped_rows} skipped)" if self.skip_stale_rows else " (written as duplicates)"),
++            + (f" ({self._episode_skipped_rows} skipped)" if self.skip_stale_rows else " (written as duplicates)")
++            + f"; waited for a fresher state on {self._episode_waited_rows} rows; "
++            f"max gap between used states: arrival {1e3 * self._episode_max_arrival_gap:.0f} ms, publisher stamps {1e3 * self._episode_max_pub_gap:.0f} ms; "
++            f"measured row rate {rate:.1f} Hz over {wall:.1f} s"
++            + (f" (dataset fps is {fps}: MISMATCH, timestamps/videos will be off)" if fps and rate == rate and abs(rate - float(fps)) > 0.15 * float(fps) else ""),
 +            say=False,
 +        )
 +        self._episode_rows = self._episode_stale_rows = self._episode_skipped_rows = 0
 +
-     @property
      def current_episode_index(self):
          return self.data_exporter.episode_buffer["episode_index"]
-@@ -129,6 +180,7 @@ class Gr00tDataCollector:
+ 
+@@ -129,13 +211,19 @@ class Gr00tDataCollector:
          if key == "c":
              self._episode_state.change_state()
              if self._episode_state.get_state() == self._episode_state.RECORDING:
+-                self._print_and_say(f"Started recording {self.current_episode_index}")
 +                self._episode_rows = self._episode_stale_rows = self._episode_skipped_rows = 0
-                 self._print_and_say(f"Started recording {self.current_episode_index}")
++                self._episode_waited_rows = 0; self._episode_max_arrival_gap = self._episode_max_pub_gap = 0.0
++                self._last_state_arrival = self._last_state_stamp = None; self._episode_t0 = time.monotonic()
++                self._print_and_say(f"Started recording {self.current_episode_index() if callable(self.current_episode_index) else self.current_episode_index}")
              elif self._episode_state.get_state() == self._episode_state.NEED_TO_SAVE:
                  self._print_and_say("Stopping recording, preparing to save")
-@@ -136,6 +188,8 @@ class Gr00tDataCollector:
+             elif self._episode_state.get_state() == self._episode_state.IDLE:
                  self._print_and_say("Saved episode and back to idle state")
          elif key == "x":
              if self._episode_state.get_state() == self._episode_state.RECORDING:
 +                self._flush_writes()
 +                self._report_episode_rows()
++                self._zero_stale_target_yaw_rows()   # same clean-up as the save path (row 0 can lag the re-arm by a tick)
                  self.data_exporter.save_episode_as_discarded()
                  self._episode_state.reset_state()
                  self._print_and_say("Discarded episode")
-@@ -153,6 +207,11 @@ class Gr00tDataCollector:
+@@ -153,6 +241,11 @@ class Gr00tDataCollector:
              return False
  
          if self._episode_state.get_state() == self._episode_state.RECORDING:
@@ -181,7 +438,7 @@ index aae1fe0..1a8828b 100644
  
              # Calculate max time delta between images and proprio
              max_time_delta = 0
-@@ -181,6 +240,25 @@ class Gr00tDataCollector:
+@@ -181,6 +274,25 @@ class Gr00tDataCollector:
                  "teleop.base_height_command": np.array(
                      [self.latest_proprio_msg["base_height_command"]], dtype=np.float64
                  ),
@@ -207,7 +464,7 @@ index aae1fe0..1a8828b 100644
              }
  
              # Add images based on dataset features
-@@ -197,13 +275,20 @@ class Gr00tDataCollector:
+@@ -197,13 +309,21 @@ class Gr00tDataCollector:
                          )
                      frame_data[feature_name] = images[image_key]
  
@@ -225,11 +482,12 @@ index aae1fe0..1a8828b 100644
  
          if self._episode_state.get_state() == self._episode_state.NEED_TO_SAVE:
 +            self._flush_writes()
++            self._zero_stale_target_yaw_rows()
 +            self._report_episode_rows()
              self.data_exporter.save_episode()
              self.timing_threshold_monitor.reset()
              self._print_and_say("Finished saving episode")
-@@ -215,6 +300,8 @@ class Gr00tDataCollector:
+@@ -215,6 +335,8 @@ class Gr00tDataCollector:
          try:
              self._print_and_say("saving episode done")
              # save on going episode if any
@@ -238,15 +496,57 @@ index aae1fe0..1a8828b 100644
              buffer_size = self.data_exporter.episode_buffer.get("size", 0)
              if buffer_size > 0:
                  self.data_exporter.save_episode()
-@@ -234,6 +321,7 @@ class Gr00tDataCollector:
-                     # 1. poll proprio msg
-                     with self.telemetry.timer("poll_state"):
-                         msg = self._state_subscriber.get_msg()
-+                        self._proprio_is_fresh = msg is not None
+@@ -231,18 +353,33 @@ class Gr00tDataCollector:
+             while rclpy.ok():
+                 t_start = time.monotonic()
+                 with self.telemetry.timer("total_loop"):
+-                    # 1. poll proprio msg
+-                    with self.telemetry.timer("poll_state"):
+-                        msg = self._state_subscriber.get_msg()
+-                        if msg is not None:
+-                            self.latest_proprio_msg = msg
+-
+-                    # 2. poll image msg
++                    # 1. wait for the next camera frame (blocking recv; rows are camera-paced)
+                     with self.telemetry.timer("poll_image"):
+                         msg = self._image_subscriber.read()
                          if msg is not None:
-                             self.latest_proprio_msg = msg
+                             self.latest_image_msg = msg
  
-@@ -326,6 +414,7 @@ def main(config: DataExporterConfig):
++                    # 2. THEN take the freshest state/action. Taking it before the frame wait
++                    # made every row one camera period stale, and a subscriber thread that was
++                    # late for one period produced a duplicate row. If nothing new has arrived
++                    # since the previous row, wait a few ms for it (50 Hz publisher).
++                    with self.telemetry.timer("poll_state"):
++                        msg, is_new, t_arr = self._state_subscriber.take_newest()
++                        if not is_new and self._episode_state.get_state() == self._episode_state.RECORDING:
++                            if self._state_subscriber.shelf.wait_for_newer(self.state_wait_s):
++                                msg, is_new, t_arr = self._state_subscriber.take_newest()
++                                self._episode_waited_rows += 1
++                        self._proprio_is_fresh = bool(is_new)
++                        if msg is not None:
++                            if is_new:
++                                stamp = float(msg.get("timestamps", {}).get("proprio", float("nan")))
++                                if self._last_state_arrival is not None:
++                                    self._episode_max_arrival_gap = max(self._episode_max_arrival_gap, t_arr - self._last_state_arrival)
++                                if self._last_state_stamp is not None and stamp == stamp:
++                                    self._episode_max_pub_gap = max(self._episode_max_pub_gap, stamp - self._last_state_stamp)
++                                self._last_state_arrival, self._last_state_stamp = t_arr, stamp
++                            self.latest_proprio_msg = msg
++
+                     # 3. check keyboard input
+                     with self.telemetry.timer("check_keyboard"):
+                         self._check_keyboard_input()
+@@ -280,7 +417,7 @@ def main(config: DataExporterConfig):
+ 
+     waist_location = "lower_and_upper_body" if config.enable_waist else "lower_body"
+     g1_rm = g1.instantiate_g1_robot_model(
+-        waist_location=waist_location, high_elbow_pose=config.high_elbow_pose
++        waist_location=waist_location, high_elbow_pose=config.high_elbow_pose, init_pose=config.init_pose
+     )
+ 
+     dataset_features = get_dataset_features(g1_rm, config.add_stereo_camera)
+@@ -326,6 +463,7 @@ def main(config: DataExporterConfig):
          camera_host=config.camera_host,
          camera_port=config.camera_port,
          text_to_speech=text_to_speech,
@@ -254,11 +554,96 @@ index aae1fe0..1a8828b 100644
      )
      data_collector.run()
  
+diff --git a/control/main/teleop/run_teleop_policy_loop.py b/control/main/teleop/run_teleop_policy_loop.py
+index 676d8a4..477464b 100644
+--- a/control/main/teleop/run_teleop_policy_loop.py
++++ b/control/main/teleop/run_teleop_policy_loop.py
+@@ -23,7 +23,7 @@ def main(config: TeleopConfig):
+     if config.robot == "g1":
+         waist_location = "lower_and_upper_body" if config.enable_waist else "lower_body"
+         robot_model = instantiate_g1_robot_model(
+-            waist_location=waist_location, high_elbow_pose=config.high_elbow_pose
++            waist_location=waist_location, high_elbow_pose=config.high_elbow_pose, init_pose=config.init_pose
+         )
+         left_hand_ik_solver, right_hand_ik_solver = instantiate_g1_hand_ik_solver()
+     else:
+@@ -52,7 +52,29 @@ def main(config: TeleopConfig):
+             enable_real_device=config.enable_real_device,
+             replay_data_path=config.teleop_replay_path,
+             activate_keyboard_listener=(config.messaging_backend == "ros2"),
++            home_after_save=config.home_after_save,
++            home_duration=config.home_duration,
++            home_max_joint_speed=config.home_max_joint_speed,
++            home_randomize=config.home_randomize,
++            home_random_scale=config.home_random_scale,
++            home_random_seed=config.home_random_seed,
++            home_random_hands=config.home_random_hands,
++            home_random_arms=config.home_random_arms,
++            home_random_height=config.home_random_height,
++            home_random_height_min=config.home_random_height_min,
++            home_random_height_max=config.home_random_height_max,
+         )
++        if config.home_after_save:
++            print(
++                f"[teleop] home_after_save ON: after each saved episode the upper body returns to "
++                f"the canonical pose over {config.home_duration:.1f}s "
++                f"(<= {config.home_max_joint_speed:.2f} rad/s per joint); teleop deactivates "
++                f"and must be re-activated (left menu + right trigger)."
++            )
++            if config.home_randomize:
++                print(f"[teleop] home_randomize ON: arms {'jittered (scale %g)' % config.home_random_scale if config.home_random_arms else 'exact canonical pose'}, "
++                      f"seed {config.home_random_seed}, hands {'jittered' if config.home_random_hands else 'open'}, "
++                      f"height {'uniform in [%.2f, %.2f] m' % (config.home_random_height_min, config.home_random_height_max) if config.home_random_height else 'fixed 0.74 m'}).")
+ 
+     # Create a publisher for the navigation commands
+     control_publisher = create_publisher(config.messaging_backend, CONTROL_GOAL_TOPIC)
+diff --git a/control/policy/g1_decoupled_whole_body_policy.py b/control/policy/g1_decoupled_whole_body_policy.py
+index 6e68894..826ad9e 100644
+--- a/control/policy/g1_decoupled_whole_body_policy.py
++++ b/control/policy/g1_decoupled_whole_body_policy.py
+@@ -104,6 +104,13 @@ class G1DecoupledWholeBodyPolicy(Policy):
+             if key in goal:
+                 lower_body_goal[key] = goal[key]
+ 
++        # Latest navigate command as sent (not interpolated): the turn flag and the yaw dial must
++        # never be interpolated or rate-limited (an angle step would become a sweep).
++        nav = goal.get("navigate_cmd")
++        if nav is not None:
++            nav = np.asarray(nav[-1] if isinstance(nav, list) and len(nav) and np.ndim(nav[0]) == 1 else nav, dtype=float).ravel()
++            if nav.size >= 4:
++                self._latest_nav_flag_dial = (float(nav[2]), float(nav[3]))
+         self.upper_body_policy.set_goal(upper_body_goal)
+         self.lower_body_policy.set_goal(lower_body_goal)
+ 
+@@ -142,6 +149,10 @@ class G1DecoupledWholeBodyPolicy(Policy):
+         q_arms = q[self.robot_model.get_joint_group_indices("arms")]
+         base_height_command = upper_body_action.get("base_height_command", None)
+         interpolated_navigate_cmd = upper_body_action.get("navigate_cmd", None)
++        if interpolated_navigate_cmd is not None and getattr(self, "_latest_nav_flag_dial", None) is not None:
++            # vx, vy stay interpolated; flag + dial are zero-order held from the latest command
++            interpolated_navigate_cmd = np.array(interpolated_navigate_cmd, dtype=float).copy()
++            interpolated_navigate_cmd[2], interpolated_navigate_cmd[3] = self._latest_nav_flag_dial
+ 
+         # Compute torso orientation relative to waist, to pass to lower body policy
+         self.robot_model.cache_forward_kinematics(q, auto_clip=False)
+@@ -175,7 +186,11 @@ class G1DecoupledWholeBodyPolicy(Policy):
+             "base_height_command": lower_body_action["base_height_command"], # synced
+             "navigate_cmd": lower_body_action["navigate_cmd"], # synced 
+             "torso_rpy_cmd": lower_body_action["torso_rpy_cmd"], # synced
+-            "obs_tensor": lower_body_action["obs_tensor"] # synced
++            "obs_tensor": lower_body_action["obs_tensor"], # synced
++            # Dial relative to the heading at the A press (0 at episode start). The recorder
++            # falls back to the ABSOLUTE dial when this key is missing, which is what put the
++            # robot's room heading into every 2026-09-11/14 real episode. Always forward it.
++            "target_yaw_rel": float(lower_body_action.get("target_yaw_rel", 0.0)),
+         }
+ 
+     def handle_keyboard_button(self, key):
 diff --git a/control/policy/g1_gear_wbc_policy.py b/control/policy/g1_gear_wbc_policy.py
-index 42a6ebf..4d4d18b 100644
+index 42a6ebf..122ca58 100644
 --- a/control/policy/g1_gear_wbc_policy.py
 +++ b/control/policy/g1_gear_wbc_policy.py
-@@ -52,6 +52,12 @@ class G1GearWbcPolicy(Policy):
+@@ -52,6 +52,18 @@ class G1GearWbcPolicy(Policy):
          self.pitch_cmd = self.config["rpy_cmd"][1]
          self.yaw_cmd = self.config["rpy_cmd"][2]
          self.target_yaw_cmd = 0
@@ -268,19 +653,28 @@ index 42a6ebf..4d4d18b 100644
 +        # toggled ("c" / PICO A), so every episode starts with zero yaw error.
 +        self.yaw_dial_offset = 0.0
 +        self._rearm_yaw_dial = True
++        # Heading captured at the last re-arm. The RECORDED target yaw is relative to it
++        # (0 at episode start, then the commanded turn), matching the Psi convention; the
++        # controller itself keeps working in absolute heading.
++        self.yaw_anchor_heading = 0.0
++        self.target_yaw_rel = 0.0
++        self._prev_raw_dial = None          # for the dial-jump guard (see get_action)
          self.gait_indices = torch.zeros((1), dtype=torch.float32)
          # self.control_dt = 1.0 / 50.0  # Control frequency at 50Hz
  
-@@ -77,6 +83,8 @@ class G1GearWbcPolicy(Policy):
+@@ -77,6 +89,11 @@ class G1GearWbcPolicy(Policy):
          self.pitch_cmd = self.config["rpy_cmd"][1]
          self.yaw_cmd = self.config["rpy_cmd"][2]
          self.target_yaw_cmd = 0
 +        self.yaw_dial_offset = 0.0
 +        self._rearm_yaw_dial = True
++        self.yaw_anchor_heading = 0.0
++        self.target_yaw_rel = 0.0
++        self._prev_raw_dial = None          # for the dial-jump guard (see get_action)
          # Gait state
          self.gait_indices = torch.zeros((1), dtype=torch.float32)
  
-@@ -248,7 +256,7 @@ class G1GearWbcPolicy(Policy):
+@@ -248,7 +265,7 @@ class G1GearWbcPolicy(Policy):
          if interpolated_navigate_cmd is not None and self.use_teleop_policy_cmd:
              self.cmd[0:2] = interpolated_navigate_cmd[0:2]  # vx, vy unchanged
              vyaw_flag = interpolated_navigate_cmd[2]  # Turning flag (raw controller input)
@@ -289,16 +683,26 @@ index 42a6ebf..4d4d18b 100644
  
              # Extract current yaw from base quaternion using scipy
              quat_raw = self.observation["floating_base_pose"][3:7]
-@@ -256,6 +264,20 @@ class G1GearWbcPolicy(Policy):
+@@ -256,6 +273,30 @@ class G1GearWbcPolicy(Policy):
              rot = R.from_quat(quat)
              current_yaw = rot.as_euler("xyz")[2]  # Extract yaw (Z-axis rotation)
  
++            if (self._prev_raw_dial is not None and not self._rearm_yaw_dial
++                    and abs(raw_target_yaw - self._prev_raw_dial) > np.pi / 2):
++                # The dial cannot move more than ~0.02 rad per tick from the stick; a bigger step is
++                # a discontinuity (streamer wrap at +-pi on an older copy, teleop process restart).
++                # Absorb it into the offset so the effective target keeps its previous value.
++                self.yaw_dial_offset = float(np.arctan2(
++                    np.sin(self.target_yaw_cmd - raw_target_yaw), np.cos(self.target_yaw_cmd - raw_target_yaw)))
++                print(f"[gear_wbc] yaw dial jumped by {raw_target_yaw - self._prev_raw_dial:+.2f} rad: offset re-synced, target held")
++            self._prev_raw_dial = float(raw_target_yaw)
 +            if self._rearm_yaw_dial:
 +                # Re-anchor: effective dial == robot heading right now, so the stale
 +                # integrator value cannot pull the robot toward an old heading.
 +                self.yaw_dial_offset = float(
 +                    np.arctan2(np.sin(current_yaw - raw_target_yaw), np.cos(current_yaw - raw_target_yaw))
 +                )
++                self.yaw_anchor_heading = float(current_yaw)
 +                self._rearm_yaw_dial = False
 +            target_yaw = float(
 +                np.arctan2(
@@ -310,7 +714,25 @@ index 42a6ebf..4d4d18b 100644
              # Compute yaw error with wrap-around
              yaw_error = np.arctan2(np.sin(target_yaw - current_yaw), np.cos(target_yaw - current_yaw))
  
-@@ -324,7 +346,11 @@ class G1GearWbcPolicy(Policy):
+@@ -272,6 +313,11 @@ class G1GearWbcPolicy(Policy):
+             # print(f"vyaw: {vyaw}, target_yaw: {target_yaw}, yaw_error: {yaw_error}")
+             self.cmd[2] = vyaw
+             self.target_yaw_cmd = target_yaw  # support target yaw control
++            # Commanded turn since the re-arm: exactly 0 at episode start, independent of
++            # which way the robot happens to face in the room.
++            self.target_yaw_rel = float(
++                np.arctan2(np.sin(target_yaw - self.yaw_anchor_heading), np.cos(target_yaw - self.yaw_anchor_heading))
++            )
+         else:
+             vyaw_flag = 0.
+ 
+@@ -320,11 +366,16 @@ class G1GearWbcPolicy(Policy):
+             "obs_tensor": self.obs_tensor,
+             "base_height_command": synced_base_height_command,
+             "navigate_cmd": np.concatenate([synced_navigate_cmd[:2], [vyaw_flag], synced_navigate_cmd[3:4]]),
+-            "torso_rpy_cmd": synced_torso_rpy_cmd
++            "torso_rpy_cmd": synced_torso_rpy_cmd,
++            "target_yaw_rel": self.target_yaw_rel,
          }
  
      def handle_keyboard_button(self, key):
@@ -323,148 +745,467 @@ index 42a6ebf..4d4d18b 100644
              self.use_policy_action = True
          elif key == "o":
              self.use_policy_action = False
-diff --git a/control/utils/ros_utils.py b/control/utils/ros_utils.py
-index f24890f..415dba5 100644
---- a/control/utils/ros_utils.py
-+++ b/control/utils/ros_utils.py
-@@ -1,3 +1,4 @@
-+import array
- import base64
- import signal
- import threading
-@@ -9,7 +10,7 @@ import rclpy
- from rclpy.executors import SingleThreadedExecutor
- from rclpy.node import Node
- from sensor_msgs.msg import Image
--from std_msgs.msg import ByteMultiArray
-+from std_msgs.msg import UInt8MultiArray
- from std_srvs.srv import Trigger
- 
- _signal_registered = False
-@@ -88,13 +89,17 @@ class ROSMsgPublisher:
-     def __init__(self, topic_name: str):
-         ros_manager = ROSManager()
-         self.node = ros_manager.node
--        self.publisher = self.node.create_publisher(ByteMultiArray, topic_name, 1)
-+        self.publisher = self.node.create_publisher(UInt8MultiArray, topic_name, 1)
- 
-     def publish(self, msg: dict):
-+        # One uint8 array per message. The previous ByteMultiArray encoding built one
-+        # Python bytes object per payload byte (thousands per message at 50 Hz), and
-+        # rclpy converted each of them individually on both the publishing and the
-+        # receiving thread -- that per-byte work is what starved the subscriber's
-+        # spin thread and produced duplicate rows in the recordings.
-         payload = msgpack.packb(msg, default=mnp.encode)
--        payload = tuple(bytes([a]) for a in payload)
--        msg = ByteMultiArray()
--        msg.data = payload
-+        msg = UInt8MultiArray()
-+        msg.data = array.array("B", payload)
-         self.publisher.publish(msg)
+diff --git a/control/policy/teleop_policy.py b/control/policy/teleop_policy.py
+index e05a43b..fab6e21 100644
+--- a/control/policy/teleop_policy.py
++++ b/control/policy/teleop_policy.py
+@@ -11,6 +11,63 @@ from decoupled_wbc.control.teleop.teleop_retargeting_ik import TeleopRetargeting
+ from decoupled_wbc.control.teleop.teleop_streamer import TeleopStreamer
  
  
-@@ -107,19 +112,23 @@ class ROSMsgSubscriber:
-         ros_manager = ROSManager()
-         self.node = ros_manager.node
-         self._msg = None
-+        self.seq = 0  # number of messages delivered to the shelf so far
-         self.subscription = self.node.create_subscription(
--            ByteMultiArray, topic_name, self._callback, 1
-+            UInt8MultiArray, topic_name, self._callback, 1
-         )
++def min_jerk_ramp(q_from: np.ndarray, q_to: np.ndarray, elapsed: float, duration: float) -> np.ndarray:
++    """Point on a minimum-jerk trajectory from q_from to q_to at time `elapsed`.
++
++    s(t) = 10t^3 - 15t^4 + 6t^5 has zero velocity and acceleration at both ends, so the
++    arms neither jerk off the operator's last pose nor slam into the home pose.
++    """
++    if duration <= 0:
++        return q_to.copy()
++    t = min(max(elapsed / duration, 0.0), 1.0)
++    s = 10 * t**3 - 15 * t**4 + 6 * t**5
++    return q_from + (q_to - q_from) * s
++
++
++def clip_step(q_prev: np.ndarray, q_des: np.ndarray, max_speed: float, dt: float) -> np.ndarray:
++    """Move from q_prev toward q_des, but never faster than max_speed (rad/s) on any joint."""
++    if max_speed <= 0 or dt <= 0:
++        return q_des.copy()
++    lim = max_speed * dt
++    return q_prev + np.clip(q_des - q_prev, -lim, lim)
++
++
++# Per-joint 1-sigma spread (rad) of the *initial* arm pose across Psi's real-robot
++# datasets (/mnt/nas28/alan.jiang/psi_new_0828/real, 9 tasks x 40 episodes, first frame
++# of each episode). Torso rpy and base height had zero spread there and are not touched.
++PSI_REAL_INIT_POSE_STD = {
++    "left_shoulder_pitch_joint": 0.047, "left_shoulder_roll_joint": 0.028, "left_shoulder_yaw_joint": 0.015,
++    "left_elbow_joint": 0.064, "left_wrist_roll_joint": 0.026, "left_wrist_pitch_joint": 0.024, "left_wrist_yaw_joint": 0.018,
++    "right_shoulder_pitch_joint": 0.055, "right_shoulder_roll_joint": 0.019, "right_shoulder_yaw_joint": 0.017,
++    "right_elbow_joint": 0.051, "right_wrist_roll_joint": 0.024, "right_wrist_pitch_joint": 0.020, "right_wrist_yaw_joint": 0.020,
++}
++HOME_RANDOM_HAND_STD = 0.05      # rad, only with home_random_hands (hands stay open otherwise)
++HOME_RANDOM_CLIP_SIGMA = 2.5     # offsets are clipped to +-2.5 sigma so the pose stays "slightly" different
++
++
++def sample_home_offset(joint_names, rng, scale=1.0, hands_mask=None, randomize_hands=False,
++                       std_profile=PSI_REAL_INIT_POSE_STD, hand_std=HOME_RANDOM_HAND_STD):
++    """Draw a per-joint offset for the parked ("home") pose.
++
++    joint_names: names of the joints in the upper-body vector, in vector order.
++    Joints found in std_profile get N(0, (scale*std)^2) clipped to +-HOME_RANDOM_CLIP_SIGMA*scale*std.
++    Hand joints (hands_mask True) get 0, or the same treatment with hand_std if randomize_hands.
++    Joints in neither set (e.g. waist) get 0. Deterministic for a given rng state.
++    """
++    n = len(joint_names)
++    hands_mask = np.zeros(n, dtype=bool) if hands_mask is None else np.asarray(hands_mask, dtype=bool)
++    std = np.zeros(n, dtype=float)
++    for i, name in enumerate(joint_names):
++        if hands_mask[i]:
++            std[i] = hand_std if randomize_hands else 0.0
++        else:
++            std[i] = std_profile.get(name, 0.0)
++    std = std * float(scale)
++    off = rng.normal(0.0, 1.0, size=n) * std
++    lim = HOME_RANDOM_CLIP_SIGMA * std
++    return np.clip(off, -lim, lim)
++
++
+ class TeleopPolicy(Policy):
+     """
+     Robot-agnostic teleop policy.
+@@ -31,6 +88,17 @@ class TeleopPolicy(Policy):
+         replay_speed: float = 1.0,
+         wait_for_activation: int = 5,
+         activate_keyboard_listener: bool = True,
++        home_after_save: bool = False,
++        home_duration: float = 6.0,
++        home_max_joint_speed: float = 0.5,
++        home_randomize: bool = False,
++        home_random_scale: float = 1.0,
++        home_random_seed: Optional[int] = None,
++        home_random_hands: bool = False,
++        home_random_arms: bool = False,
++        home_random_height: bool = False,
++        home_random_height_min: float = 0.68,
++        home_random_height_max: float = 0.74,
+     ):
+         if activate_keyboard_listener:
+             from decoupled_wbc.control.utils.keyboard_dispatcher import KeyboardListenerSubscriber
+@@ -60,6 +128,34 @@ class TeleopPolicy(Policy):
+         self.latest_left_fingers_data = {"position": np.zeros((25, 4, 4))}
+         self.latest_right_fingers_data = {"position": np.zeros((25, 4, 4))}
  
--    def _callback(self, msg: ByteMultiArray):
-+    def _callback(self, msg: UInt8MultiArray):
-+        # The shelf: keeps only the newest message. Runs on the spin thread.
-         self._msg = msg
-+        self.seq += 1
++        # --- park / release: every recording starts from the same pose ---------------
++        # Mirrors the exporter's A/B parity (A: idle->recording->save, B: discard).
++        self.home_after_save = home_after_save
++        self.home_duration = float(home_duration)
++        self.home_max_joint_speed = float(home_max_joint_speed)
++        self.release_blend_duration = 0.5   # s, parked pose -> live tracking after the A press
++        self._state = "free"                # free | homing | parked | release | tracking
++        self._home_from = self._home_to = self._home_q = None
++        self._home_t0 = self._home_t_prev = None
++        self._release_t0 = None
++        self._last_published: Optional[np.ndarray] = None
++        self._last_key = ""
++        self._hand_pos = None               # hand joints' positions inside the upper-body vector
++        # --- randomized home pose (see sample_home_offset) ----------------------------
++        self.home_randomize = bool(home_randomize)
++        self.home_random_scale = float(home_random_scale)
++        self.home_random_hands = bool(home_random_hands)
++        self.home_random_arms = bool(home_random_arms)     # arm-joint jitter is opt-in; height jitter is the default
++        self._home_rng = np.random.default_rng(home_random_seed)
++        self._home_offset: Optional[np.ndarray] = None   # last drawn offset (upper-body order), for logs/tests
++        self._parked_ee_cache = None                      # (parked q, wrist poses) of the current parked pose
++        # optional: base height as part of the home pose (home_randomize + home_random_height):
++        # uniform in [min, max], ramped together with the arms and held while parked; default off (0.74 m)
++        self.home_random_height = bool(home_random_height)
++        self.home_random_height_range = (float(home_random_height_min), float(home_random_height_max))
++        self._home_height_from = self._home_height_to = None
++        self._home_height: Optional[float] = None         # height currently commanded by the park logic
++
+     def set_goal(self, goal: dict[str, any]):
+         # The current teleop policy doesn't take higher level commands yet.
+         pass
+@@ -131,8 +227,198 @@ class TeleopPolicy(Policy):
+             self.retargeting_ik.set_goal(action["ik_data"])
+         action["target_upper_body_pose"] = self.retargeting_ik.get_action()
  
-     def get_msg(self) -> Optional[dict]:
-+        """Take the newest message off the shelf (None if nothing arrived since the last take)."""
-         msg = self._msg
-         if msg is None:
-             return None
-         self._msg = None
--        return msgpack.unpackb(bytes([ab for a in msg.data for ab in a]), object_hook=mnp.decode)
-+        return msgpack.unpackb(bytes(msg.data), object_hook=mnp.decode)
++        if self.home_after_save:
++            self._park_state_machine(action)
++
+         return action
+ 
++    # ------------------------------------------------------------ park / release ----
++    # Only with home_after_save. Goal: every recording starts from the same pose.
++    #   free     : teleop inactive -> stock behaviour
++    #   homing   : min-jerk ramp from the last published target to the parked pose
++    #   parked   : held at the parked pose; the calibration origin is re-snapped to the
++    #              operator's hands every tick, so their motion is ignored (a clutch)
++    #   release  : A pressed -> recording starts NOW at the parked pose; short blend from
++    #              the parked pose into live tracking (mostly the fingers)
++    #   tracking : normal following; the next A (save) or B (discard) -> homing
++    def _upper_idx(self):
++        return self.robot_model.get_joint_group_indices("upper_body")
++
++    def _hand_positions(self) -> np.ndarray:
++        if self._hand_pos is None:
++            up = list(self._upper_idx())
++            hands = self.robot_model.get_joint_group_indices("hands")
++            self._hand_pos = np.array([up.index(i) for i in hands if i in up], dtype=int)
++        return self._hand_pos
++
++    def _canonical_ee(self, pp):
++        """Wrist poses of the parked configuration (canonical default pose, plus the current
++        randomized home offset if any). Recomputed whenever the parked pose changes."""
++        q_up = self._home_to if getattr(self, "_home_to", None) is not None else None
++        cache = getattr(self, "_parked_ee_cache", None)
++        if cache is not None and (q_up is None or np.array_equal(cache[0], q_up)):
++            return cache[1]
++        q = np.array(pp.robot.default_body_pose, dtype=float).copy()
++        if q_up is not None:
++            q[self._upper_idx()] = q_up
++        pp.robot.cache_forward_kinematics(q, auto_clip=False)
++        ee = {n: pp.robot.frame_placement(n).np.copy() for n in pp.ee_name_list}
++        pp.robot.reset_forward_kinematics()
++        self._parked_ee_cache = (None if q_up is None else q_up.copy(), ee)
++        return ee
++
++    def _resnap_origin(self):
++        """Re-zero the operator's displacement without a full re-calibration, and anchor the
++        robot-side reference to the CANONICAL pose's wrists.
++
++        Stock calibration anchors the reference to the zero configuration, so "zero operator
++        displacement" would pull the arms toward whatever IK solution reaches those wrists,
++        not the canonical joints. Anchoring to the canonical pose's wrist poses makes zero
++        displacement == canonical pose, so parking there and releasing is jump-free.
++        TeleopStreamer.calibrate() appends to ee_name_list on every call, so it cannot run
++        at loop rate; only the two transforms it sets are updated here.
++        """
++        pp = getattr(self.teleop_streamer, "body_pre_processor", None)
++        if pp is None or not getattr(pp, "ee_name_list", None):
++            return
++        raw = self.teleop_streamer._get_live_data().ik_data or {}
++        names = self.robot_model.supplemental_info.hand_frame_names
++        canon = self._canonical_ee(pp)
++        for ee in pp.ee_name_list:
++            key = "left_wrist" if ee == names["left"] else "right_wrist"
++            if key in raw:
++                pp.init_teleop_T_teleop_world[ee] = np.linalg.inv(np.asarray(raw[key], dtype=float))
++            if ee in canon:
++                pp.robot_world_T_init_ee[ee] = canon[ee].copy()
++
++    def _upper_joint_names(self):
++        if getattr(self, "_upper_names", None) is None:
++            inv = {v: k for k, v in self.robot_model.joint_to_dof_index.items()}
++            self._upper_names = [inv[i] for i in self._upper_idx()]
++        return self._upper_names
++
++    def _parked_pose(self, fallback: np.ndarray) -> np.ndarray:
++        """Where 'parked' sits: the robot model's canonical (default) upper-body joints, hands open.
++
++        home_randomize enables the per-part options: home_random_arms draws a fresh per-joint arm
++        offset every time the robot goes home (activation, save, discard), sized like the
++        initial-pose spread of Psi's real-robot data and clipped to +-2.5 sigma and the joint
++        limits; home_random_height draws the base height in [min, max]. Both are off by default,
++        so home_randomize alone changes nothing: canonical arms, 0.74 m."""
++        up = self._upper_idx()
++        q = np.asarray(self.robot_model.default_body_pose, dtype=float)[up].copy()
++        q[self._hand_positions()] = 0.0
++        if self.home_randomize and self.home_random_arms:
++            hands = np.zeros(len(q), dtype=bool); hands[self._hand_positions()] = True
++            off = sample_home_offset(self._upper_joint_names(), self._home_rng, self.home_random_scale,
++                                     hands_mask=hands, randomize_hands=self.home_random_hands)
++            q = q + off
++            lo = np.asarray(self.robot_model.lower_joint_limits, dtype=float)[up]
++            hi = np.asarray(self.robot_model.upper_joint_limits, dtype=float)[up]
++            q = np.clip(q, lo, hi)
++            self._home_offset = q - (np.asarray(self.robot_model.default_body_pose, dtype=float)[up])
++            print(f"[teleop] randomized home pose: max |offset| {np.abs(self._home_offset).max():.3f} rad "
++                  f"(scale {self.home_random_scale:g})")
++        else:
++            self._home_offset = np.zeros(len(q))
++        self._parked_ee_cache = None      # wrist anchor must follow the new parked pose
++        return q
++
++    def _device_streamer(self):
++        return getattr(self.teleop_streamer, "body_streamer", None)
++
++    def _current_height(self, action: dict) -> float:
++        h = action.get("base_height_command", None)
++        if h is None:
++            dev = self._device_streamer()
++            h = getattr(dev, "current_base_height", 0.74) if dev is not None else 0.74
++        return float(np.asarray(h, dtype=float).ravel()[0])
++
++    def _set_height(self, action: dict, h: float):
++        """Command base height h this tick and keep the device's X/Y integrator in sync, so
++        the operator's later adjustments continue from h instead of jumping back."""
++        h = float(h)
++        action["base_height_command"] = np.atleast_1d(np.asarray(h, dtype=np.float64))
++        dev = self._device_streamer()
++        if dev is not None and hasattr(dev, "current_base_height"):
++            dev.current_base_height = h
++        self._home_height = h
++
++    def _begin_homing(self, q_from: np.ndarray, h_from: Optional[float] = None):
++        self._home_from = np.array(q_from, dtype=float).copy()
++        self._home_to = self._parked_pose(fallback=self._home_from)
++        if self.home_randomize and self.home_random_height:
++            lo, hi = self.home_random_height_range
++            self._home_height_from = float(h_from if h_from is not None else (self._home_height if self._home_height is not None else hi))
++            self._home_height_to = float(self._home_rng.uniform(lo, hi))
++            print(f"[teleop] randomized home height: {self._home_height_from:.3f} -> {self._home_height_to:.3f} m")
++        else:
++            self._home_height_from = self._home_height_to = None
++        self._home_q = self._home_from.copy()
++        self._home_t0 = self._home_t_prev = time.monotonic()
++        self._state = "homing"
++        print(
++            f"[teleop] homing: max joint delta {np.abs(self._home_to - self._home_from).max():.2f} rad "
++            f"over {self.home_duration:.1f}s, then parked until A"
++        )
++
++    def _park_state_machine(self, action: dict):
++        pressed_c = bool(action.get("toggle_data_collection", False)) or self._last_key == "c"
++        pressed_x = bool(action.get("toggle_data_abort", False)) or self._last_key == "x"
++        self._last_key = ""
++        ik_q = np.array(action["target_upper_body_pose"], dtype=float)
++        now = time.monotonic()
++
++        if not self.is_active:
++            self._state = "free"
++            self._last_published = ik_q
++            return
++
++        if self._state == "free":
++            # Just activated: glide to the parked pose instead of the stock snap.
++            self._begin_homing(self._last_published if self._last_published is not None else ik_q, self._current_height(action))
++
++        out = ik_q
++        if self._state == "tracking":
++            if pressed_c or pressed_x:
++                print(f"[teleop] episode {'saved' if pressed_c else 'discarded'} -> returning to parked pose")
++                # Start the ramp from what the robot was last COMMANDED, not from this tick's
++                # fresh IK output: if the operator's hands move at the press instant the IK
++                # target jumps, and seeding from it would put a step at the ramp start.
++                self._begin_homing(self._last_published if self._last_published is not None else ik_q, self._current_height(action))
++        if self._state == "homing":
++            self._resnap_origin()
++            dt = max(now - self._home_t_prev, 1e-3)
++            self._home_t_prev = now
++            q_des = min_jerk_ramp(self._home_from, self._home_to, now - self._home_t0, self.home_duration)
++            self._home_q = clip_step(self._home_q, q_des, self.home_max_joint_speed, dt)
++            out = self._home_q
++            if self._home_height_to is not None:
++                self._set_height(action, float(min_jerk_ramp(np.array([self._home_height_from]), np.array([self._home_height_to]),
++                                                             now - self._home_t0, self.home_duration)[0]))
++            if (now - self._home_t0) >= self.home_duration and np.abs(self._home_q - self._home_to).max() < 1e-3:
++                self._state = "parked"
++                print("[teleop] parked at the canonical pose; press A to start recording (robot releases on A)")
++        elif self._state == "parked":
++            self._resnap_origin()
++            out = self._home_to
++            if self._home_height_to is not None:
++                self._set_height(action, self._home_height_to)
++            if pressed_c:
++                self._state = "release"
++                self._release_t0 = now
++                print("[teleop] A: recording starts from the parked pose, releasing to tracking")
++        elif self._state == "release":
++            t = (now - self._release_t0) / max(self.release_blend_duration, 1e-3)
++            w = 1.0 if t >= 1.0 else 10 * t**3 - 15 * t**4 + 6 * t**5
++            out = self._home_to + (ik_q - self._home_to) * w
++            if t >= 1.0:
++                self._state = "tracking"
++
++        action["target_upper_body_pose"] = out
++        self._last_published = np.array(out, dtype=float).copy()
++        self.retargeting_ik._most_recent_q[self._upper_idx()] = self._last_published
++
+     def close(self) -> bool:
+         self.teleop_streamer.stop_streaming()
+         return True
+@@ -140,6 +426,7 @@ class TeleopPolicy(Policy):
+     def check_activation(self, teleop_data: dict, wait_for_activation: int = 5):
+         """Activation logic only looks at teleop data commands"""
+         key = self.keyboard_listener.read_msg() if self.keyboard_listener else ""
++        self._last_key = key or ""
+         toggle_activation_by_keyboard = key == "l"
+         reset_teleop_policy_by_keyboard = key == "k"
+         toggle_activation_by_teleop = teleop_data.get("toggle_activation", False)
+diff --git a/control/robot_model/instantiation/g1.py b/control/robot_model/instantiation/g1.py
+index 23bd805..59bbdff 100644
+--- a/control/robot_model/instantiation/g1.py
++++ b/control/robot_model/instantiation/g1.py
+@@ -1,3 +1,5 @@
++import json
++import numpy as np
+ import os
+ from pathlib import Path
+ from typing import Literal
+@@ -10,9 +12,79 @@ from decoupled_wbc.control.robot_model.supplemental_info.g1.g1_supplemental_info
+ )
  
  
- class ROSImgMsgSubscriber:
-diff --git a/control/utils/sync_sim_utils.py b/control/utils/sync_sim_utils.py
-index ab02db5..4aed396 100644
---- a/control/utils/sync_sim_utils.py
-+++ b/control/utils/sync_sim_utils.py
-@@ -417,6 +417,9 @@ def generate_frame(
-         ).reshape(
-             1,
-         ),
-+        "observation.torso_rpy_command": np.array(
-+            wbc_action["torso_rpy_cmd"], dtype=np.float64
-+        ).reshape(3),
-         "observation.sim.seed": np.array([seed], dtype=np.int32),
-         "observation.sim.mujoco_state_len": np.array([mujoco_state_len], dtype=np.int32),
-         "observation.sim.max_mujoco_state_len": np.array([max_mujoco_state_len], dtype=np.int32),
-diff --git a/data/utils.py b/data/utils.py
-index 39cbe0e..10f56bc 100644
---- a/data/utils.py
-+++ b/data/utils.py
-@@ -75,6 +75,11 @@ def get_modality_config(robot_model: RobotModel, add_stereo_camera: bool = False
-                 "original_key": "teleop.base_height_command",
-             },
-             "navigate_command": {"start": 0, "end": 4, "original_key": "teleop.navigate_command"},
-+            "torso_rpy_command": {
-+                "start": 0,
-+                "end": 3,
-+                "original_key": "observation.torso_rpy_command",
-+            },
-         },
-         "video": {"ego_view": {"original_key": "observation.images.ego_view"}},
-         "annotation": {"human.task_description": {"original_key": "task_index"}},
-@@ -155,11 +160,11 @@ def get_dataset_features(robot_model: RobotModel, add_stereo_camera: bool = Fals
-             "shape": (6,),
-             "names": ["lin_vel_x", "lin_vel_y", "lin_vel_z", "ang_vel_x", "ang_vel_y", "ang_vel_z"],
-         },
--        # "observation.torso_rpy_command": {
--        #     "dtype": "float64",
--        #     "shape": (3,),
--        #     "names": ["roll", "pitch", "yaw"],
--        # },
-+        "observation.torso_rpy_command": {
-+            "dtype": "float64",
-+            "shape": (3,),
-+            "names": ["roll", "pitch", "yaw"],
-+        },
-     }
-     if add_stereo_camera:
-         dataset_features.update(
-diff --git a/scripts/deploy_g1.py b/scripts/deploy_g1.py
-index b2fa6be..2dac31f 100644
---- a/scripts/deploy_g1.py
-+++ b/scripts/deploy_g1.py
-@@ -209,6 +209,11 @@ class G1Deployment:
-             "None" if self.config.sim_in_single_process else self.config.simulator,
-             "--control_frequency",
-             str(self.config.control_frequency),
-+            # Forward the interpolator rate limit: without this the control loop
-+            # falls back to its own default (1000 rad/s), which exceeds the
-+            # joint safety limits (6 arm / 50 hand rad/s) on any fast target.
-+            "--upper_body_joint_speed",
-+            str(self.config.upper_body_joint_speed),
-         ]
++# Upper-body "init pose" presets: the pose the robot boots to, parks at (home_after_save) and
++# that every recording starts from. Joints not listed are 0. Legs/waist are owned by the
++# lower-body RL policy and are never part of an init pose.
++INIT_POSE_PRESETS = {
++    # user-defined default since 2026-09-16: every joint 0 except both elbows -0.66 rad
++    # (arms slightly raised); same as the deployment client's INIT_POSE=5 (-0.65 there)
++    "elbows_raised": {"left_elbow_joint": -0.66, "right_elbow_joint": -0.66},
++    # the previous canonical pose: arms hanging, shoulder roll +-0.2, everything else 0
++    "canonical": {"left_shoulder_roll_joint": 0.2, "right_shoulder_roll_joint": -0.2},
++    # supplemental-info ElbowPose.HIGH (legacy --high-elbow-pose)
++    "high_elbow": None,
++}
++DEFAULT_INIT_POSE = "elbows_raised"
++
++
++def resolve_init_pose(init_pose):
++    """-> (name, mapping | None). Accepts a preset name, a path to a JSON {joint: rad}, or a dict."""
++    if init_pose is None:
++        init_pose = os.environ.get("DECOUPLED_WBC_INIT_POSE", DEFAULT_INIT_POSE)
++    if isinstance(init_pose, dict):
++        return "custom", dict(init_pose)
++    if init_pose in INIT_POSE_PRESETS:
++        return init_pose, INIT_POSE_PRESETS[init_pose]
++    if os.path.isfile(str(init_pose)):
++        with open(init_pose) as f:
++            return os.path.basename(str(init_pose)), {k: float(v) for k, v in json.load(f).items()}
++    raise ValueError(f"init_pose must be one of {list(INIT_POSE_PRESETS)} or a JSON file path, got {init_pose!r}")
++
++
++def apply_init_pose(robot_model, mapping: dict, name: str = "custom", verbose: bool = True):
++    """Set the model's default/initial body pose for the UPPER-BODY joints in `mapping`
++    (unlisted upper-body joints -> 0). Leg/waist entries are ignored (lower-body policy owns them).
++    Values outside the joint limits are clipped (with a warning)."""
++    upper = set(robot_model.get_joint_group_indices("upper_body"))
++    q = np.asarray(robot_model.default_body_pose, dtype=float).copy()
++    for idx in upper:
++        q[idx] = 0.0
++    lo, hi = np.asarray(robot_model.lower_joint_limits, dtype=float), np.asarray(robot_model.upper_joint_limits, dtype=float)
++    root_nq = len(q) - len(lo)
++    ignored, clipped = [], []
++    for joint, val in mapping.items():
++        if joint not in robot_model.joint_to_dof_index:
++            ignored.append(joint); continue
++        idx = robot_model.joint_to_dof_index[joint]
++        if idx not in upper:
++            if abs(float(val)) > 1e-9:
++                ignored.append(joint)
++            continue
++        v = float(val); l, h = lo[idx - root_nq], hi[idx - root_nq]
++        if v < l or v > h:
++            clipped.append((joint, v, float(np.clip(v, l, h)))); v = float(np.clip(v, l, h))
++        q[idx] = v
++    robot_model.default_body_pose = q
++    robot_model.initial_body_pose = q.copy()
++    if verbose:
++        nz = {robot_model_joint_name(robot_model, i): round(float(q[i]), 3) for i in sorted(upper) if abs(q[i]) > 1e-9}
++        print(f"[robot_model] init pose '{name}': non-zero upper-body joints {nz or '{}'}"
++              + (f"; ignored non-upper-body entries {ignored}" if ignored else "")
++              + (f"; clipped to joint limits {clipped}" if clipped else ""))
++    return q
++
++
++def robot_model_joint_name(robot_model, dof_idx):
++    for k, v in robot_model.joint_to_dof_index.items():
++        if v == dof_idx:
++            return k
++    return str(dof_idx)
++
++
+ def instantiate_g1_robot_model(
+     waist_location: Literal["lower_body", "upper_body", "lower_and_upper_body"] = "lower_body",
+     high_elbow_pose: bool = False,
++    init_pose=None,
+ ):
+     """
+     Instantiate a G1 robot model with configurable waist location and pose.
+@@ -23,6 +95,10 @@ def instantiate_g1_robot_model(
+                         or "lower_and_upper_body" (waist reference from arms/manipulation
+                         via IK then passed to lower body policy)
+         high_elbow_pose: Whether to use high elbow pose configuration for default joint positions
++            (legacy; same as init_pose="high_elbow")
++        init_pose: upper-body init/home pose: a preset name (see INIT_POSE_PRESETS; default
++            "elbows_raised", overridable with env DECOUPLED_WBC_INIT_POSE), a JSON file
++            {joint_name: rad}, or a dict. Applied to arms + hands; legs/waist entries ignored.
  
-         # Handle boolean flag using presence/absence pattern
-@@ -322,6 +327,11 @@ class G1Deployment:
-             self.config.camera_host,
-             "--camera_port",
-             str(self.config.camera_port),
-+            # Our ego camera is a RealSense publishing only 'ego_view'. The
-+            # exporter's add_stereo_camera default (True) additionally demands
-+            # OAK-style ego_view_left_mono/right_mono channels and crashes with
-+            # "Required image 'ego_view_left_mono' ... not found" otherwise.
-+            "--no-add_stereo_camera",
-         ]
- 
-         if not self._run_in_tmux("data", cmd, pane_index=1):
+     Returns:
+         RobotModel: Configured G1 robot model
+@@ -59,4 +135,9 @@ def instantiate_g1_robot_model(
+         robot_model_config["asset_path"],
+         supplemental_info=robot_model_supplemental_info,
+     )
++    name, mapping = resolve_init_pose("high_elbow" if (init_pose is None and high_elbow_pose) else init_pose)
++    if mapping is not None:
++        apply_init_pose(robot_model, mapping, name)
++    robot_model.init_pose_name = name
++
+     return robot_model
+diff --git a/control/robot_model/supplemental_info/g1/g1_supplemental_info.py b/control/robot_model/supplemental_info/g1/g1_supplemental_info.py
+index da7dc65..730b8c7 100644
+--- a/control/robot_model/supplemental_info/g1/g1_supplemental_info.py
++++ b/control/robot_model/supplemental_info/g1/g1_supplemental_info.py
+@@ -122,7 +122,7 @@ class G1SupplementalInfo(RobotSupplementalInfo):
+             "waist_pitch_joint": [-0.52, 0.52],
+             # Left arm
+             "left_shoulder_pitch_joint": [-3.0892, 2.6704],
+-            "left_shoulder_roll_joint": [0.19, 2.2515],
++            "left_shoulder_roll_joint": [0.0, 2.2515],   # was 0.19; the elbows_raised init pose has roll 0
+             "left_shoulder_yaw_joint": [-2.618, 2.618],
+             "left_elbow_joint": [-1.0472, 2.0944],
+             "left_wrist_roll_joint": [-1.972222054, 1.972222054],
+@@ -130,7 +130,7 @@ class G1SupplementalInfo(RobotSupplementalInfo):
+             "left_wrist_yaw_joint": [-1.614429558, 1.614429558],
+             # Right arm
+             "right_shoulder_pitch_joint": [-3.0892, 2.6704],
+-            "right_shoulder_roll_joint": [-2.2515, -0.19],
++            "right_shoulder_roll_joint": [-2.2515, 0.0],  # was -0.19
+             "right_shoulder_yaw_joint": [-2.618, 2.618],
+             "right_elbow_joint": [-1.0472, 2.0944],
+             "right_wrist_roll_joint": [-1.972222054, 1.972222054],
 diff --git a/control/sensor/realsense.py b/control/sensor/realsense.py
 new file mode 100644
 index 0000000..c28022a
@@ -605,3 +1346,534 @@ index 0000000..c28022a
 +
 +    def __del__(self):
 +        self.close()
+diff --git a/control/teleop/streamers/pico_streamer.py b/control/teleop/streamers/pico_streamer.py
+index 24df0f7..440d567 100644
+--- a/control/teleop/streamers/pico_streamer.py
++++ b/control/teleop/streamers/pico_streamer.py
+@@ -16,6 +16,35 @@ R_HEADSET_TO_WORLD = np.array(
+ )
+ 
+ 
++def _listeners_on(port: int) -> int:
++    """Number of TCP listeners on `port` (ss sees the host's sockets under --network=host)."""
++    try:
++        out = subprocess.run(["ss", "-Htln", f"sport = :{port}"], capture_output=True, text=True, timeout=2).stdout
++        return sum(1 for line in out.splitlines() if line.strip())
++    except Exception:
++        return 1 if _port_open("127.0.0.1", port) else 0
++
++
++def _port_open(host: str, port: int) -> bool:
++    import socket
++    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.2)
++    try:
++        return s.connect_ex((host, port)) == 0
++    finally:
++        s.close()
++
++
++def integrate_yaw_dial(prev: float, vyaw: float, dt: float) -> float:
++    """Integrate the yaw stick into the target-yaw dial WITHOUT wrapping.
++
++    The dial is an unbounded, continuous angle. It used to be wrapped to [-pi, pi]; whenever the
++    accumulated dial crossed +-pi the value jumped by 2pi, and downstream that jump was linearly
++    interpolated / rate-limited into a ~1 s sweep through every heading, which the yaw controller
++    followed (robot wobbles) and the recorder wrote (real_recordings 2026-09-17 ep 4/5/9/12).
++    The consumer (G1GearWbcPolicy) wraps the yaw ERROR, so an unbounded dial is exactly right."""
++    return float(prev) + float(vyaw) * float(dt)
++
++
+ class PicoStreamer(BaseStreamer):
+     def __init__(self):
+         self.xr_client = XrClient()
+@@ -24,15 +53,34 @@ class PicoStreamer(BaseStreamer):
+         self.reset_status()
+ 
+     def run_pico_service(self):
+-        # Run the pico service
++        """Attach to the XRoboToolkit PC service, spawning it only if none is running.
++
++        The service binds 127.0.0.1:60061 with SO_REUSEPORT, so two instances (one started by
++        hand on the host, one spawned here; or a leftover from a crashed teleop plus a new one)
++        coexist silently and the kernel spreads client connections across them. The headset is
++        attached to only one of them, so the teleop may see no tracking at all (2026-09-16,
++        three times). Rule: never start a second instance. If one is listening, use it; if two
++        are listening, say so loudly (deploy_g1 refuses to start in that case)."""
++        n = _listeners_on(60061)
++        if n >= 1:
++            self.pico_service_pid = None
++            print(f"Pico service already running on 127.0.0.1:60061 ({n} listener{'s' if n > 1 else ''}): reusing it, not spawning another")
++            if n > 1:
++                print("WARNING: more than one Pico service is listening on 60061. The headset talks to only one of them; "
++                      "kill the extra one on the host (pkill -f RoboticsServiceProcess) and restart the teleop.")
++            return
+         self.pico_service_pid = subprocess.Popen(
+-            ["bash", "/opt/apps/roboticsservice/runService.sh"]
++            ["bash", "/opt/apps/roboticsservice/runService.sh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+         )
+-        print(f"Pico service running with pid {self.pico_service_pid.pid}")
++        for _ in range(50):                                   # wait until it listens
++            if _listeners_on(60061):
++                break
++            time.sleep(0.1)
++        print(f"Pico service started with pid {self.pico_service_pid.pid} (single instance on 127.0.0.1:60061)")
+ 
+     def stop_pico_service(self):
+         # find pid and kill it
+-        if self.pico_service_pid:
++        if getattr(self, "pico_service_pid", None) is not None:
+             subprocess.Popen(["kill", "-9", str(self.pico_service_pid.pid)])
+             print(f"Pico service killed with pid {self.pico_service_pid.pid}")
+         else:
+@@ -61,7 +109,43 @@ class PicoStreamer(BaseStreamer):
+     def __del__(self):
+         pass
+ 
++    def _stream_watchdog(self):
++        """Re-initialise the SDK client if the service stopped streaming to us.
++
++        The PC service streams to its clients as one shared stream; another client connecting and
++        closing (a diagnostic script, a second teleop) stops it for everyone, and this client then
++        sees frozen poses and buttons (A presses go nowhere: 2026-09-16 19:32). If the SDK
++        timestamp has not advanced for `stall_s`, close and re-init the client, which restarts the
++        stream."""
++        try:
++            ts = int(self.xr_client.get_timestamp_ns())
++        except Exception:
++            return
++        now = time.monotonic()
++        if not hasattr(self, "_wd_last_ts"):
++            self._wd_last_ts, self._wd_last_change, self._wd_restarts = ts, now, 0
++            return
++        if ts != self._wd_last_ts:
++            self._wd_last_ts, self._wd_last_change = ts, now
++            return
++        if now - self._wd_last_change > self._wd_stall_s and now - getattr(self, "_wd_last_restart", 0.0) > 2.0:
++            self._wd_last_restart = now; self._wd_restarts += 1
++            print(f"[pico] tracking stream stalled for {now - self._wd_last_change:.1f} s: re-initialising the XR client "
++                  f"(restart #{self._wd_restarts})", flush=True)
++            try:
++                self.xr_client.close()
++            except Exception:
++                pass
++            try:
++                self.xr_client = XrClient()
++            except Exception as exc:
++                print(f"[pico] XR client re-init failed: {exc}", flush=True)
++            self._wd_last_change = now
++
++    _wd_stall_s = 1.0
++
+     def _get_pico_data(self):
++        self._stream_watchdog()
+         pico_data = {}
+ 
+         # Get the pose of the left and right controllers and the headset
+@@ -126,9 +210,7 @@ class PicoStreamer(BaseStreamer):
+         # Compute raw yaw angular velocity and integrate to produce absolute target yaw angle
+         _DT = 1.0 / 50.0  # fixed 50Hz call rate
+         vyaw = self._apply_dead_zone(yaw_input, DEAD_ZONE) * MAX_ANGULAR_VEL
+-        self.target_yaw += vyaw * _DT
+-        # Wrap to [-pi, pi]
+-        self.target_yaw = np.arctan2(np.sin(self.target_yaw), np.cos(self.target_yaw))
++        self.target_yaw = integrate_yaw_dial(self.target_yaw, vyaw, _DT)
+ 
+         # Get base height command
+         height_increment = 0.01  # Small step per call when button is pressed
+diff --git a/control/utils/navigate_cmd.py b/control/utils/navigate_cmd.py
+new file mode 100644
+index 0000000..81bffb2
+--- /dev/null
++++ b/control/utils/navigate_cmd.py
+@@ -0,0 +1,24 @@
++"""Navigation command as written into the recording (ROS-free; importable by tests)."""
++try:
++    from decoupled_wbc.control.main.constants import DEFAULT_NAV_CMD
++except Exception:  # pragma: no cover - constants module unavailable in a minimal env
++    DEFAULT_NAV_CMD = [0.0, 0.0, 0.0, 0.0]
++
++
++def recorded_navigate_cmd(last_teleop_cmd, wbc_action):
++    """[vx, vy, turn flag, target_yaw] for the data exporter.
++
++    vx, vy and the turn flag are what the operator commanded. target_yaw is `target_yaw_rel`
++    from the lower-body policy: the dial RELATIVE to the heading at the A press, so it is
++    exactly 0 at episode start and does not depend on where the robot faces in the room
++    (Psi convention). The fallback to the synced absolute dial exists only for policies that
++    do not report `target_yaw_rel`; G1DecoupledWholeBodyPolicy must forward it (regression
++    test: tests/test_target_yaw_relative.py)."""
++    nav = list(last_teleop_cmd.get("navigate_cmd", DEFAULT_NAV_CMD))
++    if isinstance(wbc_action, dict) and "target_yaw_rel" in wbc_action and len(nav) >= 4:
++        nav[3] = float(wbc_action["target_yaw_rel"])
++        return nav
++    synced = wbc_action.get("navigate_cmd") if isinstance(wbc_action, dict) else None
++    if synced is not None and len(synced) >= 4 and len(nav) >= 4:
++        nav[3] = float(synced[3])
++    return nav
+diff --git a/control/utils/network_utils.py b/control/utils/network_utils.py
+index 105a5cd..c3c8e58 100644
+--- a/control/utils/network_utils.py
++++ b/control/utils/network_utils.py
+@@ -4,6 +4,7 @@ Simple network interface utilities
+ """
+ 
+ import platform
++import os
+ import re
+ import subprocess
+ 
+@@ -68,12 +69,15 @@ def find_interface_by_ip(target_ip):
+     return None
+ 
+ 
+-def resolve_interface(interface: str) -> tuple[str, str]:
++def resolve_interface(interface: str, robot_ip: str | None = None) -> tuple[str, str]:
+     """
+     Resolve interface parameter to actual network interface name and environment type
+ 
+     Args:
+         interface: "sim", "real", or direct interface name or IP address
++        robot_ip: the robot's address (BaseConfig.robot_ip). With "real", the NIC that shares a
++            /24 with it is chosen when no NIC is on the robot's factory LAN (192.168.123.x), so
++            the stack follows the robot to whatever network it is on (wired NICs preferred).
+ 
+     Returns:
+         tuple: (interface_name, env_type) where env_type is "sim" or "real"
+@@ -100,6 +104,16 @@ def resolve_interface(interface: str) -> tuple[str, str]:
+             for ip in ip_list:
+                 if ip.startswith("192.168.123."):
+                     return iface, "real"
++        target = robot_ip or os.environ.get("ROBOT_IP")
++        if target and re.match(r"^\d+\.\d+\.\d+\.\d+$", target):
++            prefix = ".".join(target.split(".")[:3]) + "."
++            cands = [i for i, ips in interfaces.items() if i != "lo" and any(ip.startswith(prefix) for ip in ips)]
++            cands.sort(key=lambda n: (n.startswith("wl"), n))          # wired before wireless
++            if cands:
++                print(f"[network] interface 'real' -> {cands[0]} (same /24 as robot {target})")
++                return cands[0], "real"
++        print("[network] WARNING: interface 'real' could not be resolved: no NIC on 192.168.123.x and none sharing a "
++              f"/24 with the robot ({target or 'robot_ip not given'}); pass --interface <nic> explicitly")
+         return interface, "real"  # fallback
+ 
+     else:
+diff --git a/control/utils/ros_utils.py b/control/utils/ros_utils.py
+index f24890f..7251f12 100644
+--- a/control/utils/ros_utils.py
++++ b/control/utils/ros_utils.py
+@@ -1,15 +1,17 @@
++import array
+ import base64
+ import signal
+ import threading
+ from typing import Optional
+ 
+ import msgpack
++from decoupled_wbc.control.utils.state_shelf import StateShelf
+ import msgpack_numpy as mnp
+ import rclpy
+ from rclpy.executors import SingleThreadedExecutor
+ from rclpy.node import Node
+ from sensor_msgs.msg import Image
+-from std_msgs.msg import ByteMultiArray
++from std_msgs.msg import UInt8MultiArray
+ from std_srvs.srv import Trigger
+ 
+ _signal_registered = False
+@@ -88,13 +90,17 @@ class ROSMsgPublisher:
+     def __init__(self, topic_name: str):
+         ros_manager = ROSManager()
+         self.node = ros_manager.node
+-        self.publisher = self.node.create_publisher(ByteMultiArray, topic_name, 1)
++        self.publisher = self.node.create_publisher(UInt8MultiArray, topic_name, 1)
+ 
+     def publish(self, msg: dict):
++        # One uint8 array per message. The previous ByteMultiArray encoding built one
++        # Python bytes object per payload byte (thousands per message at 50 Hz), and
++        # rclpy converted each of them individually on both the publishing and the
++        # receiving thread -- that per-byte work is what starved the subscriber's
++        # spin thread and produced duplicate rows in the recordings.
+         payload = msgpack.packb(msg, default=mnp.encode)
+-        payload = tuple(bytes([a]) for a in payload)
+-        msg = ByteMultiArray()
+-        msg.data = payload
++        msg = UInt8MultiArray()
++        msg.data = array.array("B", payload)
+         self.publisher.publish(msg)
+ 
+ 
+@@ -103,23 +109,37 @@ class ROSMsgSubscriber:
+     Subscribes to any topics published by a ROSMsgPublisher.
+     """
+ 
+-    def __init__(self, topic_name: str):
++    def __init__(self, topic_name: str, depth: int = 50):
+         ros_manager = ROSManager()
+         self.node = ros_manager.node
+-        self._msg = None
++        # Keeps the last `depth` messages with arrival times (was: one slot, consumed once per
++        # camera frame -> a late spin thread meant a duplicate row). See StateShelf.
++        self.shelf = StateShelf(maxlen=depth)
+         self.subscription = self.node.create_subscription(
+-            ByteMultiArray, topic_name, self._callback, 1
++            UInt8MultiArray, topic_name, self._callback, depth
+         )
+ 
+-    def _callback(self, msg: ByteMultiArray):
+-        self._msg = msg
++    @property
++    def seq(self):
++        return self.shelf.seq
++
++    def _callback(self, msg: UInt8MultiArray):
++        # Runs on the spin thread: just shelve the raw message (decoding happens on the consumer).
++        self.shelf.push(msg)
++
++    @staticmethod
++    def decode(msg) -> dict:
++        return msgpack.unpackb(bytes(msg.data), object_hook=mnp.decode)
+ 
+     def get_msg(self) -> Optional[dict]:
+-        msg = self._msg
+-        if msg is None:
+-            return None
+-        self._msg = None
+-        return msgpack.unpackb(bytes([ab for a in msg.data for ab in a]), object_hook=mnp.decode)
++        """Newest message if one arrived since the last take, else None (legacy consume-once API)."""
++        raw, is_new, _ = self.shelf.take_newest()
++        return self.decode(raw) if (raw is not None and is_new) else None
++
++    def take_newest(self):
++        """-> (decoded newest message or None, is_new, arrival_monotonic_time)."""
++        raw, is_new, t = self.shelf.take_newest()
++        return (self.decode(raw) if raw is not None else None), is_new, t
+ 
+ 
+ class ROSImgMsgSubscriber:
+diff --git a/control/utils/state_shelf.py b/control/utils/state_shelf.py
+new file mode 100644
+index 0000000..1148b04
+--- /dev/null
++++ b/control/utils/state_shelf.py
+@@ -0,0 +1,51 @@
++"""Bounded, arrival-stamped shelf for the state/action messages the data exporter consumes (ROS-free).
++
++The old shelf kept ONE message and was consumed once per camera frame. Whenever the subscriber's
++spin thread was late for a camera period, the row had "no new state/action" and repeated the previous
++one (the duplicate-row defect, up to 20 % of an episode on 2026-09-17). This shelf keeps the last
++`maxlen` messages with their arrival times, so late/bursty delivery is never lost, reports whether a
++message is new, and lets the exporter wait a few ms for a fresher one before writing a row.
++"""
++import threading
++import time
++from collections import deque
++from typing import Any, Optional, Tuple
++
++
++class StateShelf:
++    def __init__(self, maxlen: int = 50, clock=time.monotonic):
++        self._buf = deque(maxlen=maxlen)
++        self._lock = threading.Lock()
++        self._clock = clock
++        self.seq = 0                 # messages received so far
++        self.last_used_seq = 0       # seq of the message last handed out by take_newest
++
++    def push(self, raw: Any) -> None:
++        with self._lock:
++            self.seq += 1
++            self._buf.append((self._clock(), self.seq, raw))
++
++    def newest(self) -> Optional[Tuple[float, int, Any]]:
++        with self._lock:
++            return self._buf[-1] if self._buf else None
++
++    def take_newest(self) -> Tuple[Optional[Any], bool, float]:
++        """-> (raw, is_new, arrival_time). is_new: not handed out before (a row built from it is not a duplicate)."""
++        with self._lock:
++            if not self._buf:
++                return None, False, float("nan")
++            t, seq, raw = self._buf[-1]
++            is_new = seq > self.last_used_seq
++            self.last_used_seq = seq
++            return raw, is_new, t
++
++    def wait_for_newer(self, timeout: float, poll: float = 0.001, sleep=time.sleep) -> bool:
++        """Block up to `timeout` s until a message newer than the last handed-out one arrives."""
++        deadline = self._clock() + timeout
++        while True:
++            n = self.newest()
++            if n is not None and n[1] > self.last_used_seq:
++                return True
++            if self._clock() >= deadline:
++                return False
++            sleep(poll)
+diff --git a/control/utils/sync_sim_utils.py b/control/utils/sync_sim_utils.py
+index ab02db5..4aed396 100644
+--- a/control/utils/sync_sim_utils.py
++++ b/control/utils/sync_sim_utils.py
+@@ -417,6 +417,9 @@ def generate_frame(
+         ).reshape(
+             1,
+         ),
++        "observation.torso_rpy_command": np.array(
++            wbc_action["torso_rpy_cmd"], dtype=np.float64
++        ).reshape(3),
+         "observation.sim.seed": np.array([seed], dtype=np.int32),
+         "observation.sim.mujoco_state_len": np.array([mujoco_state_len], dtype=np.int32),
+         "observation.sim.max_mujoco_state_len": np.array([max_mujoco_state_len], dtype=np.int32),
+diff --git a/data/utils.py b/data/utils.py
+index 39cbe0e..10f56bc 100644
+--- a/data/utils.py
++++ b/data/utils.py
+@@ -75,6 +75,11 @@ def get_modality_config(robot_model: RobotModel, add_stereo_camera: bool = False
+                 "original_key": "teleop.base_height_command",
+             },
+             "navigate_command": {"start": 0, "end": 4, "original_key": "teleop.navigate_command"},
++            "torso_rpy_command": {
++                "start": 0,
++                "end": 3,
++                "original_key": "observation.torso_rpy_command",
++            },
+         },
+         "video": {"ego_view": {"original_key": "observation.images.ego_view"}},
+         "annotation": {"human.task_description": {"original_key": "task_index"}},
+@@ -155,11 +160,11 @@ def get_dataset_features(robot_model: RobotModel, add_stereo_camera: bool = Fals
+             "shape": (6,),
+             "names": ["lin_vel_x", "lin_vel_y", "lin_vel_z", "ang_vel_x", "ang_vel_y", "ang_vel_z"],
+         },
+-        # "observation.torso_rpy_command": {
+-        #     "dtype": "float64",
+-        #     "shape": (3,),
+-        #     "names": ["roll", "pitch", "yaw"],
+-        # },
++        "observation.torso_rpy_command": {
++            "dtype": "float64",
++            "shape": (3,),
++            "names": ["roll", "pitch", "yaw"],
++        },
+     }
+     if add_stereo_camera:
+         dataset_features.update(
+diff --git a/scripts/deploy_g1.py b/scripts/deploy_g1.py
+index b2fa6be..62ead4a 100644
+--- a/scripts/deploy_g1.py
++++ b/scripts/deploy_g1.py
+@@ -191,6 +191,21 @@ class G1Deployment:
+         print("Simulation loop started successfully. Waiting for warmup for 10 seconds...")
+         time.sleep(10)  # Wait for sim loop to warm up
+ 
++    def check_pico_service(self) -> bool:
++        """Refuse to start with two XRoboToolkit PC services on 60061 (headset on one, teleop on the other)."""
++        try:
++            out = subprocess.run(["ss", "-Htln", "sport = :60061"], capture_output=True, text=True, timeout=2).stdout
++            n = sum(1 for line in out.splitlines() if line.strip())
++        except Exception:
++            return True
++        if n > 1:
++            print("ERROR: more than one Pico service (RoboticsServiceProcess) is listening on 60061. The headset attaches to "
++                  "only one of them and the teleop would get no tracking. On the HOST run: pkill -f RoboticsServiceProcess ; "
++                  "then start the deploy again (it starts exactly one service itself, or reuses a single running one).")
++            return False
++        print(f"Pico service check: {n} listener on 60061 ({'will reuse it' if n == 1 else 'the teleop will start one'})")
++        return True
++
+     def start_control_loop(self):
+         """Start the G1 control loop"""
+         print("Starting G1 control loop...")
+@@ -209,6 +224,11 @@ class G1Deployment:
+             "None" if self.config.sim_in_single_process else self.config.simulator,
+             "--control_frequency",
+             str(self.config.control_frequency),
++            # Forward the interpolator rate limit: without this the control loop
++            # falls back to its own default (1000 rad/s), which exceeds the
++            # joint safety limits (6 arm / 50 hand rad/s) on any fast target.
++            "--upper_body_joint_speed",
++            str(self.config.upper_body_joint_speed),
+         ]
+ 
+         # Handle boolean flag using presence/absence pattern
+@@ -226,6 +246,7 @@ class G1Deployment:
+             cmd.append("--high_elbow_pose")
+         else:
+             cmd.append("--no-high_elbow_pose")
++        cmd += ["--init_pose", str(self.config.init_pose)]
+ 
+         # Gravity compensation configuration
+         # Note: This is where gravity compensation is actually applied since the control loop
+@@ -237,6 +258,7 @@ class G1Deployment:
+                 cmd.extend(
+                     ["--gravity_compensation_joints"] + self.config.gravity_compensation_joints
+                 )
++            cmd += ["--gravity_compensation_max_torque", str(self.config.gravity_compensation_max_torque)]
+         else:
+             cmd.append("--no-enable_gravity_compensation")
+ 
+@@ -282,6 +304,7 @@ class G1Deployment:
+             cmd.append("--high_elbow_pose")
+         else:
+             cmd.append("--no-high_elbow_pose")
++        cmd += ["--init_pose", str(self.config.init_pose)]
+ 
+         if self.config.enable_visualization:
+             cmd.append("--enable_visualization")
+@@ -293,6 +316,20 @@ class G1Deployment:
+         else:
+             cmd.append("--no-enable_real_device")
+ 
++        # Return-to-canonical-pose after each saved episode (see BaseConfig.home_after_save)
++        cmd.append("--home_after_save" if self.config.home_after_save else "--no-home_after_save")
++        cmd += ["--home_duration", str(self.config.home_duration),
++                "--home_max_joint_speed", str(self.config.home_max_joint_speed)]
++        cmd.append("--home_randomize" if self.config.home_randomize else "--no-home_randomize")
++        cmd += ["--home_random_scale", str(self.config.home_random_scale)]
++        if self.config.home_random_seed is not None:
++            cmd += ["--home_random_seed", str(self.config.home_random_seed)]
++        cmd.append("--home_random_arms" if self.config.home_random_arms else "--no-home_random_arms")
++        cmd.append("--home_random_hands" if self.config.home_random_hands else "--no-home_random_hands")
++        cmd.append("--home_random_height" if self.config.home_random_height else "--no-home_random_height")
++        cmd += ["--home_random_height_min", str(self.config.home_random_height_min),
++                "--home_random_height_max", str(self.config.home_random_height_max)]
++
+         if not self._run_in_tmux("teleop", cmd, pane_index=2):
+             print("ERROR: Teleoperation policy failed to start!")
+             print("Continuing without teleoperation...")
+@@ -314,6 +351,8 @@ class G1Deployment:
+             str(self.config.data_collection_frequency),
+             "--root_output_dir",
+             self.config.root_output_dir,
++            "--init_pose",
++            str(self.config.init_pose),
+             "--lower_body_policy",
+             self.config.wbc_version,
+             "--wbc_model_path",
+@@ -322,6 +361,11 @@ class G1Deployment:
+             self.config.camera_host,
+             "--camera_port",
+             str(self.config.camera_port),
++            # Our ego camera is a RealSense publishing only 'ego_view'. The
++            # exporter's add_stereo_camera default (True) additionally demands
++            # OAK-style ego_view_left_mono/right_mono channels and crashes with
++            # "Required image 'ego_view_left_mono' ... not found" otherwise.
++            "--no-add_stereo_camera",
+         ]
+ 
+         if not self._run_in_tmux("data", cmd, pane_index=1):
+@@ -340,7 +384,7 @@ class G1Deployment:
+         cmd = [
+             sys.executable,
+             str(self.project_root / "scripts/run_webcam_recorder.py"),
+-            "--output_dir",
++            "--output-dir",
+             self.config.webcam_output_dir,
+         ]
+ 
+@@ -387,6 +431,10 @@ class G1Deployment:
+         if self.config.sim_in_single_process:
+             self.start_sim_loop()
+ 
++        if not self.check_pico_service():
++
++            self.cleanup(); return
++
+         self.start_control_loop()
+         self.start_camera_viewer()
+         self.start_policy()  # This will start either teleop or inference policy

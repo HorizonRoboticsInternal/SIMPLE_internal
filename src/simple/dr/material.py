@@ -96,24 +96,20 @@ class MaterialDR(Randomizer):
             'metallic_constant': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
             'specular_level': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
         }
+        if getattr(self.cfg, "keep_robot_shader_params", None):
+            robot_shader_params = dict(self.cfg.keep_robot_shader_params)
+        keep_obj = getattr(self.cfg, "keep_object_shader_params", None) or {}
         object_shader_params = []
-
-        # num_objects = len([obj for obj in layout.actors.values() if isinstance(obj, ObjectActor)])
-
-        # object_shader_params = [{
-        #     'reflection_roughness_constant': np.random.uniform(0.0, 1.0 if self.material_mode != "fixed" else 0.5),
-        #     'metallic_constant': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
-        #     'specular_level': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
-        #     } for _ in range(num_objects)
-        # ]
-
         for key, obj in layout.actors.items():
             if isinstance(obj, ObjectActor):
-                material = {
-                    'reflection_roughness_constant': np.random.uniform(0.0, 1.0 if self.material_mode != "fixed" else 0.5),
-                    'metallic_constant': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
-                    'specular_level': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
-                }
+                if key in keep_obj:
+                    material = dict(keep_obj[key])   # pinned (e.g. the cracker box keeps its look)
+                else:
+                    material = {
+                        'reflection_roughness_constant': np.random.uniform(0.0, 1.0 if self.material_mode != "fixed" else 0.5),
+                        'metallic_constant': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
+                        'specular_level': np.random.uniform(0.0, 1.0) if self.material_mode != "fixed" else 0.,
+                    }
                 obj.set_material(material)
                 object_shader_params.append(material)
 
@@ -137,4 +133,8 @@ class MaterialDR(Randomizer):
 class MaterialDRCfg(RandomizerCfg):
     material_mode: str = "fixed"  # fixed, rand_all, rand_tableground, rand_objects
     table_material: dict | None = None
+    # Eval-scene generation: pin these instead of sampling, so a derived scene keeps the
+    # training base's object (e.g. cracker box) and robot appearance while table/ground change.
+    keep_object_shader_params: dict | None = None   # {actor key -> shader params}
+    keep_robot_shader_params: dict | None = None
     randmizer_class: "Randomizer" = MaterialDR

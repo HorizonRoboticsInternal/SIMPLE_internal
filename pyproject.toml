@@ -140,6 +140,11 @@ plan = "simple.cli.plan:typer_main"
 control = "simple.cli.control:typer_main"
 render = "simple.cli.render:typer_main"
 teleop-decoupled-wbc = "simple.cli.teleop_decoupled_wbc:typer_main"
+teleop-holomotion = "simple.cli.teleop_holomotion:typer_main"
+holomotion-replay = "simple.cli.holomotion_replay:typer_main"
 render-decoupled-wbc = "simple.cli.render_decoupled_wbc:typer_main"
 replay-decoupled-wbc = "simple.cli.replay_decoupled_wbc:typer_main"
 eval-decoupled-wbc = "simple.cli.eval_decoupled_wbc:typer_main"
+
+[tool.pytest.ini_options]
+markers = ["sim: closed-loop tests that run the MuJoCo simulator (slow)"]

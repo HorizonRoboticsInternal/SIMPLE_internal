@@ -16,6 +16,42 @@ import shutil
 from pathlib import Path
 PRERESET_TASK_STATE = "" #"examples/demo_task_state_dict.json" # 
 
+
+def _pin_base_materials(task, env_conf, keep_keys=("target", "container")):
+    """Pin the training base's object/robot shader params so re-sampling only touches table/ground.
+
+    Object shader params are stored as a list in layout order over ObjectActors, i.e. every
+    actor except the tables and the robot. If the base carries no material state (some
+    training sets were recorded without material randomization), the training look is the
+    renderer default, so pin that."""
+    DEFAULT = {"reflection_roughness_constant": 0.5, "metallic_constant": 0.0, "specular_level": 0.0}
+    try:
+        mat = (env_conf.get("dr_state_dict") or {}).get("material") or {}
+        actors = (env_conf.get("layout") or {}).get("actors") or []
+        keys = [a.get("key") or a.get("name") for a in actors] if isinstance(actors, list) else list(actors.keys())
+        obj_keys = [k for k in keys if not str(k).startswith("table") and k != "robot" and not str(k).startswith("light")]
+        params = mat.get("object_shader_params") or []
+        keep = {k: v for k, v in zip(obj_keys, params) if k in keep_keys} if params else {}
+        # The layout is authoritative: it stores the shader params each actor was actually
+        # rendered with, even for training sets whose DR state has no material entry.
+        if isinstance(actors, dict):
+            for k in keep_keys:
+                m = (actors.get(k) or {}).get("material")
+                if isinstance(m, dict) and "reflection_roughness_constant" in m:
+                    keep[k] = dict(m)
+        for k in keep_keys:
+            if k in obj_keys and k not in keep:
+                keep[k] = dict(DEFAULT)
+        rnd = task.dr.randomizers.get("material")
+        rnd.cfg.keep_object_shader_params = keep
+        rnd.cfg.keep_robot_shader_params = mat.get("robot_shader_params") or dict(DEFAULT)
+        print(f"[dr] pinned shader params for {sorted(keep)}: {keep}")
+        return keep
+    except Exception as exc:  # noqa: BLE001
+        print(f"[dr] could not pin base materials: {exc}")
+        return {}
+
+
 def main(
     env_id: Annotated[str, typer.Argument()] = "simple/FrankaTabletopGrasp-v0",
     scene_uid: Annotated[str, typer.Option()] = "hssd:scene1",
@@ -35,6 +71,7 @@ def main(
     debug: Annotated[bool, typer.Option()] = False,
     easy_motion_gen: Annotated[bool, typer.Option()] = False,
     env_config_dir: Annotated[str | None, typer.Option()] = None,
+    keep_object_materials: Annotated[bool, typer.Option()] = False,
 ):
     # create environment
     make_kwargs = dict(
@@ -93,7 +130,12 @@ def main(
     for i in tqdm(range(num_episodes), desc="Generating eval env configs"):
         if env_configs:
             env_conf = env_configs[i % len(env_configs)]
+            if keep_object_materials:
+                _pin_base_materials(task, env_conf)
             obs, info = env.reset(options={"state_dict": env_conf, "dr_level": dr_level})
+            # Save the post-reset state (level-k components re-sampled), not the input base
+            # config -- otherwise the written eval scene is just the training scene again.
+            env_conf = task.state_dict()
         else:
             obs, info = env.reset(options={"state_dict": None, "dr_level": dr_level})
             env_conf = task.state_dict()
