@@ -1,4 +1,4 @@
-# Scenes for the G1: new level 0–3 scenes, three real kitchens, and the HoloMotion controller
+# Scenes for the G1: level-3 scenes, three real kitchens, and the HoloMotion controller
 
 What was built, where it lives, and the one command that runs each. This is the README of the
 `feat/new-simple-eval-tasks` branch; the upstream SIMPLE README is kept as [README_SIMPLE.md](README_SIMPLE.md).
@@ -13,7 +13,9 @@ http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
 | `scenes/make_levels.py` | writes the level 0–3 evaluation sets of a kit (LeRobot format, one `environment_config` per scene) into `data/evals_scenes/<env>/dr-level-<N>/`, plus `meta/scene_env.json` with the kit knobs the set was generated with |
 | `scenes/eval_scene.py` | runs SIMPLE's `eval_decoupled_wbc` on a kit's task: registers the task, re-applies `scene_env.json`, then the standard evaluator |
 | `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
-| `data/evals_scenes/…/dr-level-{0,1,2,3}/` | the twelve level sets (ten scenes each), committed so the evaluator runs without regeneration |
+| `data/evals_scenes_benchmark/<task>/dr-level-3/` | the six original tasks' level-3 sets, 30 reachability-checked scenes each (section 1) |
+| `scenes/level3/` | the tools that built and checked them: candidate generation, per-scene reach fitting, motion-planner check, exact render ([README](scenes/level3/README.md)) |
+| `data/evals_scenes/…/dr-level-{0,1,2,3}/` | the three kitchens' level sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration; not reachability-checked |
 | `scenes/readme_img/` | the pictures of this README |
 | `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`, `src/simple/cli/{teleop_holomotion,holomotion_replay}.py` | the HoloMotion v1.4.1 controller (section 3) |
 | `docs/TELEOP_CONTROL_LOOP_SPEC.md`, `docs/holomotion_teleop.md`, `REAL_ROBOT_RUNBOOK.md` | the teleop stack's control-loop spec, the HoloMotion guide, the real-robot runbook |
@@ -40,39 +42,267 @@ python scenes/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_d
     --port 21000 --headless --num-episodes 10
 ```
 
-## 1 · New level 0/1/2/3 scenes for SIMPLE
+## 1 · Level-3 scenes for SIMPLE
 
-The six original tasks in new scenes: ten at each of the four levels, rendered in Isaac and evaluated once with the official
-Ψ0 checkpoints. Each level adds to the one before it; every level is ten scenes per task:
+The six original tasks in new scenes: 30 level-3 scenes each, rendered in Isaac, every one inside the range where the G1
+can still do the task. Every level-3 scene changes all of these at once:
 
-1. **Level 0**, new scene: new distractors and a new table material
-2. **Level 1**: + new lighting
-3. **Level 2**: + new object poses
-4. **Level 3**: + new layout, on top of levels 0–2 re-randomised in every scene, as the report's alternative layouts did:
-   table top height (ten offsets inside ±4 cm, one per scene) and robot start (ten offsets inside ±10 cm forward/back and
-   ±5 cm sideways, one per scene)
+1. **Scene**: new distractors and a new table material
+2. **Lighting**: new lighting
+3. **Objects**: new object poses
+4. **Layout**: a different robot start and table-top height, chosen per scene inside the range where the G1 can still do
+   the task (within ±10 cm forward/back and ±5 cm sideways at most)
 
-**149 / 220** completed over the four levels (level 3 not evaluated for 2 of the 6 tasks). Levels 0–2: 137/180, level 3: 12/40;
-levels 0–2 are the first ten of the 20-scene sets ([20-scene report with every video](http://10.40.11.11:8899/psi0_new20_report/index.html)).
+**How the ranges were set.** The robot start is chosen after the scene's object pose is drawn, so that the target, seen from
+the start, stays where the G1 can reach it. For the two motion-planner tasks the reach and height limits come from the
+planner that generated their training data, and every final scene was solved by it (grasp and lift executed, up to four
+random grasp draws). The four teleop tasks have no planner: their targets stay inside the reach box of the 100 successful
+demonstrations, and their table heights only move the way the planner found safe for the same kind of grasp. Tools, steps
+and the calibration are in [scenes/level3/README.md](scenes/level3/README.md).
 
-| task | level 0 | level 1 | level 2 | level 3 | the ten scenes of each level |
-|---|---|---|---|---|---|
-| TabletopGrasp | 9/10 | 7/10 | 6/10 | 2/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_TabletopGraspMP_lv3.jpg) |
-| BendPick | 9/10 | 9/10 | 8/10 | 3/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_BendPickMP_lv3.jpg) |
-| XMovePick | 10/10 | 10/10 | 9/10 | 4/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMovePickTeleop_lv3.jpg) |
-| Handover | 10/10 | 7/10 | 4/10 | 3/10 | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_HandoverTeleop_lv3.jpg) |
-| LocoPickBetweenTables | 3/10 | 9/10 | 4/10 | not evaluated | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_LocomotionPickBetweenTablesTeleop_lv3.jpg) |
-| XMoveBendPick | 7/10 | 8/10 | 8/10 | not evaluated | [lv0](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv0.jpg) · [lv1](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv1.jpg) · [lv2](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv2.jpg) · [lv3](http://10.40.11.11:8899/simple_scenes_readme/img/grid_XMoveBendPickTeleop_lv3.jpg) |
+Level 3 ranges per task (cm; forward = toward the table; + = forward / left / up):
 
-Level 0 is new distractors + table material, level 1 adds lighting, level 2 adds object poses, level 3 is levels 0+1+2 combined
-plus table top z (±4 cm) and robot start (±10 / ±5 cm) in every scene.
+| task | grasp | robot start, forward | robot start, sideways | table height | target ahead of the start | target left of the start | checked by |
+|---|---|---|---|---|---|---|---|
+| TabletopGrasp | standing grasp | −3.0 to 9.2 | −2.7 to 5.0 | −4.0 to 0 | 27.4 to 39.8 | −7.0 to 2.7 | motion planner, 30/30 solved |
+| BendPick | bend grasp | −7.4 to 8.2 | −5.0 to 2.9 | −2.0 to 2.0 | 22.2 to 42.6 | −8.0 to 0 | motion planner, 30/30 solved |
+| XMovePick | walk, then standing grasp | −10.0 to 5.1 | −2.7 to 3.5 | −4.0 to 0 | 48.0 to 74.7 | −8.0 to −4.1 | inside the demonstrations' reach |
+| Handover | standing grasp | −3.4 to 4.4 | −4.8 to 4.5 | −3.0 to 0 | 24.9 to 29.8 | −3.9 to 2.0 | inside the demonstrations' reach |
+| LocoPickBetweenTables | standing grasp, then walk | −2.5 to 1.9 | −5.0 to 5.0 | −3.0 to 0 | 30.5 to 33.5 | −3.9 to 4.0 | inside the demonstrations' reach |
+| XMoveBendPick | walk, then bend grasp | −9.7 to 7.9 | −3.8 to 3.4 | −2.0 to 2.0 | 61.3 to 74.4 | −8.0 to −4.0 | inside the demonstrations' reach |
+
+Motion-planner calibration: training scenes still solvable after one change.
+
+| change | TabletopGrasp | BendPick |
+|---|---|---|
+| table 4 / 2 cm lower | 3/4 · 3/4 | 0/4 · 3/4 |
+| table 2 / 4 cm higher | 0/4 · 0/4 | 3/4 · 0/4 |
+| robot 6 / 3 cm back | 0/4 · 1/4 | 4/4 · 3/4 |
+| robot 3 / 6 cm forward | 4/4 · 4/4 | 4/4 · 4/4 |
+| robot 4 cm right / left | 2/4 · 3/4 | 4/4 · 0/4 |
+
+TabletopGrasp cannot start further away or with a higher table: the can is then out of reach, or the arms' start pose hits
+the raised table. Where a combination of changes still failed the planner, that scene's range was shrunk toward the centre
+and the scene re-checked (two rounds); in one TabletopGrasp scene a distractor standing in the grasp path behind the can was
+moved 10 cm further back. Each scene is built on one of the task's 20 base layouts; scenes 21–30 reuse layouts 1–10 with
+everything else drawn anew. The sets are in `data/evals_scenes_benchmark/<task>/dr-level-3`, with the per-scene offsets in
+`meta/feasibility_build.json` and the planner results in `meta/feasibility_planner.jsonl`. They have not been evaluated
+with Ψ0 yet (the earlier 10-scene level 3 scored 12/40 on four of these tasks).
+
+Evaluate a task on its set the standard way (Ψ0 server on `--port`, Isaac rendering):
+
+```bash
+python -m simple.cli.eval_decoupled_wbc simple/G1WholebodyXMovePickTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
+    --data-dir data/evals_scenes_benchmark/G1WholebodyXMovePickTeleop-v0/dr-level-3 --port 21000 --sim-mode mujoco_isaac --headless --num-episodes 30
+python -m simple.cli.eval simple/G1WholebodyTabletopGraspMP-v0 psi0 train --data-format lerobot \
+    --data-dir data/evals_scenes_benchmark/G1WholebodyTabletopGraspMP-v0/dr-level-3 --port 21000 --headless --num-episodes 30
+```
+
+<details><summary><b>TabletopGrasp</b> · 30 level-3 scenes · planner-checked</summary>
+
+![TabletopGrasp: 30 level-3 Isaac scenes](scenes/readme_img/grid_TabletopGraspMP_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | +7.4 | +4.3 | −0.5 | +4.5 | −1.5 | +5.7 | +9.2 | +4.7 | +8.6 | +5.2 |
+| start, sideways | +0.8 | +2.0 | −1.9 | −0.6 | +4.4 | +4.0 | +0.1 | +2.0 | −0.5 | −2.0 |
+| table height | −0.1 | −2.0 | −4.0 | −2.0 | −1.1 | −0.8 | −1.2 | −2.3 | −0.5 | −1.5 |
+| target ahead | 34.0 | 33.6 | 36.8 | 33.6 | 39.0 | 28.3 | 33.2 | 33.2 | 30.8 | 30.7 |
+| target left | −3.4 | −2.1 | 1.3 | −2.1 | −5.3 | −2.2 | −2.9 | −0.1 | −1.7 | −0.1 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | +1.2 | +5.7 | −0.3 | +3.9 | +4.7 | +1.3 | −3.0 | +2.6 | +3.1 | +7.1 |
+| start, sideways | +3.0 | +0.3 | +3.1 | +2.4 | +2.3 | +5.0 | +4.8 | +0.8 | −1.5 | +1.8 |
+| table height | −3.7 | −2.0 | −1.9 | −3.3 | −2.0 | −1.2 | −2.1 | −2.9 | −2.5 | −2.3 |
+| target ahead | 35.5 | 33.6 | 36.5 | 31.7 | 33.6 | 34.1 | 37.7 | 33.8 | 36.7 | 32.2 |
+| target left | −2.4 | −2.1 | −0.2 | −0.9 | −2.1 | −3.4 | −2.9 | 1.4 | −0.2 | −0.2 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | +1.1 | +1.0 | +3.6 | +2.2 | +1.0 | +2.8 | +8.7 | −1.1 | +5.9 | +3.3 |
+| start, sideways | 0 | +1.6 | +1.8 | +0.6 | −2.7 | −0.5 | +1.9 | +1.8 | −0.9 | +3.2 |
+| table height | −3.6 | −1.5 | −1.1 | −3.5 | 0 | −2.0 | −1.9 | −1.4 | −2.5 | −2.0 |
+| target ahead | 38.4 | 36.4 | 33.9 | 36.3 | 33.4 | 33.6 | 35.0 | 37.2 | 33.9 | 33.6 |
+| target left | 0.8 | −1.0 | −3.9 | 0.7 | 2.7 | −2.1 | 0.8 | 0.5 | −0.4 | −2.1 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+</details>
+
+<details><summary><b>BendPick</b> · 30 level-3 scenes · planner-checked</summary>
+
+![BendPick: 30 level-3 Isaac scenes](scenes/readme_img/grid_BendPickMP_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | +0.3 | +4.9 | −5.0 | +2.6 | −6.7 | +4.7 | +8.2 | +0.1 | +7.1 | +4.6 |
+| start, sideways | +0.2 | −4.3 | −3.9 | +1.7 | +1.6 | −2.5 | −1.0 | −2.1 | −0.8 | −4.8 |
+| table height | +0.9 | +0.2 | −2.0 | −0.2 | +0.9 | +0.6 | +0.8 | −0.3 | +1.5 | +0.5 |
+| target ahead | 30.5 | 29.1 | 37.8 | 30.5 | 41.4 | 28.0 | 27.1 | 30.4 | 24.9 | 27.7 |
+| target left | −4.5 | −2.1 | −2.7 | −7.2 | −7.5 | −5.5 | −4.7 | −4.9 | −3.6 | −2.6 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −1.7 | −6.8 | −7.4 | +0.4 | +3.8 | −1.2 | −7.0 | −0.5 | −6.0 | +4.8 |
+| start, sideways | +0.8 | +1.7 | −3.6 | −1.2 | −0.7 | +0.4 | +2.9 | −3.3 | −3.6 | −3.1 |
+| table height | −0.9 | −0.8 | +0.2 | −0.7 | −0.6 | +0.8 | −0.1 | −0.9 | −0.5 | −0.6 |
+| target ahead | 34.0 | 40.7 | 42.0 | 30.8 | 29.8 | 33.3 | 36.5 | 32.4 | 37.5 | 28.9 |
+| target left | −4.9 | −6.1 | −2.7 | −4.3 | −4.8 | −6.0 | −7.7 | −2.8 | −2.4 | −1.1 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −5.6 | −4.2 | −1.5 | −0.3 | +1.8 | +3.5 | +5.9 | −5.9 | +1.7 | −2.4 |
+| start, sideways | −2.9 | −1.1 | +2.4 | −1.3 | −5.0 | −0.4 | −3.0 | −2.1 | −2.6 | −0.7 |
+| table height | −0.8 | +0.5 | +1.7 | −0.7 | +2.0 | −0.9 | +0.1 | +0.6 | −0.5 | +1.3 |
+| target ahead | 36.1 | 37.2 | 32.6 | 34.3 | 33.8 | 27.3 | 26.9 | 38.1 | 30.8 | 34.6 |
+| target left | −3.1 | −4.3 | −6.9 | −3.2 | −0.8 | −5.2 | −4.8 | −3.9 | −3.4 | −5.7 |
+| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+</details>
+
+<details><summary><b>XMovePick</b> · 30 level-3 scenes</summary>
+
+![XMovePick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMovePickTeleop_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | 0 | +2.3 | −6.7 | −1.9 | −8.9 | +4.9 | +5.1 | −3.2 | +2.0 | +2.5 |
+| start, sideways | −0.5 | −1.5 | −1.8 | +3.5 | +3.2 | −0.2 | −1.3 | +1.0 | −1.0 | −2.7 |
+| table height | −0.1 | −1.7 | −4.0 | −2.2 | −1.1 | −0.8 | −1.2 | −2.3 | −0.5 | −1.0 |
+| target ahead | 52.5 | 50.6 | 58.5 | 52.9 | 62.6 | 49.1 | 49.7 | 53.5 | 49.9 | 48.4 |
+| target left | −6.5 | −4.2 | −4.8 | −7.6 | −7.7 | −7.3 | −6.2 | −6.0 | −5.9 | −4.4 |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −4.3 | −8.6 | −9.5 | +0.1 | +2.9 | −3.0 | −7.4 | −4.2 | −10.0 | +2.2 |
+| start, sideways | +2.7 | +2.4 | −2.6 | +2.1 | −0.5 | +0.4 | +0.6 | −1.8 | 0 | −2.1 |
+| table height | −3.7 | −2.8 | −1.8 | −3.3 | −3.2 | −0.4 | −2.1 | −2.9 | −3.0 | −2.6 |
+| target ahead | 58.9 | 59.7 | 60.9 | 53.3 | 52.1 | 57.9 | 60.4 | 54.2 | 63.5 | 52.6 |
+| target left | −6.9 | −7.0 | −4.9 | −6.4 | −6.8 | −8.0 | −7.9 | −5.0 | −4.5 | −4.6 |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −7.7 | −5.6 | −2.7 | −5.6 | −2.1 | +2.3 | +2.0 | −7.1 | −2.6 | −4.1 |
+| start, sideways | −1.6 | +0.2 | +0.8 | −0.2 | −0.9 | 0 | −1.9 | +0.3 | −0.7 | +1.3 |
+| table height | −3.6 | −1.5 | −0.3 | −3.5 | 0 | −3.9 | −1.9 | −1.4 | −2.5 | −0.7 |
+| target ahead | 62.5 | 59.6 | 57.0 | 57.8 | 55.4 | 48.0 | 51.1 | 59.0 | 53.2 | 57.6 |
+| target left | −5.2 | −6.1 | −7.5 | −5.3 | −4.1 | −7.2 | −5.6 | −5.7 | −5.4 | −6.7 |
+
+</details>
+
+<details><summary><b>Handover</b> · 30 level-3 scenes</summary>
+
+![Handover: 30 level-3 Isaac scenes](scenes/readme_img/grid_HandoverTeleop_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | +2.1 | +3.2 | −2.2 | −1.6 | −1.5 | +4.4 | −0.7 | −0.2 | +0.4 | +0.6 |
+| start, sideways | +1.5 | −4.8 | −2.1 | +4.5 | +2.1 | +0.2 | −1.9 | +1.2 | +0.2 | −2.0 |
+| table height | −0.1 | −1.2 | −3.0 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −0.7 |
+| target ahead | 26.4 | 25.7 | 28.6 | 26.8 | 29.5 | 25.2 | 25.4 | 27.1 | 25.6 | 25.1 |
+| target left | −1.7 | 1.6 | 1.0 | −2.8 | −3.5 | −2.9 | −1.4 | −0.9 | −0.6 | 1.6 |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −2.3 | −0.2 | −3.3 | +1.1 | +2.3 | −0.9 | −0.3 | −0.7 | −3.4 | +1.4 |
+| start, sideways | −0.8 | +0.7 | −4.0 | +1.3 | −1.3 | +0.9 | +0.4 | −2.3 | −0.1 | −0.4 |
+| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
+| target ahead | 28.1 | 29.3 | 29.6 | 26.6 | 26.1 | 27.8 | 28.9 | 27.4 | 29.8 | 26.2 |
+| target left | −2.3 | −2.5 | 0 | −1.5 | −2.2 | −3.9 | −3.7 | 0.6 | 1.4 | 1.2 |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −0.2 | −2.6 | −1.1 | −2.0 | +0.1 | +3.8 | −0.2 | −2.7 | −0.7 | −1.3 |
+| start, sideways | −1.5 | −0.5 | +4.3 | −3.1 | −3.5 | +3.8 | −2.8 | −2.3 | −2.6 | +1.6 |
+| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
+| target ahead | 29.1 | 28.4 | 27.6 | 28.3 | 27.3 | 24.9 | 25.9 | 28.8 | 26.9 | 27.9 |
+| target left | 0.4 | −1.1 | −2.5 | 0.2 | 2.0 | −2.5 | −0.3 | −0.4 | 0 | −1.9 |
+
+</details>
+
+<details><summary><b>LocoPickBetweenTables</b> · 30 level-3 scenes</summary>
+
+![LocoPickBetweenTables: 30 level-3 Isaac scenes](scenes/readme_img/grid_LocomotionPickBetweenTablesTeleop_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −1.2 | +1.4 | −0.7 | +0.6 | −0.6 | +1.9 | +1.1 | +0.9 | −0.9 | 0 |
+| start, sideways | −1.0 | −4.7 | −3.7 | +1.1 | +1.2 | +3.8 | −1.3 | +1.8 | +1.5 | −1.7 |
+| table height | −0.1 | −1.2 | −3.0 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −0.7 |
+| target ahead | 31.4 | 31.0 | 32.8 | 31.6 | 33.3 | 30.7 | 30.8 | 31.9 | 30.9 | 30.6 |
+| target left | −1.5 | 3.4 | 2.5 | −3.2 | −3.4 | −1.9 | −0.9 | 1.0 | 1.1 | 3.5 |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −0.5 | −1.6 | −0.3 | +0.4 | +1.8 | +1.0 | −0.7 | −0.4 | −2.2 | +0.2 |
+| start, sideways | −1.3 | +3.4 | −2.2 | +2.5 | +3.2 | +5.0 | +0.6 | −3.1 | −4.5 | −2.0 |
+| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
+| target ahead | 32.5 | 33.2 | 33.4 | 31.5 | 31.2 | 32.2 | 33.0 | 32.0 | 33.5 | 31.3 |
+| target left | −2.5 | −1.1 | 2.4 | 0.4 | 0 | −1.4 | −3.7 | 1.9 | 0.5 | 2.9 |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −2.5 | −1.2 | −0.9 | −0.6 | +0.6 | +1.2 | +0.8 | +0.1 | −0.9 | −1.1 |
+| start, sideways | −0.3 | −1.4 | +1.6 | −3.1 | −5.0 | +0.8 | +0.3 | −0.8 | +1.6 | +0.6 |
+| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
+| target ahead | 33.1 | 32.7 | 32.1 | 32.6 | 31.9 | 30.5 | 31.1 | 32.9 | 31.7 | 32.4 |
+| target left | 2.0 | −0.5 | −2.8 | 0.3 | 2.2 | −2.4 | 1.1 | 0.7 | 2.2 | −1.2 |
+
+</details>
+
+<details><summary><b>XMoveBendPick</b> · 30 level-3 scenes</summary>
+
+![XMoveBendPick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMoveBendPickTeleop_lv3_30.jpg)
+
+Per scene (cm):
+
+| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −0.4 | +2.8 | −7.8 | −3.5 | −0.4 | +0.2 | +7.9 | −3.1 | +4.6 | +4.3 |
+| start, sideways | +0.1 | −3.8 | −0.6 | −0.1 | +3.4 | −0.3 | −1.4 | −0.5 | +1.5 | −1.9 |
+| table height | +1.9 | +0.3 | −2.0 | −0.2 | +0.9 | +1.2 | +0.8 | −0.3 | +1.5 | +1.0 |
+| target ahead | 65.4 | 63.5 | 68.3 | 65.2 | 73.6 | 62.1 | 62.7 | 66.9 | 63.1 | 61.8 |
+| target left | −6.5 | −4.1 | −4.7 | −7.6 | −7.7 | −7.3 | −6.2 | −5.9 | −5.8 | −4.3 |
+
+| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −4.8 | −8.9 | −9.7 | +1.3 | −0.9 | −3.7 | −1.4 | −3.6 | −3.5 | −0.1 |
+| start, sideways | +0.7 | +1.0 | −0.4 | +2.0 | 0 | +0.3 | +2.4 | +0.4 | −0.3 | −0.7 |
+| table height | −1.7 | −0.8 | +0.2 | −1.3 | −1.2 | +1.6 | −0.1 | −0.9 | −1.0 | −0.6 |
+| target ahead | 69.9 | 71.0 | 70.7 | 65.8 | 64.2 | 69.0 | 72.1 | 68.1 | 74.4 | 64.9 |
+| target left | −6.9 | −7.0 | −4.8 | −6.3 | −6.8 | −8.0 | −7.9 | −5.0 | −4.4 | −4.5 |
+
+| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| start, forward | −8.3 | −5.6 | −3.3 | −3.8 | +1.6 | +2.1 | +7.8 | −7.8 | +0.8 | −4.6 |
+| start, sideways | −1.1 | −1.2 | +0.2 | −2.3 | −3.5 | +2.7 | −2.0 | +1.6 | +0.2 | +1.2 |
+| table height | −1.6 | +0.5 | +1.7 | −1.5 | +2.0 | −1.9 | +0.1 | +0.6 | −0.5 | +1.3 |
+| target ahead | 71.6 | 70.8 | 68.5 | 70.3 | 67.6 | 61.3 | 65.8 | 69.7 | 66.7 | 69.4 |
+| target left | −5.1 | −6.1 | −7.4 | −5.2 | −4.0 | −7.2 | −5.5 | −5.7 | −5.4 | −6.6 |
+
+</details>
 
 ## 2 · Real-world scenes rebuilt in MuJoCo
 
 Each is a SIMPLE task plus a replay tool: the real teleop recordings are played back inside the scene and scored by **gates**,
 ordered checks that latch when met, each only after the one before. Reward grows per gate; the last gate is success. One success
-each below. Each scene also ships as SIMPLE evaluation sets at **levels 0–3**, rendered in Isaac (20 scenes at levels 0–2, 10 at
-level 3), the same ladder as section 1. The same gate code scores the replays and the SIMPLE task.
+each below. Each scene also ships as SIMPLE evaluation sets at **levels 0–3**, rendered in Isaac, ten scenes per level (2026-09-24).
+The same gate code scores the replays and the SIMPLE task. The kitchens are not part of the level-3 reachability work of
+section 1: their sets still use the unchecked ±10 cm / ±5 cm / ±4 cm offsets.
 
 On 2026-09-24 each scene was also run once with its deployed HoloBrain model through the standard evaluator
 (`simple.cli.eval_decoupled_wbc` with SIMPLE's `psi0_decoupled_wbc` agent, HTTP `/act`, a whole chunk per query, 8 demasking

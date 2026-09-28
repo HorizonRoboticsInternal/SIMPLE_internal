@@ -1,0 +1,532 @@
+{
+ "task": "G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
+ "ranges": {
+  "rel_x": [
+   0.305,
+   0.335
+  ],
+  "rel_y": [
+   -0.039,
+   0.04
+  ],
+  "dz": [
+   -0.03,
+   0.0
+  ],
+  "kind": "standing grasp, then walk",
+  "check": "demonstrated reach",
+  "why": "the pick happens from the start pose: target inside the demonstrations' reach box; table only lower"
+ },
+ "scenes": [
+  {
+   "scene": 0,
+   "dx": -0.0118,
+   "dy": -0.0104,
+   "dz": -0.001,
+   "rel_x": 0.3143,
+   "rel_y": -0.0147,
+   "table_top": 0.649,
+   "moved_with_table": [
+    "0",
+    "32",
+    "54",
+    "4"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 1,
+   "dx": 0.0141,
+   "dy": -0.0474,
+   "dz": -0.0124,
+   "rel_x": 0.3101,
+   "rel_y": 0.0342,
+   "table_top": 0.6376,
+   "moved_with_table": [
+    "0",
+    "22",
+    "36",
+    "40"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 2,
+   "dx": -0.0069,
+   "dy": -0.0368,
+   "dz": -0.03,
+   "rel_x": 0.3278,
+   "rel_y": 0.0246,
+   "table_top": 0.62,
+   "moved_with_table": [
+    "0",
+    "24",
+    "74",
+    "16"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 3,
+   "dx": 0.0061,
+   "dy": 0.0111,
+   "dz": -0.0166,
+   "rel_x": 0.3164,
+   "rel_y": -0.0319,
+   "table_top": 0.6334,
+   "moved_with_table": [
+    "0",
+    "74",
+    "28",
+    "19"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 4,
+   "dx": -0.0063,
+   "dy": 0.0117,
+   "dz": -0.0083,
+   "rel_x": 0.3329,
+   "rel_y": -0.0344,
+   "table_top": 0.6417,
+   "moved_with_table": [
+    "0",
+    "55",
+    "53",
+    "28"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 5,
+   "dx": 0.0194,
+   "dy": 0.0377,
+   "dz": -0.0062,
+   "rel_x": 0.3071,
+   "rel_y": -0.0193,
+   "table_top": 0.6438,
+   "moved_with_table": [
+    "0",
+    "22",
+    "19",
+    "21"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 6,
+   "dx": 0.0113,
+   "dy": -0.0134,
+   "dz": -0.0093,
+   "rel_x": 0.3081,
+   "rel_y": -0.0092,
+   "table_top": 0.6407,
+   "moved_with_table": [
+    "0",
+    "71",
+    "17",
+    "9"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 7,
+   "dx": 0.0093,
+   "dy": 0.0181,
+   "dz": -0.0176,
+   "rel_x": 0.3185,
+   "rel_y": 0.0103,
+   "table_top": 0.6324,
+   "moved_with_table": [
+    "0",
+    "8",
+    "37",
+    "26"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 8,
+   "dx": -0.0091,
+   "dy": 0.0147,
+   "dz": -0.0041,
+   "rel_x": 0.3091,
+   "rel_y": 0.0113,
+   "table_top": 0.6459,
+   "moved_with_table": [
+    "0",
+    "13",
+    "71",
+    "32"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 9,
+   "dx": 0.0001,
+   "dy": -0.017,
+   "dz": -0.0072,
+   "rel_x": 0.306,
+   "rel_y": 0.035,
+   "table_top": 0.6428,
+   "moved_with_table": [
+    "0",
+    "10",
+    "8",
+    "61"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 10,
+   "dx": -0.0051,
+   "dy": -0.0126,
+   "dz": -0.0279,
+   "rel_x": 0.3247,
+   "rel_y": -0.0247,
+   "table_top": 0.6221,
+   "moved_with_table": [
+    "0",
+    "13",
+    "68",
+    "17"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 11,
+   "dx": -0.0158,
+   "dy": 0.0336,
+   "dz": -0.0207,
+   "rel_x": 0.3319,
+   "rel_y": -0.0115,
+   "table_top": 0.6293,
+   "moved_with_table": [
+    "0",
+    "51",
+    "71",
+    "10"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 12,
+   "dx": -0.0033,
+   "dy": -0.0221,
+   "dz": -0.0134,
+   "rel_x": 0.334,
+   "rel_y": 0.0236,
+   "table_top": 0.6366,
+   "moved_with_table": [
+    "0",
+    "71",
+    "39",
+    "40"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 13,
+   "dx": 0.0035,
+   "dy": 0.0247,
+   "dz": -0.0248,
+   "rel_x": 0.3154,
+   "rel_y": 0.0042,
+   "table_top": 0.6252,
+   "moved_with_table": [
+    "0",
+    "36",
+    "34",
+    "41"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 14,
+   "dx": 0.0176,
+   "dy": 0.0321,
+   "dz": -0.0238,
+   "rel_x": 0.3123,
+   "rel_y": 0.0001,
+   "table_top": 0.6262,
+   "moved_with_table": [
+    "0",
+    "1",
+    "69",
+    "47"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 15,
+   "dx": 0.01,
+   "dy": 0.05,
+   "dz": -0.0031,
+   "rel_x": 0.3225,
+   "rel_y": -0.0142,
+   "table_top": 0.6469,
+   "moved_with_table": [
+    "0",
+    "64",
+    "22",
+    "4"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 16,
+   "dx": -0.0072,
+   "dy": 0.0062,
+   "dz": -0.0155,
+   "rel_x": 0.3298,
+   "rel_y": -0.037,
+   "table_top": 0.6345,
+   "moved_with_table": [
+    "0",
+    "41",
+    "21",
+    "29"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 17,
+   "dx": -0.0038,
+   "dy": -0.0315,
+   "dz": -0.0217,
+   "rel_x": 0.3205,
+   "rel_y": 0.0192,
+   "table_top": 0.6283,
+   "moved_with_table": [
+    "0",
+    "37",
+    "42",
+    "9"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 18,
+   "dx": -0.0219,
+   "dy": -0.0449,
+   "dz": -0.0228,
+   "rel_x": 0.335,
+   "rel_y": 0.0055,
+   "table_top": 0.6272,
+   "moved_with_table": [
+    "0",
+    "47",
+    "52",
+    "7"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 19,
+   "dx": 0.002,
+   "dy": -0.0197,
+   "dz": -0.0197,
+   "rel_x": 0.3133,
+   "rel_y": 0.0291,
+   "table_top": 0.6303,
+   "moved_with_table": [
+    "0",
+    "58",
+    "70",
+    "67"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 20,
+   "dx": -0.0247,
+   "dy": -0.003,
+   "dz": -0.0269,
+   "rel_x": 0.3309,
+   "rel_y": 0.0199,
+   "table_top": 0.6231,
+   "moved_with_table": [
+    "0",
+    "48",
+    "73",
+    "31"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 21,
+   "dx": -0.0125,
+   "dy": -0.0135,
+   "dz": -0.0114,
+   "rel_x": 0.3267,
+   "rel_y": -0.005,
+   "table_top": 0.6386,
+   "moved_with_table": [
+    "0",
+    "59",
+    "63",
+    "66"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 22,
+   "dx": -0.0089,
+   "dy": 0.0164,
+   "dz": -0.0021,
+   "rel_x": 0.3215,
+   "rel_y": -0.0284,
+   "table_top": 0.6479,
+   "moved_with_table": [
+    "0",
+    "8",
+    "38",
+    "40"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 23,
+   "dx": -0.0061,
+   "dy": -0.0311,
+   "dz": -0.0259,
+   "rel_x": 0.3256,
+   "rel_y": 0.0029,
+   "table_top": 0.6241,
+   "moved_with_table": [
+    "0",
+    "60",
+    "20",
+    "62"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 24,
+   "dx": 0.006,
+   "dy": -0.05,
+   "dz": 0.0,
+   "rel_x": 0.3195,
+   "rel_y": 0.0219,
+   "table_top": 0.65,
+   "moved_with_table": [
+    "0",
+    "27",
+    "41",
+    "26"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 25,
+   "dx": 0.0125,
+   "dy": 0.0082,
+   "dz": -0.029,
+   "rel_x": 0.305,
+   "rel_y": -0.0238,
+   "table_top": 0.621,
+   "moved_with_table": [
+    "0",
+    "58",
+    "18",
+    "59"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 26,
+   "dx": 0.0084,
+   "dy": 0.0027,
+   "dz": -0.0145,
+   "rel_x": 0.3112,
+   "rel_y": 0.0111,
+   "table_top": 0.6355,
+   "moved_with_table": [
+    "0",
+    "8",
+    "2",
+    "14"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 27,
+   "dx": 0.0015,
+   "dy": -0.0084,
+   "dz": -0.0103,
+   "rel_x": 0.3288,
+   "rel_y": 0.0073,
+   "table_top": 0.6397,
+   "moved_with_table": [
+    "0",
+    "34",
+    "24",
+    "7"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 28,
+   "dx": -0.0088,
+   "dy": 0.0158,
+   "dz": -0.0186,
+   "rel_x": 0.3174,
+   "rel_y": 0.022,
+   "table_top": 0.6314,
+   "moved_with_table": [
+    "0",
+    "59",
+    "49",
+    "29"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 29,
+   "dx": -0.0107,
+   "dy": 0.0058,
+   "dz": -0.0052,
+   "rel_x": 0.3237,
+   "rel_y": -0.0118,
+   "table_top": 0.6448,
+   "moved_with_table": [
+    "0",
+    "26",
+    "37",
+    "69"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  }
+ ]
+}

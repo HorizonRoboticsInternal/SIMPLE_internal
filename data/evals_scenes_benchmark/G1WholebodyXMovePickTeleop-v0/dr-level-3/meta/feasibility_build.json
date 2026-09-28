@@ -1,0 +1,532 @@
+{
+ "task": "G1WholebodyXMovePickTeleop-v0",
+ "ranges": {
+  "rel_x": [
+   0.48,
+   0.747
+  ],
+  "rel_y": [
+   -0.08,
+   -0.041
+  ],
+  "dz": [
+   -0.04,
+   0.0
+  ],
+  "kind": "walk, then standing grasp",
+  "check": "demonstrated reach",
+  "why": "the walk absorbs the start distance: kept between the closest eval start (48 cm) and the farthest demonstration (74.7 cm); lateral inside the demonstrations; table between the eval height and the demonstrations' 6.5 cm lower height"
+ },
+ "scenes": [
+  {
+   "scene": 0,
+   "dx": -0.0004,
+   "dy": -0.0047,
+   "dz": -0.0014,
+   "rel_x": 0.5248,
+   "rel_y": -0.0652,
+   "table_top": 0.5786,
+   "moved_with_table": [
+    "0",
+    "66",
+    "17",
+    "42"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 1,
+   "dx": 0.0234,
+   "dy": -0.015,
+   "dz": -0.0166,
+   "rel_x": 0.5057,
+   "rel_y": -0.0423,
+   "table_top": 0.5634,
+   "moved_with_table": [
+    "0",
+    "19",
+    "41",
+    "28"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 2,
+   "dx": -0.0665,
+   "dy": -0.0182,
+   "dz": -0.04,
+   "rel_x": 0.5854,
+   "rel_y": -0.0478,
+   "table_top": 0.54,
+   "moved_with_table": [
+    "0",
+    "28",
+    "11",
+    "17"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 3,
+   "dx": -0.0192,
+   "dy": 0.0353,
+   "dz": -0.0221,
+   "rel_x": 0.5295,
+   "rel_y": -0.076,
+   "table_top": 0.5579,
+   "moved_with_table": [
+    "0",
+    "73",
+    "33",
+    "58"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 4,
+   "dx": -0.0892,
+   "dy": 0.0317,
+   "dz": -0.011,
+   "rel_x": 0.6262,
+   "rel_y": -0.0773,
+   "table_top": 0.569,
+   "moved_with_table": [
+    "0",
+    "52",
+    "51",
+    "38"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 5,
+   "dx": 0.049,
+   "dy": -0.0018,
+   "dz": -0.0083,
+   "rel_x": 0.4911,
+   "rel_y": -0.0733,
+   "table_top": 0.5717,
+   "moved_with_table": [
+    "0",
+    "17",
+    "69",
+    "71"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 6,
+   "dx": 0.0506,
+   "dy": -0.0134,
+   "dz": -0.0124,
+   "rel_x": 0.4974,
+   "rel_y": -0.0625,
+   "table_top": 0.5676,
+   "moved_with_table": [
+    "0",
+    "74",
+    "21",
+    "44"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 7,
+   "dx": -0.0323,
+   "dy": 0.0104,
+   "dz": -0.0234,
+   "rel_x": 0.535,
+   "rel_y": -0.0598,
+   "table_top": 0.5566,
+   "moved_with_table": [
+    "0",
+    "64",
+    "49",
+    "9"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 8,
+   "dx": 0.0199,
+   "dy": -0.0096,
+   "dz": -0.0055,
+   "rel_x": 0.4992,
+   "rel_y": -0.0585,
+   "table_top": 0.5745,
+   "moved_with_table": [
+    "0",
+    "61",
+    "66",
+    "53"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 9,
+   "dx": 0.0247,
+   "dy": -0.0272,
+   "dz": -0.0097,
+   "rel_x": 0.4845,
+   "rel_y": -0.0437,
+   "table_top": 0.5703,
+   "moved_with_table": [
+    "0",
+    "15",
+    "32",
+    "31"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 10,
+   "dx": -0.0427,
+   "dy": 0.0269,
+   "dz": -0.0372,
+   "rel_x": 0.5888,
+   "rel_y": -0.0692,
+   "table_top": 0.5428,
+   "moved_with_table": [
+    "0",
+    "17",
+    "37",
+    "26"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 11,
+   "dx": -0.0865,
+   "dy": 0.024,
+   "dz": -0.0276,
+   "rel_x": 0.5971,
+   "rel_y": -0.0705,
+   "table_top": 0.5524,
+   "moved_with_table": [
+    "0",
+    "45",
+    "5",
+    "27"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 12,
+   "dx": -0.0954,
+   "dy": -0.026,
+   "dz": -0.0179,
+   "rel_x": 0.6094,
+   "rel_y": -0.049,
+   "table_top": 0.5621,
+   "moved_with_table": [
+    "0",
+    "63",
+    "55",
+    "21"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 13,
+   "dx": 0.0008,
+   "dy": 0.0205,
+   "dz": -0.0331,
+   "rel_x": 0.533,
+   "rel_y": -0.0638,
+   "table_top": 0.5469,
+   "moved_with_table": [
+    "0",
+    "64",
+    "49",
+    "19"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 14,
+   "dx": 0.0289,
+   "dy": -0.0053,
+   "dz": -0.0317,
+   "rel_x": 0.521,
+   "rel_y": -0.0679,
+   "table_top": 0.5483,
+   "moved_with_table": [
+    "0",
+    "63",
+    "20",
+    "29"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 15,
+   "dx": -0.0299,
+   "dy": 0.0039,
+   "dz": -0.0041,
+   "rel_x": 0.5792,
+   "rel_y": -0.08,
+   "table_top": 0.5759,
+   "moved_with_table": [
+    "0",
+    "56",
+    "50",
+    "34"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 16,
+   "dx": -0.0741,
+   "dy": 0.0062,
+   "dz": -0.0207,
+   "rel_x": 0.6044,
+   "rel_y": -0.0787,
+   "table_top": 0.5593,
+   "moved_with_table": [
+    "0",
+    "56",
+    "64",
+    "17"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 17,
+   "dx": -0.0418,
+   "dy": -0.0185,
+   "dz": -0.029,
+   "rel_x": 0.5424,
+   "rel_y": -0.0504,
+   "table_top": 0.551,
+   "moved_with_table": [
+    "0",
+    "56",
+    "69",
+    "54"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 18,
+   "dx": -0.1,
+   "dy": 0.0,
+   "dz": -0.0303,
+   "rel_x": 0.6354,
+   "rel_y": -0.045,
+   "table_top": 0.5497,
+   "moved_with_table": [
+    "0",
+    "15",
+    "73",
+    "40"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 19,
+   "dx": 0.0222,
+   "dy": -0.0208,
+   "dz": -0.0262,
+   "rel_x": 0.5265,
+   "rel_y": -0.0464,
+   "table_top": 0.5538,
+   "moved_with_table": [
+    "0",
+    "4",
+    "27",
+    "55"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 20,
+   "dx": -0.0768,
+   "dy": -0.016,
+   "dz": -0.0359,
+   "rel_x": 0.6248,
+   "rel_y": -0.0517,
+   "table_top": 0.5441,
+   "moved_with_table": [
+    "0",
+    "17",
+    "29",
+    "42"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 21,
+   "dx": -0.0558,
+   "dy": 0.002,
+   "dz": -0.0152,
+   "rel_x": 0.596,
+   "rel_y": -0.0611,
+   "table_top": 0.5648,
+   "moved_with_table": [
+    "0",
+    "73",
+    "23",
+    "18"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 22,
+   "dx": -0.0266,
+   "dy": 0.008,
+   "dz": -0.0028,
+   "rel_x": 0.5703,
+   "rel_y": -0.0747,
+   "table_top": 0.5772,
+   "moved_with_table": [
+    "0",
+    "39",
+    "14",
+    "31"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 23,
+   "dx": -0.0557,
+   "dy": -0.0017,
+   "dz": -0.0345,
+   "rel_x": 0.5784,
+   "rel_y": -0.0531,
+   "table_top": 0.5455,
+   "moved_with_table": [
+    "0",
+    "56",
+    "20",
+    "18"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 24,
+   "dx": -0.0205,
+   "dy": -0.0089,
+   "dz": 0.0,
+   "rel_x": 0.5542,
+   "rel_y": -0.041,
+   "table_top": 0.58,
+   "moved_with_table": [
+    "0",
+    "74",
+    "8",
+    "24"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 25,
+   "dx": 0.0227,
+   "dy": -0.0001,
+   "dz": -0.0386,
+   "rel_x": 0.48,
+   "rel_y": -0.0719,
+   "table_top": 0.5414,
+   "moved_with_table": [
+    "0",
+    "52",
+    "20",
+    "38"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 26,
+   "dx": 0.0203,
+   "dy": -0.0191,
+   "dz": -0.0193,
+   "rel_x": 0.5114,
+   "rel_y": -0.0558,
+   "table_top": 0.5607,
+   "moved_with_table": [
+    "0",
+    "8",
+    "70",
+    "12"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 27,
+   "dx": -0.0712,
+   "dy": 0.0026,
+   "dz": -0.0138,
+   "rel_x": 0.5903,
+   "rel_y": -0.0572,
+   "table_top": 0.5662,
+   "moved_with_table": [
+    "0",
+    "6",
+    "5",
+    "12"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 28,
+   "dx": -0.0258,
+   "dy": -0.0069,
+   "dz": -0.0248,
+   "rel_x": 0.5323,
+   "rel_y": -0.0544,
+   "table_top": 0.5552,
+   "moved_with_table": [
+    "0",
+    "18",
+    "19",
+    "9"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 29,
+   "dx": -0.0414,
+   "dy": 0.0133,
+   "dz": -0.0069,
+   "rel_x": 0.5759,
+   "rel_y": -0.0665,
+   "table_top": 0.5731,
+   "moved_with_table": [
+    "0",
+    "49",
+    "64",
+    "74"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  }
+ ]
+}

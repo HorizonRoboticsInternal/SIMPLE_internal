@@ -1,0 +1,30 @@
+{"scene": 0, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 20.9}
+{"scene": 2, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 19.1}
+{"scene": 4, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 2.8}
+{"scene": 5, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 23.2}
+{"scene": 6, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 19.8}
+{"scene": 7, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 21.1}
+{"scene": 8, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 22.2}
+{"scene": 10, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 21.4}
+{"scene": 13, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 24.8}
+{"scene": 16, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.5}
+{"scene": 17, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 20.7}
+{"scene": 20, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 17.6}
+{"scene": 21, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.2}
+{"scene": 23, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 15.0}
+{"scene": 24, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 17.7}
+{"scene": 26, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.8}
+{"scene": 27, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 17.2}
+{"scene": 28, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 2, "outcomes": ["plan_failed", "success"], "s": 31.8}
+{"scene": 9, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 20.3}
+{"scene": 12, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 17.1}
+{"scene": 15, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 2.8}
+{"scene": 18, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 20.9}
+{"scene": 19, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 19.2}
+{"scene": 22, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 2.7}
+{"scene": 1, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 2, "outcomes": ["plan_failed", "success"], "s": 42.6}
+{"scene": 3, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.9}
+{"scene": 11, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.4}
+{"scene": 14, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 16.1}
+{"scene": 25, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 2, "outcomes": ["plan_failed", "success"], "s": 30.6}
+{"scene": 29, "shift_cm": [0.0, 0.0, 0.0], "feasible": true, "attempts": 1, "outcomes": ["success"], "s": 28.3}

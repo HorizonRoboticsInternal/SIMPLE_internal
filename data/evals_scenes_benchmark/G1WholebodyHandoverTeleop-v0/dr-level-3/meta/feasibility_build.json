@@ -1,0 +1,547 @@
+{
+ "task": "G1WholebodyHandoverTeleop-v0",
+ "ranges": {
+  "rel_x": [
+   0.249,
+   0.298
+  ],
+  "rel_y": [
+   -0.039,
+   0.02
+  ],
+  "dz": [
+   -0.03,
+   0.0
+  ],
+  "kind": "standing grasp",
+  "check": "demonstrated reach",
+  "why": "stationary grasp: target kept inside the 100 demonstrations' reach box; table only lower, as for TabletopGrasp"
+ },
+ "scenes": [
+  {
+   "scene": 0,
+   "dx": 0.0215,
+   "dy": 0.015,
+   "dz": -0.001,
+   "rel_x": 0.2642,
+   "rel_y": -0.0166,
+   "table_top": 0.549,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "27",
+    "35",
+    "53"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 1,
+   "dx": 0.0321,
+   "dy": -0.0481,
+   "dz": -0.0124,
+   "rel_x": 0.2574,
+   "rel_y": 0.0156,
+   "table_top": 0.5376,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "40",
+    "49",
+    "4"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 2,
+   "dx": -0.0225,
+   "dy": -0.0206,
+   "dz": -0.03,
+   "rel_x": 0.2862,
+   "rel_y": 0.0098,
+   "table_top": 0.52,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "72",
+    "11",
+    "20"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 3,
+   "dx": -0.0164,
+   "dy": 0.0445,
+   "dz": -0.0166,
+   "rel_x": 0.2676,
+   "rel_y": -0.0277,
+   "table_top": 0.5334,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "29",
+    "67",
+    "43"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 4,
+   "dx": -0.015,
+   "dy": 0.0209,
+   "dz": -0.0083,
+   "rel_x": 0.2946,
+   "rel_y": -0.0349,
+   "table_top": 0.5417,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "16"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 5,
+   "dx": 0.0437,
+   "dy": 0.0018,
+   "dz": -0.0062,
+   "rel_x": 0.2524,
+   "rel_y": -0.0288,
+   "table_top": 0.5438,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "23",
+    "34",
+    "54"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 6,
+   "dx": -0.0072,
+   "dy": -0.019,
+   "dz": -0.0093,
+   "rel_x": 0.2541,
+   "rel_y": -0.0138,
+   "table_top": 0.5407,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "30"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 7,
+   "dx": -0.0018,
+   "dy": 0.0125,
+   "dz": -0.0176,
+   "rel_x": 0.2709,
+   "rel_y": -0.0085,
+   "table_top": 0.5324,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "24",
+    "45",
+    "72"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 8,
+   "dx": 0.0035,
+   "dy": 0.0017,
+   "dz": -0.0041,
+   "rel_x": 0.2557,
+   "rel_y": -0.0064,
+   "table_top": 0.5459,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "20",
+    "59",
+    "33"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 9,
+   "dx": 0.0063,
+   "dy": -0.02,
+   "dz": -0.0072,
+   "rel_x": 0.2507,
+   "rel_y": 0.0159,
+   "table_top": 0.5428,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "33",
+    "13"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 10,
+   "dx": -0.0229,
+   "dy": -0.008,
+   "dz": -0.0279,
+   "rel_x": 0.2811,
+   "rel_y": -0.023,
+   "table_top": 0.5221,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "41",
+    "49",
+    "30"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 11,
+   "dx": -0.0021,
+   "dy": 0.007,
+   "dz": -0.0207,
+   "rel_x": 0.2929,
+   "rel_y": -0.0248,
+   "table_top": 0.5293,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "72"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 12,
+   "dx": -0.0326,
+   "dy": -0.0397,
+   "dz": -0.0134,
+   "rel_x": 0.2963,
+   "rel_y": 0.0004,
+   "table_top": 0.5366,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "15",
+    "63",
+    "5"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 13,
+   "dx": 0.0109,
+   "dy": 0.013,
+   "dz": -0.0248,
+   "rel_x": 0.2659,
+   "rel_y": -0.0146,
+   "table_top": 0.5252,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "8",
+    "60"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 14,
+   "dx": 0.0234,
+   "dy": -0.0129,
+   "dz": -0.0238,
+   "rel_x": 0.2608,
+   "rel_y": -0.0224,
+   "table_top": 0.5262,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "24",
+    "1",
+    "41"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 15,
+   "dx": -0.0093,
+   "dy": 0.0094,
+   "dz": -0.0031,
+   "rel_x": 0.2777,
+   "rel_y": -0.039,
+   "table_top": 0.5469,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "59",
+    "49",
+    "72"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 16,
+   "dx": -0.0027,
+   "dy": 0.0039,
+   "dz": -0.0155,
+   "rel_x": 0.2895,
+   "rel_y": -0.0371,
+   "table_top": 0.5345,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "69",
+    "4",
+    "43"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 17,
+   "dx": -0.0069,
+   "dy": -0.0227,
+   "dz": -0.0217,
+   "rel_x": 0.2744,
+   "rel_y": 0.0058,
+   "table_top": 0.5283,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "57",
+    "64"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 18,
+   "dx": -0.0344,
+   "dy": -0.0012,
+   "dz": -0.0228,
+   "rel_x": 0.298,
+   "rel_y": 0.014,
+   "table_top": 0.5272,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "11",
+    "69",
+    "16"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 19,
+   "dx": 0.0135,
+   "dy": -0.0044,
+   "dz": -0.0197,
+   "rel_x": 0.2625,
+   "rel_y": 0.0118,
+   "table_top": 0.5303,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "19",
+    "65",
+    "27"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 20,
+   "dx": -0.0024,
+   "dy": -0.0147,
+   "dz": -0.0269,
+   "rel_x": 0.2913,
+   "rel_y": 0.0037,
+   "table_top": 0.5231,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "56",
+    "47",
+    "49"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 21,
+   "dx": -0.0261,
+   "dy": -0.0053,
+   "dz": -0.0114,
+   "rel_x": 0.2845,
+   "rel_y": -0.0105,
+   "table_top": 0.5386,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "73",
+    "25",
+    "69"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 22,
+   "dx": -0.0113,
+   "dy": 0.0429,
+   "dz": -0.0021,
+   "rel_x": 0.276,
+   "rel_y": -0.0247,
+   "table_top": 0.5479,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "42",
+    "28",
+    "26"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 23,
+   "dx": -0.0198,
+   "dy": -0.0314,
+   "dz": -0.0259,
+   "rel_x": 0.2828,
+   "rel_y": 0.0017,
+   "table_top": 0.5241,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "1",
+    "62"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 24,
+   "dx": 0.0005,
+   "dy": -0.0352,
+   "dz": 0.0,
+   "rel_x": 0.2726,
+   "rel_y": 0.02,
+   "table_top": 0.55,
+   "moved_with_table": [
+    "container_0",
+    "0"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 25,
+   "dx": 0.0378,
+   "dy": 0.0383,
+   "dz": -0.029,
+   "rel_x": 0.249,
+   "rel_y": -0.0248,
+   "table_top": 0.521,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "55",
+    "39",
+    "58"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 26,
+   "dx": -0.0025,
+   "dy": -0.0279,
+   "dz": -0.0145,
+   "rel_x": 0.2591,
+   "rel_y": -0.0027,
+   "table_top": 0.5355,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "61",
+    "5",
+    "55"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 27,
+   "dx": -0.0272,
+   "dy": -0.0233,
+   "dz": -0.0103,
+   "rel_x": 0.2878,
+   "rel_y": -0.0045,
+   "table_top": 0.5397,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "51",
+    "34"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 28,
+   "dx": -0.0067,
+   "dy": -0.0261,
+   "dz": -0.0186,
+   "rel_x": 0.2693,
+   "rel_y": -0.0003,
+   "table_top": 0.5314,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "11",
+    "31",
+    "50"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 29,
+   "dx": -0.0134,
+   "dy": 0.0156,
+   "dz": -0.0052,
+   "rel_x": 0.2794,
+   "rel_y": -0.0186,
+   "table_top": 0.5448,
+   "moved_with_table": [
+    "container_0",
+    "0",
+    "5",
+    "53"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  }
+ ]
+}

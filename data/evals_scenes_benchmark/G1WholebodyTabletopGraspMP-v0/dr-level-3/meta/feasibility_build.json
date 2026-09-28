@@ -1,0 +1,534 @@
+{
+ "task": "G1WholebodyTabletopGraspMP-v0",
+ "ranges": {
+  "rel_x": [
+   0.274,
+   0.398
+  ],
+  "rel_y": [
+   -0.07,
+   0.027
+  ],
+  "dz": [
+   -0.04,
+   0.0
+  ],
+  "kind": "standing grasp",
+  "check": "planner",
+  "why": "robot only closer (3 and 6 cm closer: 3/3; 3 and 6 cm back: 0/3), object only further right (1/3 left, 3/3 right), table only lower (-2/-4 cm: 3/4 each; +2/+4 cm: 0/4, the arms' start pose hits the table)"
+ },
+ "scenes": [
+  {
+   "scene": 0,
+   "dx": 0.074,
+   "dy": 0.0083,
+   "dz": -0.0014,
+   "rel_x": 0.3402,
+   "rel_y": -0.0344,
+   "table_top": -0.0014,
+   "moved_with_table": [
+    "10",
+    "68",
+    "47",
+    "17"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 1,
+   "dx": 0.0434,
+   "dy": 0.0202,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "52",
+    "57",
+    "3"
+   ],
+   "flags": [],
+   "shrink": 1.0
+  },
+  {
+   "scene": 2,
+   "dx": -0.0051,
+   "dy": -0.0192,
+   "dz": -0.04,
+   "rel_x": 0.3681,
+   "rel_y": 0.0126,
+   "table_top": -0.04,
+   "moved_with_table": [
+    "10",
+    "12",
+    "72",
+    "64"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 3,
+   "dx": 0.0445,
+   "dy": -0.0057,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "43",
+    "40",
+    "67"
+   ],
+   "flags": [],
+   "shrink": 1.0
+  },
+  {
+   "scene": 4,
+   "dx": -0.0147,
+   "dy": 0.0441,
+   "dz": -0.011,
+   "rel_x": 0.3895,
+   "rel_y": -0.0527,
+   "table_top": -0.011,
+   "moved_with_table": [
+    "10",
+    "56",
+    "39",
+    "71"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 5,
+   "dx": 0.0573,
+   "dy": 0.0398,
+   "dz": -0.0083,
+   "rel_x": 0.2826,
+   "rel_y": -0.0219,
+   "table_top": -0.0083,
+   "moved_with_table": [
+    "10",
+    "28",
+    "63",
+    "11"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 6,
+   "dx": 0.0923,
+   "dy": 0.0012,
+   "dz": -0.0124,
+   "rel_x": 0.3316,
+   "rel_y": -0.0285,
+   "table_top": -0.0124,
+   "moved_with_table": [
+    "10",
+    "53",
+    "72",
+    "30"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 7,
+   "dx": 0.0466,
+   "dy": 0.0202,
+   "dz": -0.0234,
+   "rel_x": 0.3322,
+   "rel_y": -0.0008,
+   "table_top": -0.0234,
+   "moved_with_table": [
+    "10",
+    "13",
+    "7",
+    "64"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 8,
+   "dx": 0.0857,
+   "dy": -0.0046,
+   "dz": -0.0055,
+   "rel_x": 0.3084,
+   "rel_y": -0.0165,
+   "table_top": -0.0055,
+   "moved_with_table": [
+    "10",
+    "33",
+    "31",
+    "14"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 9,
+   "dx": 0.0517,
+   "dy": -0.0196,
+   "dz": -0.0148,
+   "rel_x": 0.3072,
+   "rel_y": -0.0006,
+   "table_top": -0.0148,
+   "moved_with_table": [
+    "10",
+    "19",
+    "71",
+    "14"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 10,
+   "dx": 0.012,
+   "dy": 0.0305,
+   "dz": -0.0372,
+   "rel_x": 0.3553,
+   "rel_y": -0.0243,
+   "table_top": -0.0372,
+   "moved_with_table": [
+    "10",
+    "48",
+    "54",
+    "12"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 11,
+   "dx": 0.0568,
+   "dy": 0.0029,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "44",
+    "26",
+    "38"
+   ],
+   "flags": [],
+   "shrink": 1.0
+  },
+  {
+   "scene": 12,
+   "dx": -0.0026,
+   "dy": 0.0314,
+   "dz": -0.019,
+   "rel_x": 0.3649,
+   "rel_y": -0.0021,
+   "table_top": -0.019,
+   "moved_with_table": [
+    "10",
+    "39",
+    "24",
+    "54"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 13,
+   "dx": 0.0385,
+   "dy": 0.0244,
+   "dz": -0.0331,
+   "rel_x": 0.3168,
+   "rel_y": -0.0093,
+   "table_top": -0.0331,
+   "moved_with_table": [
+    "10",
+    "49",
+    "16",
+    "71"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 14,
+   "dx": 0.0467,
+   "dy": 0.0229,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "13",
+    "66",
+    "31"
+   ],
+   "flags": [],
+   "shrink": 1.0
+  },
+  {
+   "scene": 15,
+   "dx": 0.0132,
+   "dy": 0.05,
+   "dz": -0.0121,
+   "rel_x": 0.3413,
+   "rel_y": -0.0335,
+   "table_top": -0.0121,
+   "moved_with_table": [
+    "10",
+    "52",
+    "23",
+    "11"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 16,
+   "dx": -0.03,
+   "dy": 0.048,
+   "dz": -0.0207,
+   "rel_x": 0.3766,
+   "rel_y": -0.029,
+   "table_top": -0.0207,
+   "moved_with_table": [
+    "10",
+    "66",
+    "59",
+    "21"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 17,
+   "dx": 0.0259,
+   "dy": 0.0077,
+   "dz": -0.029,
+   "rel_x": 0.3381,
+   "rel_y": 0.0136,
+   "table_top": -0.029,
+   "moved_with_table": [
+    "10",
+    "14",
+    "59",
+    "34"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 18,
+   "dx": 0.0313,
+   "dy": -0.0153,
+   "dz": -0.0252,
+   "rel_x": 0.367,
+   "rel_y": -0.0022,
+   "table_top": -0.0252,
+   "moved_with_table": [
+    "10",
+    "48",
+    "67",
+    "74"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 19,
+   "dx": 0.0713,
+   "dy": 0.0181,
+   "dz": -0.0231,
+   "rel_x": 0.3221,
+   "rel_y": -0.0023,
+   "table_top": -0.0231,
+   "moved_with_table": [
+    "10",
+    "29",
+    "26",
+    "7"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 20,
+   "dx": 0.0107,
+   "dy": -0.0003,
+   "dz": -0.0359,
+   "rel_x": 0.3837,
+   "rel_y": 0.0078,
+   "table_top": -0.0359,
+   "moved_with_table": [
+    "10",
+    "55",
+    "15",
+    "72"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 21,
+   "dx": 0.0101,
+   "dy": 0.0158,
+   "dz": -0.0152,
+   "rel_x": 0.3638,
+   "rel_y": -0.0097,
+   "table_top": -0.0152,
+   "moved_with_table": [
+    "10",
+    "61",
+    "35",
+    "71"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 22,
+   "dx": 0.036,
+   "dy": 0.0182,
+   "dz": -0.0114,
+   "rel_x": 0.3392,
+   "rel_y": -0.0391,
+   "table_top": -0.0114,
+   "moved_with_table": [
+    "10",
+    "23",
+    "13",
+    "48"
+   ],
+   "flags": [],
+   "shrink": 0.5
+  },
+  {
+   "scene": 23,
+   "dx": 0.0217,
+   "dy": 0.006,
+   "dz": -0.0345,
+   "rel_x": 0.3628,
+   "rel_y": 0.0072,
+   "table_top": -0.0345,
+   "moved_with_table": [
+    "10",
+    "15",
+    "67",
+    "5"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 24,
+   "dx": 0.0102,
+   "dy": -0.0269,
+   "dz": 0.0,
+   "rel_x": 0.3339,
+   "rel_y": 0.027,
+   "table_top": 0.0,
+   "moved_with_table": [
+    "10",
+    "6",
+    "53",
+    "36"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 25,
+   "dx": 0.028,
+   "dy": -0.0046,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "70",
+    "62",
+    "45"
+   ],
+   "flags": [],
+   "shrink": 1.0
+  },
+  {
+   "scene": 26,
+   "dx": 0.0874,
+   "dy": 0.0192,
+   "dz": -0.0193,
+   "rel_x": 0.3498,
+   "rel_y": 0.0081,
+   "table_top": -0.0193,
+   "moved_with_table": [
+    "10",
+    "24",
+    "41",
+    "14"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 27,
+   "dx": -0.0107,
+   "dy": 0.0184,
+   "dz": -0.0138,
+   "rel_x": 0.3723,
+   "rel_y": 0.0048,
+   "table_top": -0.0138,
+   "moved_with_table": [
+    "10",
+    "41",
+    "49",
+    "5"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 28,
+   "dx": 0.0585,
+   "dy": -0.0089,
+   "dz": -0.0248,
+   "rel_x": 0.3393,
+   "rel_y": -0.004,
+   "table_top": -0.0248,
+   "moved_with_table": [
+    "10",
+    "2",
+    "15",
+    "34"
+   ],
+   "flags": [],
+   "shrink": 0.0
+  },
+  {
+   "scene": 29,
+   "dx": 0.0333,
+   "dy": 0.0324,
+   "dz": -0.02,
+   "rel_x": 0.336,
+   "rel_y": -0.0215,
+   "table_top": -0.02,
+   "moved_with_table": [
+    "10",
+    "46",
+    "18",
+    "28"
+   ],
+   "flags": [
+    "distractor 46 moved 10 cm further back: it stood 14.7 cm behind the can in the grasp path"
+   ],
+   "shrink": 1.0
+  }
+ ]
+}
