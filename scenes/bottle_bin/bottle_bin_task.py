@@ -55,9 +55,10 @@ COVER_TOP_Z = BS.COVER_TOP_Z
 TARGET = os.environ.get("BOTTLE_BIN_TARGET", "bottle_bin:bottle_500ml")
 BOTTLE_MASS = float(os.environ.get("BOTTLE_BIN_BOTTLE_MASS", _LAYOUT_JSON["bottle"]["mass"]))   # kg, from build_scene.py (0.5 = full); SIMPLE's own default would be 0.1
 INSTRUCTION = os.environ.get("BOTTLE_BIN_INSTRUCTION",
-                             "move the blue chip bag from the shelf to the plate on the counter")
-# (user, 2026-09-17: the shortened form of "move toward shelf, pickup blue chip bag, turn around, move towards counter, and place the
-#  blue chip bag on top of plate"; the previous default was "pick up the bottle, move towards the trash bin, and place the bottle in the trash bin")
+                             "pick up the bottle, move towards the trash bin, and place the bottle in the trash bin")
+# 2026-09-29 (user): the bottle-bin kit's own task, as the real ChipCanToTrash recordings phrase it with the sim's bottle.
+# The 2026-09-17 default "move the blue chip bag from the shelf to the plate on the counter" belonged to a different
+# task and went into every recorded episode; set BOTTLE_BIN_INSTRUCTION to use another string.
 
 # D455 lens pose of the scene (servo pan 0 / tilt 10 deg) as an offset of SIMPLE's stock eye_in_head mount, from
 # sim/tabletop_box/g1_tabletop_box_simple_task.py (the engine's mount is the same for every G1 robot class)
