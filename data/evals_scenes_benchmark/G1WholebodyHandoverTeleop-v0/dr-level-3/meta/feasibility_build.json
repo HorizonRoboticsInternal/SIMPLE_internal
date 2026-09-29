@@ -38,12 +38,12 @@
   },
   {
    "scene": 1,
-   "dx": 0.0321,
-   "dy": -0.0481,
-   "dz": -0.0124,
-   "rel_x": 0.2574,
-   "rel_y": 0.0156,
-   "table_top": 0.5376,
+   "dx": 0.016,
+   "dy": -0.023,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -52,16 +52,16 @@
     "4"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 2,
-   "dx": -0.0225,
-   "dy": -0.0206,
-   "dz": -0.03,
-   "rel_x": 0.2862,
-   "rel_y": 0.0098,
-   "table_top": 0.52,
+   "dx": -0.0098,
+   "dy": -0.0013,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -70,7 +70,7 @@
     "20"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 3,
@@ -178,12 +178,12 @@
   },
   {
    "scene": 9,
-   "dx": 0.0063,
-   "dy": -0.02,
-   "dz": -0.0072,
-   "rel_x": 0.2507,
-   "rel_y": 0.0159,
-   "table_top": 0.5428,
+   "dx": -0.0165,
+   "dy": 0.0054,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -191,7 +191,7 @@
     "13"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 10,
@@ -318,12 +318,12 @@
   },
   {
    "scene": 17,
-   "dx": -0.0069,
-   "dy": -0.0227,
-   "dz": -0.0217,
-   "rel_x": 0.2744,
-   "rel_y": 0.0058,
-   "table_top": 0.5283,
+   "dx": -0.006,
+   "dy": -0.0074,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -331,16 +331,16 @@
     "64"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 18,
-   "dx": -0.0344,
-   "dy": -0.0012,
-   "dz": -0.0228,
-   "rel_x": 0.298,
-   "rel_y": 0.014,
-   "table_top": 0.5272,
+   "dx": -0.0099,
+   "dy": 0.0223,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -349,16 +349,16 @@
     "16"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 19,
-   "dx": 0.0135,
-   "dy": -0.0044,
-   "dz": -0.0197,
-   "rel_x": 0.2625,
-   "rel_y": 0.0118,
-   "table_top": 0.5303,
+   "dx": 0.0025,
+   "dy": 0.0169,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
@@ -367,7 +367,7 @@
     "27"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 20,
@@ -425,20 +425,22 @@
   },
   {
    "scene": 23,
-   "dx": -0.0198,
-   "dy": -0.0314,
-   "dz": -0.0259,
-   "rel_x": 0.2828,
-   "rel_y": 0.0017,
-   "table_top": 0.5241,
+   "dx": -0.0105,
+   "dy": -0.0202,
+   "dz": -0.015,
+   "rel_x": 0.2735,
+   "rel_y": -0.0095,
+   "table_top": 0.535,
    "moved_with_table": [
     "container_0",
     "0",
     "1",
     "62"
    ],
-   "flags": [],
-   "shrink": 0.0
+   "flags": [
+    "distractor 1 (sugar box) moved from 14 cm behind-right of the box to 20 cm: it stood in the right arm's grasp path"
+   ],
+   "shrink": 1.0
   },
   {
    "scene": 24,

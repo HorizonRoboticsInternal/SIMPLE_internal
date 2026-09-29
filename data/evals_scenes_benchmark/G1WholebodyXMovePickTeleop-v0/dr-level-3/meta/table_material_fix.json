@@ -1,0 +1,17 @@
+[
+ {
+  "scene": 0,
+  "from": "Water_Murky_Perlin_Green_Lake_Med",
+  "to": "Tweed_Herringbone_Black_White"
+ },
+ {
+  "scene": 14,
+  "from": "Polyester_Crepe_de_Chine_Rose",
+  "to": "Blued_Steel_Cold_Matte"
+ },
+ {
+  "scene": 18,
+  "from": "Carbon_Fiber_Worn_Coating",
+  "to": "Gold_Scratched"
+ }
+]

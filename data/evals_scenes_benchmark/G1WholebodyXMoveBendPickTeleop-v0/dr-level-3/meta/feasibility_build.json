@@ -71,20 +71,22 @@
   },
   {
    "scene": 3,
-   "dx": -0.0355,
-   "dy": -0.0005,
-   "dz": -0.0021,
-   "rel_x": 0.6525,
-   "rel_y": -0.0758,
-   "table_top": 0.4479,
+   "dx": -0.0416,
+   "dy": -0.0163,
+   "dz": 0.0,
+   "rel_x": 0.6785,
+   "rel_y": -0.06,
+   "table_top": 0.45,
    "moved_with_table": [
     "0",
     "47",
     "22",
     "68"
    ],
-   "flags": [],
-   "shrink": 0.0
+   "flags": [
+    "box moved 2.0 cm away from the table edge (with the robot start): it tipped off when grasped"
+   ],
+   "shrink": 1.0
   },
   {
    "scene": 4,
@@ -207,20 +209,22 @@
   },
   {
    "scene": 11,
-   "dx": -0.0889,
-   "dy": 0.0098,
-   "dz": -0.0076,
-   "rel_x": 0.7097,
-   "rel_y": -0.0703,
-   "table_top": 0.4424,
+   "dx": -0.0549,
+   "dy": -0.0005,
+   "dz": 0.0,
+   "rel_x": 0.6785,
+   "rel_y": -0.06,
+   "table_top": 0.45,
    "moved_with_table": [
     "0",
     "36",
     "27",
     "6"
    ],
-   "flags": [],
-   "shrink": 0.0
+   "flags": [
+    "box moved 0.3 cm away from the table edge (with the robot start): it tipped off when grasped"
+   ],
+   "shrink": 1.0
   },
   {
    "scene": 12,
@@ -258,12 +262,12 @@
   },
   {
    "scene": 14,
-   "dx": -0.0091,
-   "dy": 0.0001,
-   "dz": -0.0117,
-   "rel_x": 0.6419,
-   "rel_y": -0.0676,
-   "table_top": 0.4383,
+   "dx": -0.0457,
+   "dy": -0.0075,
+   "dz": 0.0,
+   "rel_x": 0.6785,
+   "rel_y": -0.06,
+   "table_top": 0.45,
    "moved_with_table": [
     "0",
     "49",
@@ -271,7 +275,7 @@
     "61"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 15,
@@ -445,12 +449,12 @@
   },
   {
    "scene": 25,
-   "dx": 0.0207,
-   "dy": 0.0272,
-   "dz": -0.0186,
-   "rel_x": 0.613,
-   "rel_y": -0.0717,
-   "table_top": 0.4314,
+   "dx": -0.0448,
+   "dy": 0.0155,
+   "dz": 0.0,
+   "rel_x": 0.6785,
+   "rel_y": -0.06,
+   "table_top": 0.45,
    "moved_with_table": [
     "0",
     "54",
@@ -458,7 +462,7 @@
     "27"
    ],
    "flags": [],
-   "shrink": 0.0
+   "shrink": 1.0
   },
   {
    "scene": 26,

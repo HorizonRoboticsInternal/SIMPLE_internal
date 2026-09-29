@@ -7,6 +7,7 @@
 
     python levelgen.py dr_wbc  <dr_decoupled_wbc args...>
     python levelgen.py kit     <make_levels.py path> <kit> --_level 3 --episodes 30 --out <dir> --seed 0
+(3) LEVELGEN_EXACT=1 (SIMPLE CLIs) / LEVELGEN_KIT_STATES=<episodes.jsonl> (kits): render stored scene states exactly.
 """
 import os
 import runpy
@@ -52,6 +53,34 @@ if os.environ.get("LEVELGEN_EXACT") == "1":
 
     DRManager.load_state_dict = _exact
     print("[levelgen] exact reload: every scene state is loaded as stored", flush=True)
+
+KIT_STATES = os.environ.get("LEVELGEN_KIT_STATES")
+if KIT_STATES:
+    # kits: render these scene states exactly -- every per-scene reset make_levels.py makes (options with a state_dict) gets
+    # the next stored state instead, loaded whole (no dr_level: robot start, table, target, distractors, material, lighting)
+    import json
+    import gymnasium
+    _states = []
+    for _l in open(KIT_STATES):
+        if _l.strip():
+            _c = json.loads(_l)["environment_config"]
+            while isinstance(_c, str):
+                _c = json.loads(_c)
+            _states.append(_c)
+    _gm = gymnasium.make
+
+    def _make_exact(*ma, **mk):
+        e = _gm(*ma, **mk); _orig_reset = e.reset; k = [0]
+
+        def reset(*ra, **rk):
+            o = rk.get("options")
+            if isinstance(o, dict) and "state_dict" in o:
+                rk["options"] = {"state_dict": _states[k[0] % len(_states)]}; k[0] += 1
+            return _orig_reset(*ra, **rk)
+        e.reset = reset
+        return e
+    gymnasium.make = _make_exact
+    print(f"[levelgen] kit exact states: {len(_states)} from {KIT_STATES}", flush=True)
 
 mode = sys.argv[1]
 if mode == "dr":

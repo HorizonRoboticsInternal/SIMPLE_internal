@@ -1,0 +1,27 @@
+[
+ {
+  "scene": 3,
+  "from": "Mirror_Smoked_Dark",
+  "to": "Devil_Black"
+ },
+ {
+  "scene": 10,
+  "from": "Zircon",
+  "to": "Copper_Antique_Brushed_Shiny_Matte_Smudged"
+ },
+ {
+  "scene": 11,
+  "from": "Onyx",
+  "to": "Platinum_Foil_Heavy_Glossy_Wrinkles"
+ },
+ {
+  "scene": 13,
+  "from": "Silk_Crepe_de_Chine_Champagne",
+  "to": "Gold_Foil_Heavy_Matte_Wrinkled"
+ },
+ {
+  "scene": 21,
+  "from": "Glass_Clear_Saturated_Purple",
+  "to": "Ceramic_Tiles_Pinwheel_White_Matte"
+ }
+]

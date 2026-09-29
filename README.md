@@ -56,20 +56,24 @@ can still do the task. Every level-3 scene changes all of these at once:
 **How the ranges were set.** The robot start is chosen after the scene's object pose is drawn, so that the target, seen from
 the start, stays where the G1 can reach it. For the two motion-planner tasks the reach and height limits come from the
 planner that generated their training data, and every final scene was solved by it (grasp and lift executed, up to four
-random grasp draws). The four teleop tasks have no planner: their targets stay inside the reach box of the 100 successful
-demonstrations, and their table heights only move the way the planner found safe for the same kind of grasp. Tools, steps
-and the calibration are in [scenes/level3/README.md](scenes/level3/README.md).
+random grasp draws). The four teleop tasks were checked with their motion-planning twins (same G1 and planner): the robot
+stands where the teleop demonstrations stood when they lifted the object (from their recorded base and object poses) and
+must grasp and lift it at least 5 cm; Handover's twin also hands the object to the left hand. Scenes that failed a check
+were moved toward the middle of their range and re-checked. Every scene was also stepped for 20 s with the robot standing:
+the object must stay put. See-through table materials (glass, gems, water, thin fabrics) were replaced by opaque ones:
+Isaac drew objects resting on them hollow. Tools, steps and the calibration are in
+[scenes/level3/README.md](scenes/level3/README.md).
 
 Level 3 ranges per task (cm; forward = toward the table; + = forward / left / up):
 
 | task | grasp | robot start, forward | robot start, sideways | table height | target ahead of the start | target left of the start | checked by |
 |---|---|---|---|---|---|---|---|
-| TabletopGrasp | standing grasp | −3.0 to 9.2 | −2.7 to 5.0 | −4.0 to 0 | 27.4 to 39.8 | −7.0 to 2.7 | motion planner, 30/30 solved |
-| BendPick | bend grasp | −7.4 to 8.2 | −5.0 to 2.9 | −2.0 to 2.0 | 22.2 to 42.6 | −8.0 to 0 | motion planner, 30/30 solved |
-| XMovePick | walk, then standing grasp | −10.0 to 5.1 | −2.7 to 3.5 | −4.0 to 0 | 48.0 to 74.7 | −8.0 to −4.1 | inside the demonstrations' reach |
-| Handover | standing grasp | −3.4 to 4.4 | −4.8 to 4.5 | −3.0 to 0 | 24.9 to 29.8 | −3.9 to 2.0 | inside the demonstrations' reach |
-| LocoPickBetweenTables | standing grasp, then walk | −2.5 to 1.9 | −5.0 to 5.0 | −3.0 to 0 | 30.5 to 33.5 | −3.9 to 4.0 | inside the demonstrations' reach |
-| XMoveBendPick | walk, then bend grasp | −9.7 to 7.9 | −3.8 to 3.4 | −2.0 to 2.0 | 61.3 to 74.4 | −8.0 to −4.0 | inside the demonstrations' reach |
+| TabletopGrasp | standing grasp | −3.0 to 9.2 | −2.7 to 5.0 | −4.0 to 0 | 27.4 to 39.8 | −7.0 to 2.7 | motion planner, 30/30 solved; can stays put 30/30 |
+| BendPick | bend grasp | −7.4 to 8.2 | −5.0 to 2.9 | −2.0 to 2.0 | 22.2 to 42.6 | −8.0 to 0 | motion planner, 30/30 solved; box stays put 30/30 |
+| XMovePick | walk, then standing grasp | −10.0 to 5.1 | −2.7 to 3.5 | −4.0 to 0 | 48.0 to 74.7 | −8.0 to −4.1 | planner twin, walk then grasp: 30/30 |
+| Handover | standing grasp | −3.4 to 4.4 | −4.8 to 4.5 | −3.0 to 0 | 24.9 to 29.8 | −3.9 to 2.0 | planner twin: right-hand grasp 30/30, left-hand takeover 19/30 (3/6 on level 0) |
+| LocoPickBetweenTables | standing grasp, then walk | −2.5 to 1.9 | −5.0 to 5.0 | −3.0 to 0 | 30.5 to 33.5 | −3.9 to 4.0 | planner twin, grasp from the start: 30/30 |
+| XMoveBendPick | walk, then bend grasp | −9.7 to 7.9 | −3.8 to 3.4 | −2.0 to 2.0 | 61.3 to 74.4 | −8.0 to −4.0 | planner twin, walk then bend grasp: 30/30 |
 
 Motion-planner calibration: training scenes still solvable after one change.
 
@@ -82,12 +86,14 @@ Motion-planner calibration: training scenes still solvable after one change.
 | robot 4 cm right / left | 2/4 · 3/4 | 4/4 · 0/4 |
 
 TabletopGrasp cannot start further away or with a higher table: the can is then out of reach, or the arms' start pose hits
-the raised table. Where a combination of changes still failed the planner, that scene's range was shrunk toward the centre
-and the scene re-checked (two rounds); in one TabletopGrasp scene a distractor standing in the grasp path behind the can was
-moved 10 cm further back. Each scene is built on one of the task's 20 base layouts; scenes 21–30 reuse layouts 1–10 with
-everything else drawn anew. The sets are in `data/evals_scenes_benchmark/<task>/dr-level-3`, with the per-scene offsets in
-`meta/feasibility_build.json` and the planner results in `meta/feasibility_planner.jsonl`. They have not been evaluated
-with Ψ0 yet (the earlier 10-scene level 3 scored 12/40 on four of these tasks).
+the raised table. Where a combination of changes still failed a check, that scene was moved toward the middle of its range
+and re-checked; in two scenes a distractor standing in the grasp path was moved back (TabletopGrasp 30, Handover 24). BendPick
+boxes sit 0.5–3.4 cm behind the table edge, as in SIMPLE's own level 0 (0.6–3.3 cm); none moved in the 20 s check. Each scene
+is built on one of the task's 20 base layouts; scenes 21–30 reuse layouts 1–10 with everything else drawn anew. The sets are
+in `data/evals_scenes_benchmark/<task>/dr-level-3`: per-scene offsets in `meta/feasibility_build.json`, planner results in
+`meta/feasibility_planner.jsonl` (planner tasks) or `meta/feasibility_loco.jsonl` (planner twin of the teleop tasks), the
+stays-put check in `meta/feasibility_settle.jsonl`, replaced table materials in `meta/table_material_fix.json`. They have not
+been evaluated with Ψ0 yet.
 
 Evaluate a task on its set the standard way (Ψ0 server on `--port`, Isaac rendering):
 
@@ -106,30 +112,32 @@ Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +7.4 | +4.3 | −0.5 | +4.5 | −1.5 | +5.7 | +9.2 | +4.7 | +8.6 | +5.2 |
-| start, sideways | +0.8 | +2.0 | −1.9 | −0.6 | +4.4 | +4.0 | +0.1 | +2.0 | −0.5 | −2.0 |
-| table height | −0.1 | −2.0 | −4.0 | −2.0 | −1.1 | −0.8 | −1.2 | −2.3 | −0.5 | −1.5 |
-| target ahead | 34.0 | 33.6 | 36.8 | 33.6 | 39.0 | 28.3 | 33.2 | 33.2 | 30.8 | 30.7 |
-| target left | −3.4 | −2.1 | 1.3 | −2.1 | −5.3 | −2.2 | −2.9 | −0.1 | −1.7 | −0.1 |
+| start, forward | +7.4 | +4.3 | −0.5 | +4.5 | +3.9 | +5.7 | +9.2 | +4.7 | +8.6 | +5.2 |
+| start, sideways | −2.6 | +2.0 | −1.9 | −0.6 | +1.3 | +4.0 | +0.1 | +2.0 | −0.5 | −2.0 |
+| table height | −0.1 | −2.0 | −4.0 | −2.0 | −2.0 | −0.8 | −1.2 | −2.3 | −0.5 | −1.5 |
+| target ahead | 34.0 | 33.6 | 36.8 | 33.6 | 33.6 | 28.3 | 33.2 | 33.2 | 30.8 | 30.7 |
+| target left | 0 | −2.1 | 1.3 | −2.1 | −2.1 | −2.2 | −2.9 | −0.1 | −1.7 | −0.1 |
 | planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +1.2 | +5.7 | −0.3 | +3.9 | +4.7 | +1.3 | −3.0 | +2.6 | +3.1 | +7.1 |
-| start, sideways | +3.0 | +0.3 | +3.1 | +2.4 | +2.3 | +5.0 | +4.8 | +0.8 | −1.5 | +1.8 |
-| table height | −3.7 | −2.0 | −1.9 | −3.3 | −2.0 | −1.2 | −2.1 | −2.9 | −2.5 | −2.3 |
-| target ahead | 35.5 | 33.6 | 36.5 | 31.7 | 33.6 | 34.1 | 37.7 | 33.8 | 36.7 | 32.2 |
-| target left | −2.4 | −2.1 | −0.2 | −0.9 | −2.1 | −3.4 | −2.9 | 1.4 | −0.2 | −0.2 |
+| start, forward | +1.2 | +5.7 | −0.3 | +3.9 | +4.7 | +1.8 | −3.0 | +2.6 | +3.1 | +7.1 |
+| start, sideways | +3.0 | +0.3 | +3.1 | +2.4 | +2.3 | +3.8 | +4.8 | +0.8 | −1.5 | +1.8 |
+| table height | −3.7 | −2.0 | −1.9 | −3.3 | −2.0 | −2.0 | −2.1 | −2.9 | −2.5 | −2.3 |
+| target ahead | 35.5 | 33.6 | 36.5 | 31.7 | 33.6 | 33.6 | 37.7 | 33.8 | 36.7 | 32.2 |
+| target left | −2.4 | −2.1 | −0.2 | −0.9 | −2.1 | −2.1 | −2.9 | 1.4 | −0.2 | −0.2 |
 | planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +1.1 | +1.0 | +3.6 | +2.2 | +1.0 | +2.8 | +8.7 | −1.1 | +5.9 | +3.3 |
-| start, sideways | 0 | +1.6 | +1.8 | +0.6 | −2.7 | −0.5 | +1.9 | +1.8 | −0.9 | +3.2 |
-| table height | −3.6 | −1.5 | −1.1 | −3.5 | 0 | −2.0 | −1.9 | −1.4 | −2.5 | −2.0 |
-| target ahead | 38.4 | 36.4 | 33.9 | 36.3 | 33.4 | 33.6 | 35.0 | 37.2 | 33.9 | 33.6 |
-| target left | 0.8 | −1.0 | −3.9 | 0.7 | 2.7 | −2.1 | 0.8 | 0.5 | −0.4 | −2.1 |
+| start, forward | +1.1 | +1.0 | +3.9 | +2.2 | +1.0 | +2.8 | +8.7 | −1.1 | +5.9 | +3.3 |
+| start, sideways | 0 | +1.6 | +0.1 | +0.6 | −2.7 | −0.5 | +1.9 | +1.8 | −0.9 | +3.2 |
+| table height | −3.6 | −1.5 | −2.0 | −3.5 | 0 | −2.0 | −1.9 | −1.4 | −2.5 | −2.0 |
+| target ahead | 38.4 | 36.4 | 33.6 | 36.3 | 33.4 | 33.6 | 35.0 | 37.2 | 33.9 | 33.6 |
+| target left | 0.8 | −1.0 | −2.1 | 0.7 | 2.7 | −2.1 | 0.8 | 0.5 | −0.4 | −2.1 |
 | planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Notes: recentred toward the middle of the range after a failed check: scenes 2, 4, 5, 10, 12, 13, 15, 16, 19, 20, 23, 26, 30 · scene 1: robot start moved -3.4 cm sideways so the can is on its centre line: the right hand pushed it 2.4 cm at start-up · scene 30: distractor 46 moved 10 cm further back: it stood 14.7 cm behind the can in the grasp path
 
 </details>
 
@@ -166,9 +174,11 @@ Per scene (cm):
 | target left | −3.1 | −4.3 | −6.9 | −3.2 | −0.8 | −5.2 | −4.8 | −3.9 | −3.4 | −5.7 |
 | planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
+Notes: recentred toward the middle of the range after a failed check: scenes 1, 2, 6, 10, 11, 14, 15, 16, 19, 21, 24, 26
+
 </details>
 
-<details><summary><b>XMovePick</b> · 30 level-3 scenes</summary>
+<details><summary><b>XMovePick</b> · 30 level-3 scenes · planner-checked</summary>
 
 ![XMovePick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMovePickTeleop_lv3_30.jpg)
 
@@ -181,6 +191,7 @@ Per scene (cm):
 | table height | −0.1 | −1.7 | −4.0 | −2.2 | −1.1 | −0.8 | −1.2 | −2.3 | −0.5 | −1.0 |
 | target ahead | 52.5 | 50.6 | 58.5 | 52.9 | 62.6 | 49.1 | 49.7 | 53.5 | 49.9 | 48.4 |
 | target left | −6.5 | −4.2 | −4.8 | −7.6 | −7.7 | −7.3 | −6.2 | −6.0 | −5.9 | −4.4 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -189,6 +200,7 @@ Per scene (cm):
 | table height | −3.7 | −2.8 | −1.8 | −3.3 | −3.2 | −0.4 | −2.1 | −2.9 | −3.0 | −2.6 |
 | target ahead | 58.9 | 59.7 | 60.9 | 53.3 | 52.1 | 57.9 | 60.4 | 54.2 | 63.5 | 52.6 |
 | target left | −6.9 | −7.0 | −4.9 | −6.4 | −6.8 | −8.0 | −7.9 | −5.0 | −4.5 | −4.6 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -197,10 +209,11 @@ Per scene (cm):
 | table height | −3.6 | −1.5 | −0.3 | −3.5 | 0 | −3.9 | −1.9 | −1.4 | −2.5 | −0.7 |
 | target ahead | 62.5 | 59.6 | 57.0 | 57.8 | 55.4 | 48.0 | 51.1 | 59.0 | 53.2 | 57.6 |
 | target left | −5.2 | −6.1 | −7.5 | −5.3 | −4.1 | −7.2 | −5.6 | −5.7 | −5.4 | −6.7 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 </details>
 
-<details><summary><b>Handover</b> · 30 level-3 scenes</summary>
+<details><summary><b>Handover</b> · 30 level-3 scenes · planner-checked</summary>
 
 ![Handover: 30 level-3 Isaac scenes](scenes/readme_img/grid_HandoverTeleop_lv3_30.jpg)
 
@@ -208,31 +221,39 @@ Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +2.1 | +3.2 | −2.2 | −1.6 | −1.5 | +4.4 | −0.7 | −0.2 | +0.4 | +0.6 |
-| start, sideways | +1.5 | −4.8 | −2.1 | +4.5 | +2.1 | +0.2 | −1.9 | +1.2 | +0.2 | −2.0 |
-| table height | −0.1 | −1.2 | −3.0 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −0.7 |
-| target ahead | 26.4 | 25.7 | 28.6 | 26.8 | 29.5 | 25.2 | 25.4 | 27.1 | 25.6 | 25.1 |
-| target left | −1.7 | 1.6 | 1.0 | −2.8 | −3.5 | −2.9 | −1.4 | −0.9 | −0.6 | 1.6 |
+| start, forward | +2.1 | +1.6 | −1.0 | −1.6 | −1.5 | +4.4 | −0.7 | −0.2 | +0.4 | −1.7 |
+| start, sideways | +1.5 | −2.3 | −0.1 | +4.5 | +2.1 | +0.2 | −1.9 | +1.2 | +0.2 | +0.5 |
+| table height | −0.1 | −1.5 | −1.5 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −1.5 |
+| target ahead | 26.4 | 27.4 | 27.4 | 26.8 | 29.5 | 25.2 | 25.4 | 27.1 | 25.6 | 27.4 |
+| target left | −1.7 | −0.9 | −0.9 | −2.8 | −3.5 | −2.9 | −1.4 | −0.9 | −0.6 | −0.9 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| handed over | ✓ | · | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −2.3 | −0.2 | −3.3 | +1.1 | +2.3 | −0.9 | −0.3 | −0.7 | −3.4 | +1.4 |
-| start, sideways | −0.8 | +0.7 | −4.0 | +1.3 | −1.3 | +0.9 | +0.4 | −2.3 | −0.1 | −0.4 |
-| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
-| target ahead | 28.1 | 29.3 | 29.6 | 26.6 | 26.1 | 27.8 | 28.9 | 27.4 | 29.8 | 26.2 |
-| target left | −2.3 | −2.5 | 0 | −1.5 | −2.2 | −3.9 | −3.7 | 0.6 | 1.4 | 1.2 |
+| start, forward | −2.3 | −0.2 | −3.3 | +1.1 | +2.3 | −0.9 | −0.3 | −0.6 | −1.0 | +0.2 |
+| start, sideways | −0.8 | +0.7 | −4.0 | +1.3 | −1.3 | +0.9 | +0.4 | −0.7 | +2.2 | +1.7 |
+| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −1.5 | −1.5 | −1.5 |
+| target ahead | 28.1 | 29.3 | 29.6 | 26.6 | 26.1 | 27.8 | 28.9 | 27.4 | 27.4 | 27.4 |
+| target left | −2.3 | −2.5 | 0 | −1.5 | −2.2 | −3.9 | −3.7 | −0.9 | −0.9 | −0.9 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| handed over | · | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | · | · |
 
 | scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.2 | −2.6 | −1.1 | −2.0 | +0.1 | +3.8 | −0.2 | −2.7 | −0.7 | −1.3 |
-| start, sideways | −1.5 | −0.5 | +4.3 | −3.1 | −3.5 | +3.8 | −2.8 | −2.3 | −2.6 | +1.6 |
-| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
-| target ahead | 29.1 | 28.4 | 27.6 | 28.3 | 27.3 | 24.9 | 25.9 | 28.8 | 26.9 | 27.9 |
-| target left | 0.4 | −1.1 | −2.5 | 0.2 | 2.0 | −2.5 | −0.3 | −0.4 | 0 | −1.9 |
+| start, forward | −0.2 | −2.6 | −1.1 | −1.1 | +0.1 | +3.8 | −0.2 | −2.7 | −0.7 | −1.3 |
+| start, sideways | −1.5 | −0.5 | +4.3 | −2.0 | −3.5 | +3.8 | −2.8 | −2.3 | −2.6 | +1.6 |
+| table height | −2.7 | −1.1 | −0.2 | −1.5 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
+| target ahead | 29.1 | 28.4 | 27.6 | 27.4 | 27.3 | 24.9 | 25.9 | 28.8 | 26.9 | 27.9 |
+| target left | 0.4 | −1.1 | −2.5 | −0.9 | 2.0 | −2.5 | −0.3 | −0.4 | 0 | −1.9 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| handed over | · | · | ✓ | ✓ | ✓ | ✓ | · | · | · | ✓ |
+
+Notes: recentred toward the middle of the range after a failed check: scenes 2, 3, 10, 18, 19, 20, 24 · scene 24: distractor 1 (sugar box) moved from 14 cm behind-right of the box to 20 cm: it stood in the right arm's grasp path
 
 </details>
 
-<details><summary><b>LocoPickBetweenTables</b> · 30 level-3 scenes</summary>
+<details><summary><b>LocoPickBetweenTables</b> · 30 level-3 scenes · planner-checked</summary>
 
 ![LocoPickBetweenTables: 30 level-3 Isaac scenes](scenes/readme_img/grid_LocomotionPickBetweenTablesTeleop_lv3_30.jpg)
 
@@ -240,31 +261,36 @@ Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −1.2 | +1.4 | −0.7 | +0.6 | −0.6 | +1.9 | +1.1 | +0.9 | −0.9 | 0 |
-| start, sideways | −1.0 | −4.7 | −3.7 | +1.1 | +1.2 | +3.8 | −1.3 | +1.8 | +1.5 | −1.7 |
-| table height | −0.1 | −1.2 | −3.0 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −0.7 |
-| target ahead | 31.4 | 31.0 | 32.8 | 31.6 | 33.3 | 30.7 | 30.8 | 31.9 | 30.9 | 30.6 |
-| target left | −1.5 | 3.4 | 2.5 | −3.2 | −3.4 | −1.9 | −0.9 | 1.0 | 1.1 | 3.5 |
+| start, forward | −1.2 | +0.4 | −0.7 | +0.6 | −0.6 | +0.7 | −0.1 | +0.9 | −0.9 | −1.4 |
+| start, sideways | −1.0 | −1.4 | −3.7 | +1.1 | +1.2 | +1.8 | −2.3 | +1.8 | +1.5 | +1.8 |
+| table height | −0.1 | −1.5 | −3.0 | −1.7 | −0.8 | −1.5 | −1.5 | −1.8 | −0.4 | −1.5 |
+| target ahead | 31.4 | 32.0 | 32.8 | 31.6 | 33.3 | 32.0 | 32.0 | 31.9 | 30.9 | 32.0 |
+| target left | −1.5 | 0.1 | 2.5 | −3.2 | −3.4 | 0.1 | 0.1 | 1.0 | 1.1 | 0.1 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.5 | −1.6 | −0.3 | +0.4 | +1.8 | +1.0 | −0.7 | −0.4 | −2.2 | +0.2 |
+| start, forward | −0.5 | −1.6 | −0.3 | +0.4 | +1.0 | +1.0 | −0.7 | −0.4 | −2.2 | +0.2 |
 | start, sideways | −1.3 | +3.4 | −2.2 | +2.5 | +3.2 | +5.0 | +0.6 | −3.1 | −4.5 | −2.0 |
-| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
-| target ahead | 32.5 | 33.2 | 33.4 | 31.5 | 31.2 | 32.2 | 33.0 | 32.0 | 33.5 | 31.3 |
-| target left | −2.5 | −1.1 | 2.4 | 0.4 | 0 | −1.4 | −3.7 | 1.9 | 0.5 | 2.9 |
+| table height | −2.8 | −2.1 | −1.3 | −2.5 | −1.5 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
+| target ahead | 32.5 | 33.2 | 33.4 | 31.5 | 32.0 | 32.2 | 33.0 | 32.0 | 33.5 | 31.3 |
+| target left | −2.5 | −1.1 | 2.4 | 0.4 | 0.1 | −1.4 | −3.7 | 1.9 | 0.5 | 2.9 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −2.5 | −1.2 | −0.9 | −0.6 | +0.6 | +1.2 | +0.8 | +0.1 | −0.9 | −1.1 |
-| start, sideways | −0.3 | −1.4 | +1.6 | −3.1 | −5.0 | +0.8 | +0.3 | −0.8 | +1.6 | +0.6 |
-| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
-| target ahead | 33.1 | 32.7 | 32.1 | 32.6 | 31.9 | 30.5 | 31.1 | 32.9 | 31.7 | 32.4 |
-| target left | 2.0 | −0.5 | −2.8 | 0.3 | 2.2 | −2.4 | 1.1 | 0.7 | 2.2 | −1.2 |
+| start, forward | −2.5 | −1.2 | −0.9 | −0.6 | +0.6 | −0.2 | +0.8 | +0.1 | −0.9 | −1.1 |
+| start, sideways | −0.3 | −1.4 | +1.6 | −3.1 | −5.0 | −1.6 | +0.3 | −0.8 | +1.6 | +0.6 |
+| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −1.5 | −1.5 | −1.0 | −1.9 | −0.5 |
+| target ahead | 33.1 | 32.7 | 32.1 | 32.6 | 31.9 | 32.0 | 31.1 | 32.9 | 31.7 | 32.4 |
+| target left | 2.0 | −0.5 | −2.8 | 0.3 | 2.2 | 0.1 | 1.1 | 0.7 | 2.2 | −1.2 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Notes: recentred toward the middle of the range after a failed check: scenes 2, 6, 7, 10, 15, 26
 
 </details>
 
-<details><summary><b>XMoveBendPick</b> · 30 level-3 scenes</summary>
+<details><summary><b>XMoveBendPick</b> · 30 level-3 scenes · planner-checked</summary>
 
 ![XMoveBendPick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMoveBendPickTeleop_lv3_30.jpg)
 
@@ -272,27 +298,32 @@ Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.4 | +2.8 | −7.8 | −3.5 | −0.4 | +0.2 | +7.9 | −3.1 | +4.6 | +4.3 |
-| start, sideways | +0.1 | −3.8 | −0.6 | −0.1 | +3.4 | −0.3 | −1.4 | −0.5 | +1.5 | −1.9 |
-| table height | +1.9 | +0.3 | −2.0 | −0.2 | +0.9 | +1.2 | +0.8 | −0.3 | +1.5 | +1.0 |
-| target ahead | 65.4 | 63.5 | 68.3 | 65.2 | 73.6 | 62.1 | 62.7 | 66.9 | 63.1 | 61.8 |
-| target left | −6.5 | −4.1 | −4.7 | −7.6 | −7.7 | −7.3 | −6.2 | −5.9 | −5.8 | −4.3 |
+| start, forward | −0.4 | +2.8 | −7.8 | −4.2 | −0.4 | +0.2 | +7.9 | −3.1 | +4.6 | +4.3 |
+| start, sideways | +0.1 | −3.8 | −0.6 | −1.6 | +3.4 | −0.3 | −1.4 | −0.5 | +1.5 | −1.9 |
+| table height | +1.9 | +0.3 | −2.0 | 0 | +0.9 | +1.2 | +0.8 | −0.3 | +1.5 | +1.0 |
+| target ahead | 65.4 | 63.5 | 68.3 | 67.8 | 73.6 | 62.1 | 62.7 | 66.9 | 63.1 | 61.8 |
+| target left | −6.5 | −4.1 | −4.7 | −6.0 | −7.7 | −7.3 | −6.2 | −5.9 | −5.8 | −4.3 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −4.8 | −8.9 | −9.7 | +1.3 | −0.9 | −3.7 | −1.4 | −3.6 | −3.5 | −0.1 |
-| start, sideways | +0.7 | +1.0 | −0.4 | +2.0 | 0 | +0.3 | +2.4 | +0.4 | −0.3 | −0.7 |
-| table height | −1.7 | −0.8 | +0.2 | −1.3 | −1.2 | +1.6 | −0.1 | −0.9 | −1.0 | −0.6 |
-| target ahead | 69.9 | 71.0 | 70.7 | 65.8 | 64.2 | 69.0 | 72.1 | 68.1 | 74.4 | 64.9 |
-| target left | −6.9 | −7.0 | −4.8 | −6.3 | −6.8 | −8.0 | −7.9 | −5.0 | −4.4 | −4.5 |
+| start, forward | −4.8 | −5.5 | −9.7 | +1.3 | −4.6 | −3.7 | −1.4 | −3.6 | −3.5 | −0.1 |
+| start, sideways | +0.7 | −0.1 | −0.4 | +2.0 | −0.8 | +0.3 | +2.4 | +0.4 | −0.3 | −0.7 |
+| table height | −1.7 | 0 | +0.2 | −1.3 | 0 | +1.6 | −0.1 | −0.9 | −1.0 | −0.6 |
+| target ahead | 69.9 | 67.8 | 70.7 | 65.8 | 67.8 | 69.0 | 72.1 | 68.1 | 74.4 | 64.9 |
+| target left | −6.9 | −6.0 | −4.8 | −6.3 | −6.0 | −8.0 | −7.9 | −5.0 | −4.4 | −4.5 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 | scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −8.3 | −5.6 | −3.3 | −3.8 | +1.6 | +2.1 | +7.8 | −7.8 | +0.8 | −4.6 |
-| start, sideways | −1.1 | −1.2 | +0.2 | −2.3 | −3.5 | +2.7 | −2.0 | +1.6 | +0.2 | +1.2 |
-| table height | −1.6 | +0.5 | +1.7 | −1.5 | +2.0 | −1.9 | +0.1 | +0.6 | −0.5 | +1.3 |
-| target ahead | 71.6 | 70.8 | 68.5 | 70.3 | 67.6 | 61.3 | 65.8 | 69.7 | 66.7 | 69.4 |
-| target left | −5.1 | −6.1 | −7.4 | −5.2 | −4.0 | −7.2 | −5.5 | −5.7 | −5.4 | −6.6 |
+| start, forward | −8.3 | −5.6 | −3.3 | −3.8 | +1.6 | −4.5 | +7.8 | −7.8 | +0.8 | −4.6 |
+| start, sideways | −1.1 | −1.2 | +0.2 | −2.3 | −3.5 | +1.6 | −2.0 | +1.6 | +0.2 | +1.2 |
+| table height | −1.6 | +0.5 | +1.7 | −1.5 | +2.0 | 0 | +0.1 | +0.6 | −0.5 | +1.3 |
+| target ahead | 71.6 | 70.8 | 68.5 | 70.3 | 67.6 | 67.8 | 65.8 | 69.7 | 66.7 | 69.4 |
+| target left | −5.1 | −6.1 | −7.4 | −5.2 | −4.0 | −6.0 | −5.5 | −5.7 | −5.4 | −6.6 |
+| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Notes: recentred toward the middle of the range after a failed check: scenes 4, 12, 15, 26 · scene 4: box moved 2.0 cm away from the table edge (with the robot start): it tipped off when grasped · scene 12: box moved 0.3 cm away from the table edge (with the robot start): it tipped off when grasped
 
 </details>
 

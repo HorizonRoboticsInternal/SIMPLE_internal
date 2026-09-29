@@ -1,0 +1,32 @@
+[
+ {
+  "scene": 0,
+  "from": "Jelly_Clear_Red_Strawberry",
+  "to": "Chameleon_Pigment_Golden_Green"
+ },
+ {
+  "scene": 5,
+  "from": "metallic_plastic_simple_controls",
+  "to": "Platinum_Brushed_Very_Strong_Brushing"
+ },
+ {
+  "scene": 9,
+  "from": "Glass_Glazing_Tinted_Dark_Bronze",
+  "to": "Aluminum_Scratched_Scuffs_and_Grime"
+ },
+ {
+  "scene": 12,
+  "from": "Silk_Charmeuse_Light_Blue",
+  "to": "Nickel_Foil_Smudged_Foil"
+ },
+ {
+  "scene": 22,
+  "from": "PET_Smudged",
+  "to": "Brass_Brushed_Yellow_Medium"
+ },
+ {
+  "scene": 25,
+  "from": "Silk_Charmeuse_Blue",
+  "to": "Brass_Scratched_Gold_Polished_Subtle_Dark_Scratches"
+ }
+]

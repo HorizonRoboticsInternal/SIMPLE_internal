@@ -45,10 +45,10 @@ because the arms' start pose then hits it, and fails from further back because t
 |---|---|---|---|---|---|
 | TabletopGrasp | standing | 27.4 to 39.8 | −7.0 to 2.7 | −4 to 0 | motion planner, 30/30 |
 | BendPick | bend | 22.2 to 42.6 | −8.0 to 0 | −2 to +2 | motion planner, 30/30 |
-| Handover | standing | 24.9 to 29.8 | −3.9 to 2.0 | −3 to 0 | inside the demonstrations' reach |
-| LocoPickBetweenTables | standing, then walk | 30.5 to 33.5 | −3.9 to 4.0 | −3 to 0 | inside the demonstrations' reach |
-| XMovePick | walk, then standing | 48.0 to 74.7 | −8.0 to −4.1 | −4 to 0 | inside the demonstrations' reach |
-| XMoveBendPick | walk, then bend | 61.3 to 74.4 | −8.0 to −4.0 | −2 to +2 | inside the demonstrations' reach |
+| Handover | standing | 24.9 to 29.8 | −3.9 to 2.0 | −3 to 0 | planner twin: right-hand grasp 30/30, left-hand takeover 19/30 |
+| LocoPickBetweenTables | standing, then walk | 30.5 to 33.5 | −3.9 to 4.0 | −3 to 0 | planner twin, 30/30 |
+| XMovePick | walk, then standing | 48.0 to 74.7 | −8.0 to −4.1 | −4 to 0 | planner twin, 30/30 |
+| XMoveBendPick | walk, then bend | 61.3 to 74.4 | −8.0 to −4.0 | −2 to +2 | planner twin, 30/30 |
 
 The four teleop tasks have no planner: their targets stay inside the reach box of the 100 successful demonstrations, and
 their table heights only move the way the planner found safe for the same kind of grasp. For the walking tasks the start
@@ -63,3 +63,37 @@ assignment), and each target has only one or two cached grasps, so retries mainl
 `--render-hz 50`. `levelgen.py` gives the level generator its own DDS domain (`LEVELGEN_DDS_DOMAIN`) so it never competes
 with other decoupled-WBC workers for participant slots. The training demonstrations and the level-0 base sets are read from
 `LEVEL3_DEMO_ROOT` / `LEVEL3_BASE_ROOT` (lab NAS by default).
+
+## Teleop tasks: the planner-twin check (added 2026-09-28)
+
+The four teleop tasks have no planner of their own, but SIMPLE has motion-planning twins with the same G1 and planner
+(XMoveAndPickMP, XMoveBendPickMP, LocomotionPickBetweenTablesMP, TabletopHandoverMP). `feas_loco.py` copies each teleop scene
+into its twin (table top at z = 0, the robot's pelvis at the teleop height above it; the basket of Handover is left out) and
+places the robot where the teleop demonstrations stood when they lifted the object (from their recorded `observation.base_pose`
+and `observation.object_poses`: XMovePick 30.7 cm ahead / 7.8 cm right, 109 demos; XMoveBendPick 37.1 / 4.3 cm, 152 demos).
+It tries the straight-ahead stance first, then the demos' sidestep, then (XMoveBendPick) a deeper squat that still stays above
+the demos' median squat. A scene passes when cuRobo grasps the object and it ends >= 5 cm above its start; for Handover the
+right-hand grasp and the left-hand takeover are recorded separately.
+
+| task | level-0 control (first 6 scenes) | level 3 | changed to get there |
+|---|---|---|---|
+| XMovePick | 5/6 (scene 1: the box stands 0.5 cm from the edge and topples before the grasp) | 30/30 | none |
+| XMoveBendPick | 6/6 | 30/30 | 4 scenes recentred, 2 of them with the box moved to 4.5 cm from the edge |
+| LocoPickBetweenTables | 6/6 | 30/30 | 6 scenes recentred (box closest to the pelvis on a lower table) |
+| Handover | grasp 6/6, takeover 3/6 | grasp 30/30, takeover 19/30 | 7 scenes recentred (box left of centre on a lower table), 1 distractor moved out of the arm's path |
+
+The twin's left-hand takeover fails in half of SIMPLE's own level-0 scenes, so it is a limit of the twin, not of the scenes.
+
+## Stays put (20 s, robot standing)
+
+`bench_settle.py` (motion-planner tasks) and `kit_settle.py` (teleop tasks) load every scene exactly and let the robot stand for
+20 s: the object must move < 1-1.5 cm, tilt < 5 deg and not drop. All 180 pass. TabletopGrasp needed 4 scenes recentred: the
+right hand pushed the can 2.4 cm or left it leaning on a finger at start-up (SIMPLE's own level 0 nudges it up to 1.3 cm).
+
+## See-through table materials
+
+`fix_tables.py` replaces glass, gem, liquid, light-transmitting and thin-walled (translucent fabric) table materials by an opaque
+material of the same set: Isaac's real-time renderer drew objects resting on them hollow. Visual only (MuJoCo ignores it); the
+replaced ones are listed in each set's `meta/table_material_fix.json`.
+
+`check_teleop.sh` re-runs both checks.

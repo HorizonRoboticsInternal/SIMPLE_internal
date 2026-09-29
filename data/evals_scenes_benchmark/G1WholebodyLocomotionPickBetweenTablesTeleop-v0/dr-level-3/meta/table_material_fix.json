@@ -1,0 +1,27 @@
+[
+ {
+  "scene": 7,
+  "from": "Glass_Clear_Saturated_Red",
+  "to": "Aniline_Leather_Soft_Light_Brown"
+ },
+ {
+  "scene": 14,
+  "from": "Carbon_Fiber_Worn_Coating",
+  "to": "Carpet_Woven_Orange"
+ },
+ {
+  "scene": 23,
+  "from": "Polyester_Charmeuse_Orange",
+  "to": "Titanium_Brushed"
+ },
+ {
+  "scene": 24,
+  "from": "Water_Pool_Clear_Green",
+  "to": "Chameleon_Pigment_Desert_Fire"
+ },
+ {
+  "scene": 26,
+  "from": "Glass_Optical_F",
+  "to": "Stucco_Subtle_Dirt"
+ }
+]
