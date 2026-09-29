@@ -1,6 +1,6 @@
 # Level-3 scenes the G1 can complete
 
-Tools that made the 30 level-3 scenes of each of the six benchmark tasks in `data/evals_scenes_benchmark/<task>/dr-level-3`.
+Tools that made the 30 level-3 scenes of each of the five benchmark tasks in `data/evals_scenes_benchmark/<task>/dr-level-3`.
 Level 3 changes everything at once in every scene: distractors, table material, lighting, object pose, robot start and
 table-top height. The robot start and the table height are chosen **per scene, after its object pose is drawn**, inside
 the range where the G1 can still do the task.
@@ -16,7 +16,7 @@ the range where the G1 can still do the task.
 ```bash
 bash scenes/level3/gen_candidates.sh
 for t in G1WholebodyTabletopGraspMP-v0 G1WholebodyBendPickMP-v0 G1WholebodyXMovePickTeleop-v0 G1WholebodyHandoverTeleop-v0 \
-         G1WholebodyLocomotionPickBetweenTablesTeleop-v0 G1WholebodyXMoveBendPickTeleop-v0; do
+         G1WholebodyLocomotionPickBetweenTablesTeleop-v0; do
   .venv/bin/python scenes/level3/build_lv3_feasible.py $t --src data/level3_work/candidates/$t/dr-level-3 --out data/level3_work/stage/$t
 done
 bash scenes/level3/check_mp.sh G1WholebodyTabletopGraspMP-v0 G1WholebodyBendPickMP-v0
@@ -48,9 +48,8 @@ because the arms' start pose then hits it, and fails from further back because t
 | Handover | standing | 24.9 to 29.8 | −3.9 to 2.0 | −3 to 0 | planner twin: right-hand grasp 30/30, left-hand takeover 19/30 |
 | LocoPickBetweenTables | standing, then walk | 30.5 to 33.5 | −3.9 to 4.0 | −3 to 0 | planner twin, 30/30 |
 | XMovePick | walk, then standing | 48.0 to 74.7 | −8.0 to −4.1 | −4 to 0 | planner twin, 30/30 |
-| XMoveBendPick | walk, then bend | 61.3 to 74.4 | −8.0 to −4.0 | −2 to +2 | planner twin, 30/30 |
 
-The four teleop tasks have no planner: their targets stay inside the reach box of the 100 successful demonstrations, and
+The three teleop tasks have no planner: their targets stay inside the reach box of the 100 successful demonstrations, and
 their table heights only move the way the planner found safe for the same kind of grasp. For the walking tasks the start
 distance is absorbed by the walk, so it ranges between the closest eval start and the farthest demonstration.
 
@@ -66,19 +65,17 @@ with other decoupled-WBC workers for participant slots. The training demonstrati
 
 ## Teleop tasks: the planner-twin check (added 2026-09-28)
 
-The four teleop tasks have no planner of their own, but SIMPLE has motion-planning twins with the same G1 and planner
-(XMoveAndPickMP, XMoveBendPickMP, LocomotionPickBetweenTablesMP, TabletopHandoverMP). `feas_loco.py` copies each teleop scene
+The three teleop tasks have no planner of their own, but SIMPLE has motion-planning twins with the same G1 and planner
+(XMoveAndPickMP, LocomotionPickBetweenTablesMP, TabletopHandoverMP). `feas_loco.py` copies each teleop scene
 into its twin (table top at z = 0, the robot's pelvis at the teleop height above it; the basket of Handover is left out) and
 places the robot where the teleop demonstrations stood when they lifted the object (from their recorded `observation.base_pose`
-and `observation.object_poses`: XMovePick 30.7 cm ahead / 7.8 cm right, 109 demos; XMoveBendPick 37.1 / 4.3 cm, 152 demos).
-It tries the straight-ahead stance first, then the demos' sidestep, then (XMoveBendPick) a deeper squat that still stays above
-the demos' median squat. A scene passes when cuRobo grasps the object and it ends >= 5 cm above its start; for Handover the
+and `observation.object_poses`: XMovePick 30.7 cm ahead / 7.8 cm right, 109 demos).
+It tries the straight-ahead stance first, then the demos' sidestep. A scene passes when cuRobo grasps the object and it ends >= 5 cm above its start; for Handover the
 right-hand grasp and the left-hand takeover are recorded separately.
 
 | task | level-0 control (first 6 scenes) | level 3 | changed to get there |
 |---|---|---|---|
 | XMovePick | 5/6 (scene 1: the box stands 0.5 cm from the edge and topples before the grasp) | 30/30 | none |
-| XMoveBendPick | 6/6 | 30/30 | 4 scenes recentred, 2 of them with the box moved to 4.5 cm from the edge |
 | LocoPickBetweenTables | 6/6 | 30/30 | 6 scenes recentred (box closest to the pelvis on a lower table) |
 | Handover | grasp 6/6, takeover 3/6 | grasp 30/30, takeover 19/30 | 7 scenes recentred (box left of centre on a lower table), 1 distractor moved out of the arm's path |
 
@@ -87,7 +84,7 @@ The twin's left-hand takeover fails in half of SIMPLE's own level-0 scenes, so i
 ## Stays put (20 s, robot standing)
 
 `bench_settle.py` (motion-planner tasks) and `kit_settle.py` (teleop tasks) load every scene exactly and let the robot stand for
-20 s: the object must move < 1-1.5 cm, tilt < 5 deg and not drop. All 180 pass. TabletopGrasp needed 4 scenes recentred: the
+20 s: the object must move < 1-1.5 cm, tilt < 5 deg and not drop. All 150 retained scenes pass. TabletopGrasp needed 4 scenes recentred: the
 right hand pushed the can 2.4 cm or left it leaning on a finger at start-up (SIMPLE's own level 0 nudges it up to 1.3 cm).
 
 ## See-through table materials

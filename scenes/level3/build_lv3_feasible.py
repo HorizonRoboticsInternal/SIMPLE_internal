@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Feasible level-3 scenes for the six SIMPLE benchmark tasks.
+"""Feasible level-3 scenes for the five SIMPLE benchmark tasks.
 
 Every scene keeps what the level-3 generator drew for it (distractors, table material, lighting, the target's pose on
 the table) and gets a new layout offset -- robot start (dx forward, dy left) and table-top height dz -- chosen inside

@@ -13,7 +13,6 @@ TASK_TITLES = {
         "Locomotion Pick Between Tables"
     ),
     "G1WholebodyTabletopGraspMP-v0": "Tabletop Grasp MP",
-    "G1WholebodyXMoveBendPickTeleop-v0": "XMove BendPick Teleop",
     "G1WholebodyBendHandoverTeleop-v0": "Bend Handover Teleop",
     "G1WholebodyBendPickTeleop-v0": "BendPick Teleop",
     "G1WholebodyCloseDoorTeleop-v0": "Close Door Teleop",

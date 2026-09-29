@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]      # the SIMPLE checkout
 BENCH = ["G1WholebodyTabletopGraspMP-v0", "G1WholebodyBendPickMP-v0", "G1WholebodyXMovePickTeleop-v0", "G1WholebodyHandoverTeleop-v0",
-         "G1WholebodyLocomotionPickBetweenTablesTeleop-v0", "G1WholebodyXMoveBendPickTeleop-v0"]
+         "G1WholebodyLocomotionPickBetweenTablesTeleop-v0"]
 KITS = {"bottle_bin": "G1WholebodyBottleBinTeleop-v0", "bowl_sink": "G1WholebodyBowlSinkTeleop-v0", "coffee_cart": "G1WholebodyCoffeeCartTeleop-v0"}
 COLS, ROWS, TW, TH = 6, 5, 320, 180
 try:

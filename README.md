@@ -13,7 +13,7 @@ http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
 | `scenes/make_levels.py` | writes the level 0–3 evaluation sets of a kit (LeRobot format, one `environment_config` per scene) into `data/evals_scenes/<env>/dr-level-<N>/`, plus `meta/scene_env.json` with the kit knobs the set was generated with |
 | `scenes/eval_scene.py` | runs SIMPLE's `eval_decoupled_wbc` on a kit's task: registers the task, re-applies `scene_env.json`, then the standard evaluator |
 | `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
-| `data/evals_scenes_benchmark/<task>/dr-level-3/` | the six original tasks' level-3 sets, 30 reachability-checked scenes each (section 1) |
+| `data/evals_scenes_benchmark/<task>/dr-level-3/` | the five original tasks' level-3 sets, 30 reachability-checked scenes each (section 1) |
 | `scenes/level3/` | the tools that built and checked them: candidate generation, per-scene reach fitting, motion-planner check, exact render ([README](scenes/level3/README.md)) |
 | `data/evals_scenes/…/dr-level-{0,1,2}/` | the three kitchens' level 0–2 sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration |
 | `data/evals_scenes/…/dr-level-3/` | the three kitchens' level-3 sets, 30 scenes each (2026-09-28): bottle_bin and bowl_sink rebuilt from the replay fits and checked graspable, coffee_cart the ±10 / ±5 / ±4 cm draw; used by the HoloMotion v1.4 VLA evaluation (section 4) |
@@ -47,7 +47,7 @@ python scenes/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_d
 
 ## 1 · Level-3 scenes for SIMPLE
 
-The six original tasks in new scenes: 30 level-3 scenes each, rendered in Isaac, every one inside the range where the G1
+The five original tasks in new scenes: 30 level-3 scenes each, rendered in Isaac, every one inside the range where the G1
 can still do the task. Every level-3 scene changes all of these at once:
 
 1. **Scene**: new distractors and a new table material
@@ -76,7 +76,6 @@ Level 3 ranges per task (cm; forward = toward the table; + = forward / left / up
 | XMovePick | walk, then standing grasp | −10.0 to 5.1 | −2.7 to 3.5 | −4.0 to 0 | 48.0 to 74.7 | −8.0 to −4.1 | planner twin, walk then grasp: 30/30 |
 | Handover | standing grasp | −3.4 to 4.4 | −4.8 to 4.5 | −3.0 to 0 | 24.9 to 29.8 | −3.9 to 2.0 | planner twin: right-hand grasp 30/30, left-hand takeover 19/30 (3/6 on level 0) |
 | LocoPickBetweenTables | standing grasp, then walk | −2.5 to 1.9 | −5.0 to 5.0 | −3.0 to 0 | 30.5 to 33.5 | −3.9 to 4.0 | planner twin, grasp from the start: 30/30 |
-| XMoveBendPick | walk, then bend grasp | −9.7 to 7.9 | −3.8 to 3.4 | −2.0 to 2.0 | 61.3 to 74.4 | −8.0 to −4.0 | planner twin, walk then bend grasp: 30/30 |
 
 Motion-planner calibration: training scenes still solvable after one change.
 
@@ -290,43 +289,6 @@ Per scene (cm):
 | grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 Notes: recentred toward the middle of the range after a failed check: scenes 2, 6, 7, 10, 15, 26
-
-</details>
-
-<details><summary><b>XMoveBendPick</b> · 30 level-3 scenes · planner-checked</summary>
-
-![XMoveBendPick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMoveBendPickTeleop_lv3_30.jpg)
-
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.4 | +2.8 | −7.8 | −4.2 | −0.4 | +0.2 | +7.9 | −3.1 | +4.6 | +4.3 |
-| start, sideways | +0.1 | −3.8 | −0.6 | −1.6 | +3.4 | −0.3 | −1.4 | −0.5 | +1.5 | −1.9 |
-| table height | +1.9 | +0.3 | −2.0 | 0 | +0.9 | +1.2 | +0.8 | −0.3 | +1.5 | +1.0 |
-| target ahead | 65.4 | 63.5 | 68.3 | 67.8 | 73.6 | 62.1 | 62.7 | 66.9 | 63.1 | 61.8 |
-| target left | −6.5 | −4.1 | −4.7 | −6.0 | −7.7 | −7.3 | −6.2 | −5.9 | −5.8 | −4.3 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −4.8 | −5.5 | −9.7 | +1.3 | −4.6 | −3.7 | −1.4 | −3.6 | −3.5 | −0.1 |
-| start, sideways | +0.7 | −0.1 | −0.4 | +2.0 | −0.8 | +0.3 | +2.4 | +0.4 | −0.3 | −0.7 |
-| table height | −1.7 | 0 | +0.2 | −1.3 | 0 | +1.6 | −0.1 | −0.9 | −1.0 | −0.6 |
-| target ahead | 69.9 | 67.8 | 70.7 | 65.8 | 67.8 | 69.0 | 72.1 | 68.1 | 74.4 | 64.9 |
-| target left | −6.9 | −6.0 | −4.8 | −6.3 | −6.0 | −8.0 | −7.9 | −5.0 | −4.4 | −4.5 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −8.3 | −5.6 | −3.3 | −3.8 | +1.6 | −4.5 | +7.8 | −7.8 | +0.8 | −4.6 |
-| start, sideways | −1.1 | −1.2 | +0.2 | −2.3 | −3.5 | +1.6 | −2.0 | +1.6 | +0.2 | +1.2 |
-| table height | −1.6 | +0.5 | +1.7 | −1.5 | +2.0 | 0 | +0.1 | +0.6 | −0.5 | +1.3 |
-| target ahead | 71.6 | 70.8 | 68.5 | 70.3 | 67.6 | 67.8 | 65.8 | 69.7 | 66.7 | 69.4 |
-| target left | −5.1 | −6.1 | −7.4 | −5.2 | −4.0 | −6.0 | −5.5 | −5.7 | −5.4 | −6.6 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-Notes: recentred toward the middle of the range after a failed check: scenes 4, 12, 15, 26 · scene 4: box moved 2.0 cm away from the table edge (with the robot start): it tipped off when grasped · scene 12: box moved 0.3 cm away from the table edge (with the robot start): it tipped off when grasped
 
 </details>
 

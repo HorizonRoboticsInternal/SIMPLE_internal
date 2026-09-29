@@ -1,21 +1,20 @@
 """Walk-then-grasp feasibility of the locomotion teleop scenes, checked with the motion planner of their MP twins.
 
-The three locomotion teleop tasks have MP twins in SIMPLE (same G1, AMO controller + cuRobo grasp planning):
+The two locomotion teleop tasks have MP twins in SIMPLE (same G1, AMO controller + cuRobo grasp planning):
     XMovePickTeleop        -> XMoveAndPickMP        walk to the table, grasp, lift
-    XMoveBendPickTeleop    -> XMoveBendPickMP       walk, squat (height -0.3), grasp, stand up
     LocomotionPickBetween… -> LocomotionPickBetweenTablesMP   grasp from the start, lift (the walk to table 2 is not checked)
 Each teleop scene is transplanted into its twin: target, distractors, container, table(s) and robot start are copied. Like
 every SIMPLE MP task the twin keeps the table top at z = 0 (the dexterous-grasp code picks the object's resting pose from
 its height above z = 0) and moves the robot instead: pelvis z = TELEOP_PELVIS - teleop table top, objects z - table top. "After walking to the table" is modelled
 by placing the robot at the grasp stance straight ahead of its start (lateral offset kept): the object at the
 demonstrations' median distance ahead of the pelvis at lift (XMovePick 30.7 cm; p5 27.4, p95 35.9 are tried next), or at
-the twin's own measured stance (XMoveBendPick 37.5 cm; 35 and 40 next); last, the demonstrations' median stance at lift
-including their sidestep (XMovePick 30.7 ahead / 7.8 right; XMoveBendPick 37.1 ahead / 4.3 right). The planner's own open-loop walk is not used: it
+the demonstrations' median stance at lift
+including their sidestep (XMovePick 30.7 ahead / 7.8 right). The planner's own open-loop walk is not used: it
 covers ~0.6 of short commanded distances. A scene is feasible when, from one of these stances, the planner grasps and the
 target ends >= 5 cm above its start height.
 
     python scenes/level3/feas_loco.py <teleop LeRobot set> --task G1WholebodyXMovePickTeleop-v0 --out res.jsonl [--tries 2 --scenes 3 11]
-Tasks: XMovePick, XMoveBendPick, LocomotionPickBetweenTables, Handover (twin: G1WholebodyTabletopHandoverMP; records the right-hand
+Tasks: XMovePick, LocomotionPickBetweenTables, Handover (twin: G1WholebodyTabletopHandoverMP; records the right-hand
 grasp and the left-hand takeover separately).
 """
 import argparse, copy, json, math, os, time, traceback
@@ -29,15 +28,9 @@ from simple.mp.curobo import CuRoboPlanner
 TELEOP_PELVIS = 0.75          # teleop pelvis height above the floor while walking / grasping (XMovePick demos, height command 0.74)
 TWINS = {
     # stances: (target ahead of the pelvis, target left of the pelvis or None = keep the start's lateral offset) at the grasp.
-    # Straight walks first; the last one is the demonstrations' median stance at lift (operators sidestep: XMoveBendPick demos
-    # move the box 1.5 cm left on median, up to 5.3 cm at p95), from observation.base_pose + object_poses of the teleop demos.
+    # Straight walks first, then the demonstrations' median sidestep stance.
     "G1WholebodyXMovePickTeleop-v0": dict(twin="simple/G1WholebodyXMoveAndPickMP-v0", kind="walk",
                                           stances=[(0.307, None), (0.274, None), (0.359, None), (0.307, -0.078)]),
-    # (a third element = squat height command; default -0.3 as the twin. Deeper squats are tried last and count only if the
-    # pelvis at the grasp stays inside the demos' range: 0.533 m median, 0.483 m at p5)
-    "G1WholebodyXMoveBendPickTeleop-v0": dict(twin="simple/G1WholebodyXMoveBendPickMP-v0", kind="walk_bend",
-                                              stances=[(0.375, None), (0.35, None), (0.40, None), (0.371, -0.043),
-                                                       (0.371, -0.043, -0.35), (0.371, -0.043, -0.40)]),
     "G1WholebodyLocomotionPickBetweenTablesTeleop-v0": dict(twin="simple/G1WholebodyLocomotionPickBetweenTablesMP-v0", stances=[None], kind="static"),
     # Handover: right hand grasps + lifts 10 cm, the left hand takes it over (the twin's success: left-hand contact held), the right
     # hand opens and the left hand moves away. The teleop basket (placing into it) is not part of the twin.

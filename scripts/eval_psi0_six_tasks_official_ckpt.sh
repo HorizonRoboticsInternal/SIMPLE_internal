@@ -19,7 +19,6 @@ TASKS=(
   G1WholebodyHandoverTeleop-v0
   G1WholebodyLocomotionPickBetweenTablesTeleop-v0
   G1WholebodyTabletopGraspMP-v0
-  G1WholebodyXMoveBendPickTeleop-v0
 )
 RUN_DIRS=(
   "$PSI_ROOT/.runs/psi0/simple-checkpoints/g1wholebodyxmovepick-v0.simple.flow1000.cosine.lr1.0e-04.b128.gpus8.2604022205"

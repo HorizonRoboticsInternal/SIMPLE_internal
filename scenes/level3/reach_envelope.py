@@ -23,7 +23,6 @@ DEMOS = {
     "G1WholebodyXMovePickTeleop-v0": f"{A}/simple-teleop/G1WholebodyXMovePickTeleop-v0/level-0",
     "G1WholebodyHandoverTeleop-v0": f"{A}/simple/G1WholebodyHandoverTeleop-v0",
     "G1WholebodyLocomotionPickBetweenTablesTeleop-v0": f"{A}/simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
-    "G1WholebodyXMoveBendPickTeleop-v0": f"{A}/simple-archive/G1WholebodyXMoveBendPickTeleop-v0",
 }
 ROBOTS = ("g1_sonic", "g1_wholebody", "robot")
 L3 = str(ROOT / "data/evals_scenes_benchmark/{t}/dr-level-3")

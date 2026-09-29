@@ -83,22 +83,5 @@
   "kind": "walk, then standing grasp",
   "check": "demonstrated reach",
   "why": "the walk absorbs the start distance: kept between the closest eval start (48 cm) and the farthest demonstration (74.7 cm); lateral inside the demonstrations; table between the eval height and the demonstrations' 6.5 cm lower height"
- },
- "G1WholebodyXMoveBendPickTeleop-v0": {
-  "rel_x": [
-   0.613,
-   0.744
-  ],
-  "rel_y": [
-   -0.08,
-   -0.04
-  ],
-  "dz": [
-   -0.02,
-   0.02
-  ],
-  "kind": "walk, then bend grasp",
-  "check": "demonstrated reach",
-  "why": "start distance and lateral inside the demonstrations; table +-2 cm, the band the planner solved for BendPick"
  }
 }

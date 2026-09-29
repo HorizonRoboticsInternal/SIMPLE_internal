@@ -7,7 +7,7 @@ set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); ROOT=$(cd "$HERE/../.." && pwd); cd "$ROOT"
 PY=${PY:-.venv/bin/python}; WORK=${WORK:-$ROOT/data/level3_work}; OUT=data/evals_scenes_benchmark; N=30
 export MUJOCO_GL=egl OMNI_KIT_ACCEPT_EULA=YES LEVELGEN_DDS_DOMAIN=${LEVELGEN_DDS_DOMAIN:-37} LEVELGEN_EXACT=1
-TASKS=("$@"); [ ${#TASKS[@]} -gt 0 ] || TASKS=(G1WholebodyTabletopGraspMP-v0 G1WholebodyBendPickMP-v0 G1WholebodyXMovePickTeleop-v0 G1WholebodyHandoverTeleop-v0 G1WholebodyLocomotionPickBetweenTablesTeleop-v0 G1WholebodyXMoveBendPickTeleop-v0)
+TASKS=("$@"); [ ${#TASKS[@]} -gt 0 ] || TASKS=(G1WholebodyTabletopGraspMP-v0 G1WholebodyBendPickMP-v0 G1WholebodyXMovePickTeleop-v0 G1WholebodyHandoverTeleop-v0 G1WholebodyLocomotionPickBetweenTablesTeleop-v0)
 mkdir -p $WORK/logs
 ok() { [ -f "$1/meta/episodes.jsonl" ] && [ "$(grep -c . "$1/meta/episodes.jsonl")" -ge $N ]; }
 for t in "${TASKS[@]}"; do

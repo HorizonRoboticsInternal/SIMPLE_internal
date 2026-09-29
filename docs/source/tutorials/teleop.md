@@ -61,7 +61,6 @@ python src/simple/cli/teleop_decoupled_wbc.py simple/G1WholebodyXMoveBendPickTel
 **Command Arguments Explained:**
 
 * **`env_id` (The Environment):** This is the first argument (e.g., `simple/G1WholebodyXMoveBendPickTeleop-v0`). It defines the task scene. You can replace it with any of our currently supported environments:
-    * `simple/G1WholebodyXMoveBendPickTeleop-v0` 
     * `simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0`
     * `simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0`
     * `simple/G1WholebodyHandoverSonic-v0` 

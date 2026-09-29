@@ -321,7 +321,6 @@ Supported Wholebody Teleop Tasks Include:
 * `simple/G1WholebodyOpenOvenTeleop-v0`
 * `simple/G1WholebodyCloseDoorTeleop-v0`
 * `simple/G1WholebodyXMovePickTeleop-v0`
-* `simple/G1WholebodyXMoveBendPickTeleop-v0`
 * `simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0`
 * `simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0`
 * `simple/G1WholebodyHandoverTeleop-v0`
