@@ -1,0 +1,126 @@
+# VLA evaluation with the HoloMotion v1.4 controller
+
+`python -m simple.cli.eval_holomotion_v14` evaluates a VLA in the real-to-sim scenes (bottle → bin by default) with
+the controller the teleop data was collected with. The loop is `simple.cli.eval_decoupled_wbc`'s: the VLA sits behind
+the same HTTP client (`simple.baselines.client.HttpActionClient`, `POST /act`, optional `GET /info`), returns action
+chunks, and the task check decides success. The controller is the one change. Instead of the decoupled WBC turning
+upper-body targets and a navigate command into joint targets, HoloMotion v1.4's motion-tracking policy (`model_22000`,
+the 3.2 kg backpack model) tracks the reference frames the VLA returns.
+
+```bash
+# 1. your VLA server, answering POST /act on port 21000
+# 2. the evaluation: the 30 level-3 bottle_bin scenes
+python -m simple.cli.eval_holomotion_v14 --scene bottle_bin --host 127.0.0.1 --port 21000
+```
+
+## What is fixed to the teleop defaults
+
+| | |
+|---|---|
+| robot | G1 + Dex3 + HBVCAM stereo head camera + 3.2 kg backpack, camera tilted 10° down |
+| controller | HoloMotion v1.4, motion model `model_22000` (`--motion-model public` for `model_16200`) |
+| scenes | the level-3 eval set `data/evals_scenes/<env>/dr-level-3`: the 30 checked bottle_bin scenes, each with its own robot start, bottle spot, table height (±2 cm), 3 distractors and look (below) |
+| start | quick start: standing on the floor, no leash, a random start pose, walking policy on |
+| VLA image | the HBVCAM rectified left eye, 1280 × 720 (the teleop's recorded `ego_view`); `--image-camera fisheye`, `--image-size 640x360` |
+| success | the task check at reward ≥ 0.9 (bottle_bin: placed in the bin). The original eval's default of 0.5 would count grasped + at bin. |
+
+**The level-3 set, moved to the teleop start.** The 30 scenes were built from the decoupled-WBC replay fits, with the
+robot's feet 3 cm from the table. The v1.4 controller stands with its hands at table height, so at 3 cm they land on
+the table; the teleop data starts at 0.35 m (±10 cm). Each scene is loaded exactly (its environment_config, as
+`eval_decoupled_wbc --data-format lerobot` and the replay load it), with one change: the table, bottle, distractors and
+(Isaac) lights move 0.32 m away from the robot. The kit's legs, cover board and bin follow from the layout, imported at
+the teleop start distance (`--start-distance`), and the robot keeps its level-3 start near the origin, as in the
+teleop data. MuJoCo's one light is fixed at the origin, so the image is lit as in the teleop data. Checked on scenes
+0 and 1:
+- the feet start 0.350 m from the table;
+- the table heights (−1.7, +0.3 cm) and bottle spots match the set's build record;
+- legs, cover board and bin line up with the moved table.
+
+Every scene gets a random start pose seeded by `--seed` + scene index. `--episode-start` and `--num-episodes` pick
+scenes (default all).
+
+Other scene sources:
+- `--eval-set <dir>`: another LeRobot eval set (its `meta/scene_env.json` is applied before the kit is imported, as
+  in `eval_scene.py`).
+- `--eval-set seeds`: fresh level-3 setups from `--seed` + index (16 by default).
+- `--scenes-from <teleop dataset>`: recorded teleop episodes, with their exact scenes and start poses.
+
+## The VLA protocol
+
+**Request** (`POST /act`, the HttpActionClient message; numpy arrays base64-encoded):
+
+- `image`: `{"observation.images.ego_view": uint8 (720, 1280, 3)}`. Set the key with `--image-key`.
+- `instruction`: the task's instruction ("pick up the bottle, move towards the trash bin, and place the bottle in the
+  trash bin").
+- `state`: named like the teleop dataset's columns:
+  - `observation.state`: the 43 joint positions;
+  - `observation.base_pose`: 7 values;
+  - `observation.base_vel`: 6 values;
+  - `teleop.latest_obs`: the reference frame the controller is on now (65);
+  - `policy.mode`: 0 walking, 1 motion tracking.
+- `history`: `session_id` (new per episode), `episode_index`, `step_index`, `frame_index`, and `reset: true` on an
+  episode's first query.
+- `dataset_name`: `"simple"`.
+
+**Reply** `action`: shape (T, D), one row per reference frame, at 50 Hz by default (`--reference-hz`):
+
+| columns | what |
+|---|---|
+| 0–64 | the reference frame model_22000 tracks: `dof_pos[29]`, `dof_vel[29]` in the robot's joint order (`complete_dof_order` in `third_party/holomotion_v14/config/g1_29dof_holomotion.yaml`), `root_pos[3]`, `root_rot_wxyz[4]`. This is exactly the dataset's `teleop.latest_obs`. |
+| 65–66 (D = 67) | left and right grip, 0–1: the teleop's Dex3 grip gripper, where more than 0.5 closes the hand |
+| 65–78 (D = 79) | left and right hand joint targets, 7 each, in SIMPLE's MJCF order (`G1Sonic.joint_names[29:43]`). These are the replay logs' `action_left_hand_q` / `action_right_hand_q`; the parquet `action` holds the same values in the decoupled-WBC order. |
+| D = 65 | the hands stay open |
+
+## How an episode runs
+
+1. **Reset and stand.** The setup is applied, the scene reset, and the robot placed standing in its (random) start
+   pose. The walking policy switches on as in the teleop quick start.
+2. **Settle.** The robot stands for `--settle-s` (0.5 s).
+3. **Stream the reference.** The VLA is queried and its frames stream into the policy node, one per 50 Hz control step,
+   right before the node's step, where the teleop fed the publisher's frames. A new chunk is queried when the current
+   one runs out.
+4. **Switch to motion tracking.** The node needs 11 frames (its 10-frame window plus one) before it can switch. Then
+   the eval presses the motion-tracking button, as the operator's Y (about 0.8 s into the episode).
+5. **Run.** Motion tracking follows the VLA's frames until success or `--max-episode-steps` (1500 = 30 s).
+
+The controller stack (the vendored node and the agent) runs on a clock that moves exactly 20 ms per control step
+(`teleop/holomotion_v14/sim_clock.py`). On the wall clock, VLA latency would age the reference (the node freezes it
+past 0.6 s) and shift the node's timers. With this clock, a rollout depends only on the scene, the seed and the VLA's
+replies.
+
+## Outputs
+
+Everything goes to `<eval_dir>/<policy>/<env>/<scenes>/`. When the server has `/info`, `<env>` is prefixed with its
+policy and timestamp, as in the original eval.
+
+| File | Contents |
+|---|---|
+| `results.json` | per episode: success, gates (grasped / at_bin / placed) and their times, steps, VLA queries and latency, the setup seed, table offset, errors |
+| `videos/episode_N.mp4` | the VLA image beside a third-person view, with phase and gates overlaid |
+| `replay/episode_N.npz` | the bit-exact replay log. Replay with `python -m simple.cli.replay_holomotion_v14 <that folder> --all --mode action`. |
+
+`eval_stats.txt` in `--eval-dir` gets `episode_N: True/False` lines, as in the original.
+
+## Checks (2026-09-30)
+
+A stand-in VLA, `scripts/holomotion_v14_episode_server.py`, serves a recorded teleop episode's own reference frames
+and hand targets. It checks the pipeline, not a policy.
+
+```bash
+.venv/bin/python scripts/holomotion_v14_episode_server.py <teleop dataset> --episode 9 --port 21090 [--delay 0.3]
+python -m simple.cli.eval_holomotion_v14 --scenes-from <teleop dataset> --episode-start 9 --num-episodes 1 --port 21090
+```
+
+- **The recorded scene:** the eval rebuilt the scene of teleop episode 9 as a byte-identical model.
+- **The motion:** motion tracking engaged at step 40. The robot walked to the table, reached around the bottle, then
+  turned and walked to the bin. Open-loop, the grasp missed; the bottle ended up on its side.
+- **Replay:** the eval's replay log replays bit-exact (900 frames).
+- **VLA latency:** with the server delayed 0.3 s per reply (0.316 s mean vs 0.013 s), the rollout was bit-identical in
+  start state, physics, controls and targets. The same held for a seeded lv3 scene.
+
+**Found on the way:** SIMPLE's scene randomizers draw the distractor pick, their turn, the materials and stable poses
+from Python's `random`, which the setups did not seed. Seeding both numpy and `random` since 2026-09-30 makes a setup
+seed fix the whole scene. Recorded episodes are unaffected, because they keep their exact scene.
+
+**Not the same as `eval_decoupled_wbc`:** one worker per process, MuJoCo only (no Isaac rendering), no policy-specific
+agents. The VLA protocol above replaces the per-baseline agents.

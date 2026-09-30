@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PICO Sim Teleop Runbook</title>
+<style>
+:root{
+  --ground:#F3F5F8; --surface:#FFFFFF; --ink:#16202B; --muted:#566273; --line:#D8DEE6;
+  --accent:#2462A6; --accent-soft:#E3ECF7; --rec:#C5362E; --code:#EDF1F5;
+  --panel:#0E1318; --panel-ink:#EEF2F6; --panel-muted:#A9B3BF;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"Arial Narrow",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0F141A; --surface:#161D25; --ink:#E4E9EF; --muted:#95A1B0; --line:#27313C;
+    --accent:#7DB2EB; --accent-soft:#1B2A3B; --rec:#FF6A60; --code:#1C242E;
+    --panel:#06090C; --panel-ink:#EEF2F6; --panel-muted:#A9B3BF;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0F141A; --surface:#161D25; --ink:#E4E9EF; --muted:#95A1B0; --line:#27313C;
+  --accent:#7DB2EB; --accent-soft:#1B2A3B; --rec:#FF6A60; --code:#1C242E;
+  --panel:#06090C; --panel-ink:#EEF2F6; --panel-muted:#A9B3BF;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15.5px/1.6 var(--sans);padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(28px,5vw,40px)/1.1 var(--cond);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 22px/1.2 var(--cond);margin:0;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 14px/1 var(--mono);color:var(--accent);min-width:1.6em}
+h3{font:600 15px/1.3 var(--sans);margin:0}
+section h3{margin-top:10px}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);max-width:66ch}
+section{display:flex;flex-direction:column;gap:14px}
+.hero-cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.hero-cmd .label{font:500 12px/1 var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.code{position:relative;background:var(--code);border-radius:8px;overflow-x:auto}
+.code pre{margin:0;padding:12px 84px 12px 14px;font:13.5px/1.55 var(--mono);white-space:pre}
+.code pre .c{color:var(--muted)}
+.hero-cmd .code pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.copy{position:absolute;top:8px;right:8px;font:500 12px/1 var(--sans);padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.copy:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:13.5px var(--mono);background:var(--code);padding:1px 5px;border-radius:4px}
+ol.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+kbd{font:500 12.5px/1 var(--mono);background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:3px 6px;white-space:nowrap}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:600 12px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--code)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.log{background:var(--panel);color:var(--panel-ink);border-radius:8px;padding:12px 14px;font:13px/1.6 var(--mono);overflow-x:auto;white-space:pre}
+.log .m{color:var(--panel-muted)}
+.headset{background:var(--panel);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:1fr;gap:4px;font:14px/1.5 var(--mono);color:var(--panel-ink);max-width:560px;box-shadow:inset 0 0 0 1px #ffffff14}
+.headset .rec{color:#FF5A52;font-weight:500}
+.headset .dim{color:var(--panel-muted)}
+.headset .cap{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--panel-muted);margin-bottom:8px}
+.loop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.loop div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.loop .t{font:500 12px/1 var(--mono);color:var(--accent)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;max-width:72ch}
+footer{color:var(--muted);font-size:13.5px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">HoloMotion v1.4 · G1 + Dex3 · MuJoCo</div>
+    <h1>PICO sim teleop runbook</h1>
+    <p class="lede">Collecting episodes in the three real-to-sim scenes (bottle → bin, bowl → sink, coffee cart) on the workstation in <code>~/wrk/SIMPLE</code>, with a PICO 4 / 4 Ultra and two ankle motion trackers. Every saved episode can be replayed bit-exactly.</p>
+    <div class="hero-cmd">
+      <span class="label">The command</span>
+      <div class="code"><pre>cd ~/wrk/SIMPLE
+scripts/teleop_holomotion_v14.sh --scene bottle_bin --record</pre><button class="copy" type="button">Copy</button></div>
+      <p class="lede">Level-3 random setups, a random start pose, the HBVCAM rectified picture in the headset and in the recording, camera tilted 10° down. Every default is in step 3.</p>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">1</span>PC checks</h2>
+    <p>Every session. The XRoboToolkit service, the PC's address and two free ports.</p>
+    <div class="code"><pre>pgrep -af RoboticsServiceProcess || bash /opt/apps/roboticsservice/runService.sh
+ss -ltnp | grep -E ':13579|:6001'   <span class="c"># must print nothing</span>
+hostname -I                         <span class="c"># the PC's address for the headset (192.168.50.x)</span></pre><button class="copy" type="button">Copy</button></div>
+    <p>If a port is taken, another sim or replay is holding it. Stop that process first.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>Headset</h2>
+    <ol class="steps">
+      <li>Ankle trackers on and calibrated: Motion Tracker app → Calibrate (stand, then look down at the trackers).</li>
+      <li>Headset on the same network as the PC.</li>
+      <li>XRoboToolkit app → Connect to the PC's address → Status <b>Working</b>.</li>
+      <li>Tracking: <b>Head</b> + <b>Controller</b>, PICO Motion Tracker <b>Full-body</b>. <b>Send</b> on.</li>
+      <li>Remote Vision: source <b>Zedmini</b>. Press <b>Listen</b> only after the sim is up (step 3).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>Start the sim</h2>
+    <p>Run the command above. What the defaults give you:</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>default</th><th>change with</th></tr></thead>
+      <tbody>
+        <tr><td>scene setup</td><td>level-3 ranges, new every episode (below)</td><td><code>--setup-ranges teleop</code> (the older ranges, fixed table height)</td></tr>
+        <tr><td>seed</td><td>a new random one every launch, printed</td><td><code>--seed N</code></td></tr>
+        <tr><td>start pose</td><td>slightly random every episode</td><td><code>--no-random-init-pose</code></td></tr>
+        <tr><td>headset</td><td>one picture: the HBVCAM stereo camera's rectified left eye</td><td><code>--stream-camera fisheye</code> (both raw fisheye eyes)</td></tr>
+        <tr><td>recorded <code>ego_view</code></td><td>the same picture: 1280 × 720, 104.7° × 72.2°</td><td><code>--record-camera head</code> (SIMPLE's head camera, 640 × 360)</td></tr>
+        <tr><td>camera tilt</td><td>10° further down than the calibrated mount (56° below horizontal standing)</td><td><code>--head-tilt-deg 0</code> (46°), any angle, negative = up</td></tr>
+        <tr><td>robot</td><td>G1 + Dex3 + HBVCAM head camera + 3.2 kg backpack, backpack motion model (<code>model_22000</code>)</td><td><code>--motion-model public --backpack-kg 0</code></td></tr>
+      </tbody>
+    </table></div>
+    <p>Other scenes: <code>--scene bowl_sink</code> or <code>--scene coffee_cart</code>. A healthy start takes about 15 s:</p>
+    <div class="log">[HoloMotion v1.4] policy node ready in 2.4 s
+[TCPServer] Ready for connections on 0.0.0.0:13579
+[HoloMotion v1.4] setup 0 (seed 772841: robot (...), target (...), table -2.6 cm, 3 distractors)
+[HoloMotion v1.4] head cameras pitched +10 deg (down)
+[Record] ego_view = pinhole camera, 1280 x 720
+[Record] saving to .../teleop_holomotion_v14/simple/<span class="m">&lt;env&gt;</span>/level-3_pinhole</div>
+    <p>Then press <b>Listen</b> in the app. The body reference runs in the background: <code>tail -f /tmp/holomotion_v14_publisher.log</code> should show steady <code>body frames</code> lines.</p>
+
+    <h3>Level-3 setups</h3>
+    <p>As in the level-3 evaluation sets, every episode draws:</p>
+    <ul>
+      <li>the robot start: ±10 cm back/forward, ±5 cm sideways;</li>
+      <li>the item, inside the level-3 region;</li>
+      <li>the table / counter / cart-box height: ±4 cm;</li>
+      <li>3 new distractors.</li>
+    </ul>
+    <p>The bin and the cart stay put. Episodes go to <code>level-3_pinhole</code>: <code>level-3</code> is the setup ranges, <code>_pinhole</code> the recorded camera (a dataset holds one image size).</p>
+
+    <h3>Camera tilt</h3>
+    <p>The tilt turns both head cameras, the one the headset shows and SIMPLE's head camera.</p>
+    <ul>
+      <li>10° keeps the item in view from the start spot and puts both hands in the picture at the table.</li>
+      <li>At 20° the head camera loses the bottle from the start spot.</li>
+      <li>The tilt is saved with each episode and the replay rebuilds it.</li>
+      <li>0 is the real robot's calibrated mount; the sim picture then matches the real camera.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>First episode</h2>
+    <p>The robot starts standing on the floor, no leash, in walking mode. Recording starts by itself once your PICO controllers are connected. Press <kbd>Y</kbd> for motion tracking when you are in position.</p>
+    <p>With <code>--no-quick-start</code> the robot starts hanging on the leash: <kbd>left stick click</kbd> stand up (3 s) → <kbd>A</kbd> walking, the leash lowers → <kbd>Y</kbd> motion tracking → <kbd>left menu</kbd> + <kbd>A</kbd> record.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>The collection loop</h2>
+    <div class="loop">
+      <div><span class="t">do the task</span><p>The overlay shows <code>REC</code> and the task checks.</p></div>
+      <div><span class="t">left menu + A</span><p>Saves. The task check passing also saves.</p></div>
+      <div><span class="t">at once</span><p>New random setup, robot standing in walking mode, recording from the (random) start pose. Press <kbd>Y</kbd> for motion tracking.</p></div>
+    </div>
+    <div class="tbl"><table>
+      <tr><th>If you want to</th><th>Press</th><th>Result</th></tr>
+      <tr><td>drop this recording, stay in the scene</td><td><kbd>left menu</kbd> + <kbd>B</kbd></td><td>not saved; left menu + A starts a new recording</td></tr>
+      <tr><td>retry the same setup</td><td><kbd>both triggers</kbd></td><td>not saved; the same setup reloads and re-records</td></tr>
+      <tr><td>skip to another setup</td><td><kbd>left menu</kbd> + <kbd>Y</kbd></td><td>not saved; a new setup loads and records</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>Controls</h2>
+    <div class="two">
+      <div class="tbl"><table>
+        <tr><th>Robot (sim map)</th><th>Does</th></tr>
+        <tr><td><kbd>A</kbd></td><td>walking mode; from motion tracking, back to walking</td></tr>
+        <tr><td><kbd>Y</kbd></td><td>motion tracking: the robot follows your body</td></tr>
+        <tr><td><kbd>B</kbd></td><td>nothing on the robot (the app's view toggle)</td></tr>
+        <tr><td>left stick · right stick x</td><td>walk · turn (walking mode)</td></tr>
+        <tr><td>grips</td><td>close the Dex3 hands</td></tr>
+        <tr><td><kbd>X</kbd></td><td>zero torque</td></tr>
+        <tr><td><kbd>right stick click</kbd></td><td>emergency stop</td></tr>
+        <tr><td><kbd>left stick click</kbd></td><td>stand up (only with <code>--no-quick-start</code>, or after X / emergency stop)</td></tr>
+      </table></div>
+      <div class="tbl"><table>
+        <tr><th>Sim only (hold left menu)</th><th>Does</th></tr>
+        <tr><td><kbd>left menu</kbd> + <kbd>A</kbd></td><td>start recording / save</td></tr>
+        <tr><td><kbd>left menu</kbd> + <kbd>B</kbd></td><td>drop the recording</td></tr>
+        <tr><td><kbd>left menu</kbd> + <kbd>Y</kbd></td><td>new random setup</td></tr>
+        <tr><td><kbd>both triggers</kbd></td><td>retry the same setup</td></tr>
+      </table></div>
+    </div>
+    <p>While the left menu button is held, nothing reaches the robot.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span>Headset view</h2>
+    <p>One picture: the robot's stereo head camera, left eye, as a flat (pinhole) image, 104.7° × 72.2° at 1280 × 720, with this overlay:</p>
+    <div class="headset" role="img" aria-label="Headset status overlay example">
+      <span class="cap">overlay, example</span>
+      <span class="rec">REC  12.3 s</span>
+      <span>MOTION   saved 3/100   setup 5</span>
+      <span>grasped [x]  at_bin [ ]  placed [ ]</span>
+      <span class="dim">L-menu + A save  + B drop  + Y new setup</span>
+    </div>
+    <p class="note">The app's own right <kbd>B</kbd> toggles its view, and B does nothing on the robot: if the picture looks cut in half, press <kbd>B</kbd>. <code>--stream-view mono</code> puts the camera in both halves, <code>stereo</code> sends left | right.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">8</span>Stop</h2>
+    <ol class="steps">
+      <li>Drop an unfinished episode first with <kbd>left menu</kbd> + <kbd>B</kbd>. Ctrl-C saves a recording that is still running.</li>
+      <li><kbd>Ctrl-C</kbd> in the terminal. The publisher stops with it. The session also stops by itself after 100 saved episodes (<code>--num-episodes</code>).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="n">9</span>After the session</h2>
+    <p>Data lands in <code>data/teleop_holomotion_v14/simple/&lt;env&gt;/level-3_pinhole/</code>: <code>data/</code> parquet, <code>videos/</code> the recorded HBVCAM picture, <code>meta/</code> task string and each episode's random setup, <code>replay/</code> bit-exact logs. The folder name is the setup ranges (<code>level-3</code>; <code>level-0</code> with <code>--setup-ranges teleop</code>) plus the recorded camera (<code>_pinhole</code>, <code>_fisheye</code>, none for <code>head</code>). Episodes recorded before 2026-09-30 are in <code>level-0</code> (head camera).</p>
+    <div class="code"><pre>D=data/teleop_holomotion_v14/simple/G1WholebodyBottleBinTeleop-v0/level-3_pinhole
+python -m simple.cli.replay_holomotion_v14 $D --all --mode action           <span class="c"># every episode: BIT-EXACT</span>
+python -m simple.cli.replay_holomotion_v14 $D --episode 0 --video ep0.mp4   <span class="c"># head | third-person video</span></pre><button class="copy" type="button">Copy</button></div>
+    <p>Quick-started episodes replay from the actions alone. Episodes that began with the leash up also use its logged force.</p>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <div class="tbl"><table>
+      <tr><th>Symptom</th><th>Check / fix</th></tr>
+      <tr><td>no picture in the headset</td><td><code>[TCPServer] Ready</code> printed before you pressed Listen; source Zedmini; same network; port 13579 free</td></tr>
+      <tr><td>two pictures, or half a picture</td><td>press B (the app's view toggle; nothing on the robot); keep <code>--stream-view single</code></td></tr>
+      <tr><td>overlay stuck on <code>starting ...</code>; terminal says <code>motion tracking not ready</code></td><td>publisher log shows steady <code>body frames</code>; trackers calibrated, Full-body mode; XRoboToolkit service running</td></tr>
+      <tr><td>terminal says <code>waiting for the PICO controllers</code></td><td>controllers asleep, or Send is off in the app</td></tr>
+      <tr><td>robot falls</td><td>both triggers: the same setup reloads, the recording is dropped</td></tr>
+      <tr><td>wrong task string in the data</td><td>fixed 2026-09-29 for bottle_bin; <code>BOTTLE_BIN_INSTRUCTION="..."</code> overrides</td></tr>
+      <tr><td>replay says <code>model DIFFERENT</code></td><td>the scene code changed since recording; record with <code>--save-model</code> to keep the compiled model (~125 MB per episode)</td></tr>
+      <tr><td>port 6001 busy</td><td><code>REFERENCE_PORT=6002 scripts/teleop_holomotion_v14.sh ...</code></td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Options</h2>
+    <div class="tbl"><table>
+      <tr><th>Option</th><th>Default</th><th>What it does</th></tr>
+      <tr><td><code>--scene</code></td><td>bottle_bin</td><td>bottle_bin, bowl_sink, coffee_cart</td></tr>
+      <tr><td><code>--record</code></td><td>off</td><td>save LeRobot episodes and bit-exact logs</td></tr>
+      <tr><td><code>--no-quick-start</code></td><td>quick start on</td><td>hang on the leash and stand up by hand instead of starting standing with the policy running</td></tr>
+      <tr><td><code>--button-map</code></td><td>sim</td><td>sim: A walk, Y motion, B free; robot: the v1.4.1 map (B motion, Y back to walking)</td></tr>
+      <tr><td><code>--no-random-init-pose</code></td><td>random start pose on</td><td>start every episode from the policy's default pose</td></tr>
+      <tr><td><code>--init-pose-scale</code></td><td>1</td><td>scales those ranges: arms ±0.15 rad, waist ±0.05, legs ±0.03, base ±2 cm / ±3°</td></tr>
+      <tr><td><code>--backpack-kg</code></td><td>3.2</td><td>backpack mass on the robot (0 = none)</td></tr>
+      <tr><td><code>--motion-model</code></td><td>backpack</td><td>backpack (model_22000) or public (v1.4.1 model_16200)</td></tr>
+      <tr><td><code>--motion-model-bundle</code></td><td>—</td><td>another backpack model folder, hash-checked; overrides --motion-model</td></tr>
+      <tr><td><code>--seed</code></td><td>random</td><td>first setup's seed; the n-th setup uses seed + n</td></tr>
+      <tr><td><code>--max-distractors</code></td><td>3</td><td>distractors per setup, 0 to N</td></tr>
+      <tr><td><code>--no-randomize</code></td><td>off</td><td>the nominal scene every time</td></tr>
+      <tr><td><code>--setup-ranges</code></td><td>lv3</td><td>lv3: level-3 eval ranges (robot ±10 / ±5 cm, the level-3 item region, table / counter / cart-box height ±4 cm, 3 distractors), folder <code>level-3</code>; teleop: the older ranges (robot ±8 / ±10 cm ±10°, bin/cart moves, 0–3 distractors, fixed table), folder <code>level-0</code></td></tr>
+      <tr><td><code>--stream-view</code></td><td>single</td><td>single, mono, stereo</td></tr>
+      <tr><td><code>--robot</code></td><td>stereo</td><td>stereo: the G1 with the HBVCAM stereo head camera; stock: SIMPLE's G1</td></tr>
+      <tr><td><code>--stream-camera</code></td><td>pinhole</td><td>pinhole: the stereo camera's left eye, flat; fisheye: both eyes' fisheye images side by side (like the real camera); head: the scene's head camera</td></tr>
+      <tr><td><code>--auto-motion</code></td><td>off</td><td>quick start also presses Y (motion tracking) for you</td></tr>
+      <tr><td><code>--record-on-motion</code></td><td>off</td><td>each recording starts when you press Y (motion tracking), not at the start of the scene</td></tr>
+      <tr><td><code>--record-camera</code></td><td>auto</td><td>what is saved as ego_view: auto = the headset's camera (pinhole → 1280 × 720, folder <code>_pinhole</code>; fisheye → the fisheye pair, <code>_fisheye</code>); head = SIMPLE's head camera (640 × 360)</td></tr>
+      <tr><td><code>--head-tilt-deg</code></td><td>10</td><td>point the head cameras (headset and recorded) this many degrees further down than the calibrated mount; 0 = the real mount, negative = up</td></tr>
+      <tr><td><code>--stream-port</code></td><td>13579</td><td>the port the app connects to (change only for tests)</td></tr>
+      <tr><td><code>--num-episodes</code></td><td>100</td><td>stop after this many saved episodes</td></tr>
+      <tr><td><code>--save-dir</code></td><td>data/teleop_holomotion_v14</td><td>where the datasets go</td></tr>
+    </table></div>
+  </section>
+
+  <footer>In the SIMPLE repo: <code>PICO_SIM_TELEOP_RUNBOOK.md</code> (this runbook) and <code>docs/holomotion_v14_teleop.md</code> (why each option exists). Verified with scripted controller input on 2026-09-29; first live headset session pending.</footer>
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var pre = btn.parentElement.querySelector("pre");
+    var text = pre.innerText;
+    function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = "Copy"; }, 1400); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); done("Selected");
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { done("Copied"); }, fallback);
+    } catch (e) { fallback(); }
+  });
+});
+</script>
+
+</body>
+</html>

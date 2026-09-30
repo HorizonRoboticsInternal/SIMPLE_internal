@@ -694,8 +694,8 @@ class MujocoSimulator(Simulator):
 
         robot_geom_ids = self._robot_mask_geom_ids() if mask_camera_name is not None else set()
         for mjCamera in self.mj_worldbody.find_all('camera'):
-            renderer = self.renderers[mjCamera.name]
-            if renderer is None:
+            renderer = self.renderers.get(mjCamera.name)       # cameras that come with a model (e.g. on the robot)
+            if renderer is None:                               # have no sensor renderer: not an observation
                 continue
             
             # with self._telemetry.timer(f"render.updatescene.{mjCamera.name}"):

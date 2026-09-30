@@ -63,9 +63,16 @@ def _build_env(info: dict, setup: dict, headless: bool = True):
                    target=getattr(mod, "TARGET", None), dr_level=info["dr_level"], success_criteria=0.9)
     sonic_env = env.unwrapped
     robot = sonic_env.task.robot
-    if info.get("backpack_kg", 0) > 0:
-        from simple.teleop.holomotion_v14.robot_variants import backpack_mjcf
+    from simple.teleop.holomotion_v14.robot_variants import REPO_ROOT, backpack_mjcf, teleop_mjcf, tilt_head_sensor
+    tilt = float(info.get("head_tilt_deg", 0.0))
+    if "robot" in info:                                   # rebuild the recorded robot model (written deterministically)
+        robot.mjcf_path = teleop_mjcf(info["robot"], info.get("backpack_kg", 0.0), tilt_deg=tilt)
+    if tilt:
+        tilt_head_sensor(sonic_env.task, tilt)
+    elif info.get("backpack_kg", 0) > 0:                  # episodes recorded before --robot existed
         robot.mjcf_path = backpack_mjcf(info["backpack_kg"])
+    if info.get("robot_mjcf") and robot.mjcf_path != info["robot_mjcf"] and (REPO_ROOT / "data" / info["robot_mjcf"]).exists():
+        robot.mjcf_path = info["robot_mjcf"]
     _reset_to(env, sonic_env, mod, info, setup)
     return env, sonic_env, mod
 
