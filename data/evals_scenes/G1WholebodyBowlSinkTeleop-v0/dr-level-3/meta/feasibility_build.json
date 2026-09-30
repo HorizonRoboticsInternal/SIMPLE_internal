@@ -1,0 +1,1081 @@
+{
+ "kit": "bowl_sink",
+ "src": "data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-3",
+ "fits": "/home/Horizon/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim/bowl_sink/replay/best_fits.json",
+ "dz_max": 0.01,
+ "scenes": [
+  {
+   "scene": 0,
+   "fit_ep": 30,
+   "fit_feet_to_edge": 0.24,
+   "fit_bowl_rel": [
+    0.45,
+    -0.008
+   ],
+   "fit_robot_dy": -0.08,
+   "shift_m": 0.003,
+   "jitter": [
+    0.0,
+    -0.0
+   ],
+   "retry": 2,
+   "jscale": 0.0,
+   "dz_retry": -0.0013,
+   "robot_xy": [
+    0.14,
+    -0.077
+   ],
+   "target_xy": [
+    0.59,
+    -0.085
+   ],
+   "target_rel": [
+    0.45,
+    -0.008
+   ],
+   "table_dz": -0.0013,
+   "target_behind_edge": 0.085,
+   "distractors_moved": [
+    {
+     "uid": "54",
+     "from": [
+      0.666,
+      1.022
+     ],
+     "to": [
+      0.965,
+      0.94
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 1,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": 0.0279,
+   "jitter": [
+    0.013,
+    0.0179
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.042,
+    0.1379
+   ],
+   "target_xy": [
+    0.603,
+    0.2269
+   ],
+   "target_rel": [
+    0.561,
+    0.0889
+   ],
+   "table_dz": 0.0017,
+   "target_behind_edge": 0.098,
+   "distractors_moved": [
+    {
+     "uid": "53",
+     "from": [
+      0.721,
+      0.436
+     ],
+     "to": [
+      0.965,
+      1.9
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 2,
+   "fit_ep": 4,
+   "fit_feet_to_edge": 0.323,
+   "fit_bowl_rel": [
+    0.533,
+    -0.055
+   ],
+   "fit_robot_dy": 0.021,
+   "shift_m": 0.004,
+   "jitter": [
+    0.0057,
+    0.0052
+   ],
+   "retry": 1,
+   "jscale": 0.5,
+   "dz_retry": 0.0004,
+   "robot_xy": [
+    0.057,
+    0.025
+   ],
+   "target_xy": [
+    0.5957,
+    -0.0248
+   ],
+   "target_rel": [
+    0.5387,
+    -0.0498
+   ],
+   "table_dz": 0.0004,
+   "target_behind_edge": 0.0907,
+   "distractors_moved": []
+  },
+  {
+   "scene": 3,
+   "fit_ep": 11,
+   "fit_feet_to_edge": 0.171,
+   "fit_bowl_rel": [
+    0.381,
+    -0.025
+   ],
+   "fit_robot_dy": -0.055,
+   "shift_m": -0.0093,
+   "jitter": [
+    0.004,
+    -0.0146
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.209,
+    -0.0643
+   ],
+   "target_xy": [
+    0.594,
+    -0.1039
+   ],
+   "target_rel": [
+    0.385,
+    -0.0396
+   ],
+   "table_dz": -0.0037,
+   "target_behind_edge": 0.089,
+   "distractors_moved": []
+  },
+  {
+   "scene": 4,
+   "fit_ep": 24,
+   "fit_feet_to_edge": 0.263,
+   "fit_bowl_rel": [
+    0.473,
+    0.057
+   ],
+   "fit_robot_dy": 0.023,
+   "shift_m": 0.0238,
+   "jitter": [
+    0.0124,
+    -0.0043
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.117,
+    0.0468
+   ],
+   "target_xy": [
+    0.6024,
+    0.0995
+   ],
+   "target_rel": [
+    0.4854,
+    0.0527
+   ],
+   "table_dz": -0.0025,
+   "target_behind_edge": 0.0974,
+   "distractors_moved": []
+  },
+  {
+   "scene": 5,
+   "fit_ep": 1,
+   "fit_feet_to_edge": 0.261,
+   "fit_bowl_rel": [
+    0.471,
+    -0.035
+   ],
+   "fit_robot_dy": 0.072,
+   "shift_m": 0.0197,
+   "jitter": [
+    0.004,
+    0.0075
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.119,
+    0.0917
+   ],
+   "target_xy": [
+    0.594,
+    0.0642
+   ],
+   "target_rel": [
+    0.475,
+    -0.0275
+   ],
+   "table_dz": -0.0065,
+   "target_behind_edge": 0.089,
+   "distractors_moved": [
+    {
+     "uid": "29",
+     "from": [
+      0.719,
+      -0.119
+     ],
+     "to": [
+      0.605,
+      0.86
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 6,
+   "fit_ep": 52,
+   "fit_feet_to_edge": 0.285,
+   "fit_bowl_rel": [
+    0.495,
+    0.046
+   ],
+   "fit_robot_dy": -0.084,
+   "shift_m": 0.0259,
+   "jitter": [
+    0.0151,
+    -0.0077
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.095,
+    -0.0581
+   ],
+   "target_xy": [
+    0.6051,
+    -0.0198
+   ],
+   "target_rel": [
+    0.5101,
+    0.0383
+   ],
+   "table_dz": 0.0025,
+   "target_behind_edge": 0.1001,
+   "distractors_moved": []
+  },
+  {
+   "scene": 7,
+   "fit_ep": 4,
+   "fit_feet_to_edge": 0.323,
+   "fit_bowl_rel": [
+    0.533,
+    -0.055
+   ],
+   "fit_robot_dy": 0.021,
+   "shift_m": 0.004,
+   "jitter": [
+    0.0,
+    0.0
+   ],
+   "retry": 3,
+   "jscale": 0.0,
+   "dz_retry": -0.0018,
+   "robot_xy": [
+    0.057,
+    0.025
+   ],
+   "target_xy": [
+    0.59,
+    -0.03
+   ],
+   "target_rel": [
+    0.533,
+    -0.055
+   ],
+   "table_dz": -0.0018,
+   "target_behind_edge": 0.085,
+   "distractors_moved": []
+  },
+  {
+   "scene": 8,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": 0.0052,
+   "jitter": [
+    0.0113,
+    0.0018
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.042,
+    0.1152
+   ],
+   "target_xy": [
+    0.6013,
+    0.188
+   ],
+   "target_rel": [
+    0.5593,
+    0.0728
+   ],
+   "table_dz": 0.0085,
+   "target_behind_edge": 0.0963,
+   "distractors_moved": []
+  },
+  {
+   "scene": 9,
+   "fit_ep": 4,
+   "fit_feet_to_edge": 0.323,
+   "fit_bowl_rel": [
+    0.533,
+    -0.055
+   ],
+   "fit_robot_dy": 0.021,
+   "shift_m": 0.0155,
+   "jitter": [
+    0.0087,
+    0.0017
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.057,
+    0.0365
+   ],
+   "target_xy": [
+    0.5987,
+    -0.0167
+   ],
+   "target_rel": [
+    0.5417,
+    -0.0533
+   ],
+   "table_dz": 0.01,
+   "target_behind_edge": 0.0937,
+   "distractors_moved": []
+  },
+  {
+   "scene": 10,
+   "fit_ep": 52,
+   "fit_feet_to_edge": 0.285,
+   "fit_bowl_rel": [
+    0.495,
+    0.046
+   ],
+   "fit_robot_dy": -0.084,
+   "shift_m": 0.0211,
+   "jitter": [
+    0.0,
+    -0.0
+   ],
+   "retry": 3,
+   "jscale": 0.0,
+   "dz_retry": 0.0097,
+   "robot_xy": [
+    0.095,
+    -0.0629
+   ],
+   "target_xy": [
+    0.59,
+    -0.0169
+   ],
+   "target_rel": [
+    0.495,
+    0.046
+   ],
+   "table_dz": 0.0097,
+   "target_behind_edge": 0.085,
+   "distractors_moved": []
+  },
+  {
+   "scene": 11,
+   "fit_ep": 24,
+   "fit_feet_to_edge": 0.263,
+   "fit_bowl_rel": [
+    0.473,
+    0.057
+   ],
+   "fit_robot_dy": 0.023,
+   "shift_m": 0.0031,
+   "jitter": [
+    0.0094,
+    -0.0195
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.117,
+    0.0261
+   ],
+   "target_xy": [
+    0.5994,
+    0.0636
+   ],
+   "target_rel": [
+    0.4824,
+    0.0375
+   ],
+   "table_dz": -0.001,
+   "target_behind_edge": 0.0944,
+   "distractors_moved": []
+  },
+  {
+   "scene": 12,
+   "fit_ep": 1,
+   "fit_feet_to_edge": 0.261,
+   "fit_bowl_rel": [
+    0.471,
+    -0.035
+   ],
+   "fit_robot_dy": 0.072,
+   "shift_m": -0.0035,
+   "jitter": [
+    0.0086,
+    -0.0074
+   ],
+   "retry": 1,
+   "jscale": 0.5,
+   "dz_retry": -0.0087,
+   "robot_xy": [
+    0.119,
+    0.0685
+   ],
+   "target_xy": [
+    0.5986,
+    0.026
+   ],
+   "target_rel": [
+    0.4796,
+    -0.0424
+   ],
+   "table_dz": -0.0087,
+   "target_behind_edge": 0.0936,
+   "distractors_moved": []
+  },
+  {
+   "scene": 13,
+   "fit_ep": 52,
+   "fit_feet_to_edge": 0.285,
+   "fit_bowl_rel": [
+    0.495,
+    0.046
+   ],
+   "fit_robot_dy": -0.084,
+   "shift_m": -0.001,
+   "jitter": [
+    0.002,
+    -0.0124
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.095,
+    -0.085
+   ],
+   "target_xy": [
+    0.592,
+    -0.0514
+   ],
+   "target_rel": [
+    0.497,
+    0.0336
+   ],
+   "table_dz": -0.01,
+   "target_behind_edge": 0.087,
+   "distractors_moved": [
+    {
+     "uid": "59",
+     "from": [
+      1.023,
+      0.502
+     ],
+     "to": [
+      0.805,
+      1.78
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 14,
+   "fit_ep": 30,
+   "fit_feet_to_edge": 0.24,
+   "fit_bowl_rel": [
+    0.45,
+    -0.008
+   ],
+   "fit_robot_dy": -0.08,
+   "shift_m": 0.0124,
+   "jitter": [
+    0.0057,
+    -0.0076
+   ],
+   "retry": 1,
+   "jscale": 0.5,
+   "dz_retry": -0.0046,
+   "robot_xy": [
+    0.14,
+    -0.0676
+   ],
+   "target_xy": [
+    0.5957,
+    -0.0831
+   ],
+   "target_rel": [
+    0.4557,
+    -0.0156
+   ],
+   "table_dz": -0.0046,
+   "target_behind_edge": 0.0907,
+   "distractors_moved": []
+  },
+  {
+   "scene": 15,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": 0.0114,
+   "jitter": [
+    0.0195,
+    -0.0185
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.042,
+    0.1214
+   ],
+   "target_xy": [
+    0.6095,
+    0.1739
+   ],
+   "target_rel": [
+    0.5675,
+    0.0525
+   ],
+   "table_dz": -0.0057,
+   "target_behind_edge": 0.1045,
+   "distractors_moved": []
+  },
+  {
+   "scene": 16,
+   "fit_ep": 4,
+   "fit_feet_to_edge": 0.323,
+   "fit_bowl_rel": [
+    0.533,
+    -0.055
+   ],
+   "fit_robot_dy": 0.021,
+   "shift_m": -0.0279,
+   "jitter": [
+    0.0106,
+    0.0077
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.057,
+    -0.0069
+   ],
+   "target_xy": [
+    0.6006,
+    -0.0542
+   ],
+   "target_rel": [
+    0.5436,
+    -0.0473
+   ],
+   "table_dz": 0.008,
+   "target_behind_edge": 0.0956,
+   "distractors_moved": []
+  },
+  {
+   "scene": 17,
+   "fit_ep": 11,
+   "fit_feet_to_edge": 0.171,
+   "fit_bowl_rel": [
+    0.381,
+    -0.025
+   ],
+   "fit_robot_dy": -0.055,
+   "shift_m": 0.03,
+   "jitter": [
+    0.0067,
+    0.0169
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.209,
+    -0.025
+   ],
+   "target_xy": [
+    0.5967,
+    -0.0331
+   ],
+   "target_rel": [
+    0.3877,
+    -0.0081
+   ],
+   "table_dz": 0.0037,
+   "target_behind_edge": 0.0917,
+   "distractors_moved": []
+  },
+  {
+   "scene": 18,
+   "fit_ep": 24,
+   "fit_feet_to_edge": 0.263,
+   "fit_bowl_rel": [
+    0.473,
+    0.057
+   ],
+   "fit_robot_dy": 0.023,
+   "shift_m": -0.0176,
+   "jitter": [
+    0.0129,
+    0.004
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.117,
+    0.0054
+   ],
+   "target_xy": [
+    0.6029,
+    0.0664
+   ],
+   "target_rel": [
+    0.4859,
+    0.061
+   ],
+   "table_dz": -0.003,
+   "target_behind_edge": 0.0979,
+   "distractors_moved": []
+  },
+  {
+   "scene": 19,
+   "fit_ep": 1,
+   "fit_feet_to_edge": 0.261,
+   "fit_bowl_rel": [
+    0.471,
+    -0.035
+   ],
+   "fit_robot_dy": 0.072,
+   "shift_m": 0.0132,
+   "jitter": [
+    0.0,
+    0.0
+   ],
+   "retry": 2,
+   "jscale": 0.0,
+   "dz_retry": 0.0073,
+   "robot_xy": [
+    0.119,
+    0.0852
+   ],
+   "target_xy": [
+    0.59,
+    0.0502
+   ],
+   "target_rel": [
+    0.471,
+    -0.035
+   ],
+   "table_dz": 0.0073,
+   "target_behind_edge": 0.085,
+   "distractors_moved": []
+  },
+  {
+   "scene": 20,
+   "fit_ep": 52,
+   "fit_feet_to_edge": 0.285,
+   "fit_bowl_rel": [
+    0.495,
+    0.046
+   ],
+   "fit_robot_dy": -0.084,
+   "shift_m": 0.0072,
+   "jitter": [
+    0.0118,
+    0.0035
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.095,
+    -0.0768
+   ],
+   "target_xy": [
+    0.6018,
+    -0.0273
+   ],
+   "target_rel": [
+    0.5068,
+    0.0495
+   ],
+   "table_dz": -0.0045,
+   "target_behind_edge": 0.0968,
+   "distractors_moved": [
+    {
+     "uid": "57",
+     "from": [
+      0.96,
+      0.983
+     ],
+     "to": [
+      0.605,
+      1.02
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 21,
+   "fit_ep": 30,
+   "fit_feet_to_edge": 0.24,
+   "fit_bowl_rel": [
+    0.45,
+    -0.008
+   ],
+   "fit_robot_dy": -0.08,
+   "shift_m": 0.0093,
+   "jitter": [
+    0.0015,
+    -0.0027
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.14,
+    -0.0707
+   ],
+   "target_xy": [
+    0.5915,
+    -0.0814
+   ],
+   "target_rel": [
+    0.4515,
+    -0.0107
+   ],
+   "table_dz": -0.0003,
+   "target_behind_edge": 0.0865,
+   "distractors_moved": []
+  },
+  {
+   "scene": 22,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": -0.0114,
+   "jitter": [
+    0.0022,
+    -0.0048
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.042,
+    0.0986
+   ],
+   "target_xy": [
+    0.5922,
+    0.1649
+   ],
+   "target_rel": [
+    0.5502,
+    0.0662
+   ],
+   "table_dz": -0.0053,
+   "target_behind_edge": 0.0872,
+   "distractors_moved": []
+  },
+  {
+   "scene": 23,
+   "fit_ep": 4,
+   "fit_feet_to_edge": 0.323,
+   "fit_bowl_rel": [
+    0.533,
+    -0.055
+   ],
+   "fit_robot_dy": 0.021,
+   "shift_m": -0.0155,
+   "jitter": [
+    0.0101,
+    -0.0117
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.057,
+    0.0055
+   ],
+   "target_xy": [
+    0.6001,
+    -0.0612
+   ],
+   "target_rel": [
+    0.5431,
+    -0.0667
+   ],
+   "table_dz": 0.0057,
+   "target_behind_edge": 0.0951,
+   "distractors_moved": []
+  },
+  {
+   "scene": 24,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": -0.0008,
+   "jitter": [
+    0.0,
+    0.0
+   ],
+   "retry": 3,
+   "jscale": 0.0,
+   "dz_retry": 0.0062,
+   "robot_xy": [
+    0.042,
+    0.1092
+   ],
+   "target_xy": [
+    0.59,
+    0.1802
+   ],
+   "target_rel": [
+    0.548,
+    0.071
+   ],
+   "table_dz": 0.0062,
+   "target_behind_edge": 0.085,
+   "distractors_moved": []
+  },
+  {
+   "scene": 25,
+   "fit_ep": 24,
+   "fit_feet_to_edge": 0.263,
+   "fit_bowl_rel": [
+    0.473,
+    0.057
+   ],
+   "fit_robot_dy": 0.023,
+   "shift_m": -0.0238,
+   "jitter": [
+    0.0129,
+    0.0102
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.117,
+    -0.0008
+   ],
+   "target_xy": [
+    0.6029,
+    0.0664
+   ],
+   "target_rel": [
+    0.4859,
+    0.0672
+   ],
+   "table_dz": -0.008,
+   "target_behind_edge": 0.0979,
+   "distractors_moved": [
+    {
+     "uid": "16",
+     "from": [
+      0.7,
+      0.063
+     ],
+     "to": [
+      0.725,
+      1.7
+     ]
+    },
+    {
+     "uid": "39",
+     "from": [
+      0.642,
+      0.251
+     ],
+     "to": [
+      0.845,
+      -0.02
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 26,
+   "fit_ep": 1,
+   "fit_feet_to_edge": 0.261,
+   "fit_bowl_rel": [
+    0.471,
+    -0.035
+   ],
+   "fit_robot_dy": 0.072,
+   "shift_m": -0.0239,
+   "jitter": [
+    0.0036,
+    0.0045
+   ],
+   "retry": 1,
+   "jscale": 0.5,
+   "dz_retry": 0.0065,
+   "robot_xy": [
+    0.119,
+    0.0481
+   ],
+   "target_xy": [
+    0.5936,
+    0.0177
+   ],
+   "target_rel": [
+    0.4746,
+    -0.0305
+   ],
+   "table_dz": 0.0065,
+   "target_behind_edge": 0.0886,
+   "distractors_moved": []
+  },
+  {
+   "scene": 27,
+   "fit_ep": 52,
+   "fit_feet_to_edge": 0.285,
+   "fit_bowl_rel": [
+    0.495,
+    0.046
+   ],
+   "fit_robot_dy": -0.084,
+   "shift_m": 0.0134,
+   "jitter": [
+    0.0194,
+    -0.0114
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.095,
+    -0.0706
+   ],
+   "target_xy": [
+    0.6094,
+    -0.0359
+   ],
+   "target_rel": [
+    0.5144,
+    0.0346
+   ],
+   "table_dz": 0.0072,
+   "target_behind_edge": 0.1044,
+   "distractors_moved": []
+  },
+  {
+   "scene": 28,
+   "fit_ep": 1,
+   "fit_feet_to_edge": 0.261,
+   "fit_bowl_rel": [
+    0.471,
+    -0.035
+   ],
+   "fit_robot_dy": 0.072,
+   "shift_m": 0.0279,
+   "jitter": [
+    0.0,
+    0.0
+   ],
+   "retry": 3,
+   "jscale": 0.0,
+   "dz_retry": 0.0071,
+   "robot_xy": [
+    0.119,
+    0.0999
+   ],
+   "target_xy": [
+    0.59,
+    0.0649
+   ],
+   "target_rel": [
+    0.471,
+    -0.035
+   ],
+   "table_dz": 0.0071,
+   "target_behind_edge": 0.085,
+   "distractors_moved": []
+  },
+  {
+   "scene": 29,
+   "fit_ep": 50,
+   "fit_feet_to_edge": 0.338,
+   "fit_bowl_rel": [
+    0.548,
+    0.071
+   ],
+   "fit_robot_dy": 0.11,
+   "shift_m": -0.0052,
+   "jitter": [
+    0.0144,
+    -0.0113
+   ],
+   "retry": 0,
+   "jscale": 1.0,
+   "dz_retry": null,
+   "robot_xy": [
+    0.042,
+    0.1048
+   ],
+   "target_xy": [
+    0.6044,
+    0.1645
+   ],
+   "target_rel": [
+    0.5624,
+    0.0597
+   ],
+   "table_dz": 0.0003,
+   "target_behind_edge": 0.0994,
+   "distractors_moved": []
+  }
+ ]
+}

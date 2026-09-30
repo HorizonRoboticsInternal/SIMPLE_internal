@@ -1,7 +1,7 @@
 # VLA evaluation with the HoloMotion v1.4 controller
 
-`python -m simple.cli.eval_holomotion_v14` evaluates a VLA in the real-to-sim scenes (bottle → bin by default) with
-the controller the teleop data was collected with. The loop is `simple.cli.eval_decoupled_wbc`'s: the VLA sits behind
+`python -m simple.cli.eval_holomotion_v14` evaluates a VLA in the three real-to-sim scenes (bottle → bin, bowl →
+sink, coffee cart → table) with the controller the teleop data was collected with. The loop is `simple.cli.eval_decoupled_wbc`'s: the VLA sits behind
 the same HTTP client (`simple.baselines.client.HttpActionClient`, `POST /act`, optional `GET /info`), returns action
 chunks, and the task check decides success. The controller is the one change. Instead of the decoupled WBC turning
 upper-body targets and a navigate command into joint targets, HoloMotion v1.4's motion-tracking policy (`model_22000`,
@@ -9,9 +9,22 @@ the 3.2 kg backpack model) tracks the reference frames the VLA returns.
 
 ```bash
 # 1. your VLA server, answering POST /act on port 21000
-# 2. the evaluation: the 30 level-3 bottle_bin scenes
-python -m simple.cli.eval_holomotion_v14 --scene bottle_bin --host 127.0.0.1 --port 21000
+# 2. the evaluation, 30 level-3 scenes per task
+python -m simple.cli.eval_holomotion_v14 --scene bottle_bin  --host 127.0.0.1 --port 21000
+python -m simple.cli.eval_holomotion_v14 --scene bowl_sink   --host 127.0.0.1 --port 21000
+python -m simple.cli.eval_holomotion_v14 --scene coffee_cart --host 127.0.0.1 --port 21000
 ```
+
+Instructions sent to the VLA:
+- bottle_bin: "pick up the bottle, move towards the trash bin, and place the bottle in the trash bin";
+- bowl_sink: "pick up the green bowl from the counter, turn right, move towards the sink, and place the bowl in the sink";
+- coffee_cart: "push the cart to the table, then pick up the coffee cup and place it on the table".
+
+Success is the task's last gate at reward ≥ 0.9: the bottle in the bin, the bowl in the sink, the cup placed on the
+table. `results.json` also records every gate:
+- bottle_bin: grasped, at_bin, placed;
+- bowl_sink: at_bowl, grasped, at_basin, placed;
+- coffee_cart: cart_pushed, cup_lifted, placed.
 
 The motion model is not in git. Copy it once from the NAS:
 
@@ -26,13 +39,19 @@ rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/h
 |---|---|
 | robot | G1 + Dex3 + HBVCAM stereo head camera + 3.2 kg backpack, camera tilted 10° down |
 | controller | HoloMotion v1.4, motion model `model_22000` (`--motion-model public` for `model_16200`) |
-| scenes | the level-3 eval set `data/evals_scenes/<env>/dr-level-3`: the 30 checked bottle_bin scenes, each with its own robot start, bottle spot, table height (±2 cm), 3 distractors and look (below) |
+| scenes | each task's level-3 eval set, `data/evals_scenes/<env>/dr-level-3`: 30 scenes, each with its own robot start, item spot, table / counter / cart-box height, 3 distractors and look (below) |
 | start | quick start: standing on the floor, no leash, a random start pose, walking policy on |
 | VLA image | the HBVCAM rectified left eye, 1280 × 720 (the teleop's recorded `ego_view`); `--image-camera fisheye`, `--image-size 640x360` |
 | success | the task check at reward ≥ 0.9 (bottle_bin: placed in the bin). The original eval's default of 0.5 would count grasped + at bin. |
 
-**The level-3 set, moved to the teleop start.** The 30 scenes were built from the decoupled-WBC replay fits, with the
-robot's feet 3 cm from the table. The v1.4 controller stands with its hands at table height, so at 3 cm they land on
+**The level-3 sets, adapted to the v1.4 start.** Each task has 30 scenes:
+- bottle_bin and bowl_sink: rebuilt on 09-28 from the replay fits and checked graspable;
+- coffee_cart: the make_levels draw, ±10 / ±5 cm and ±4 cm.
+
+Two need a start adjustment, because the v1.4 controller stands with its hands at table height. bowl_sink's are used
+as built.
+
+*bottle_bin.* The scenes were built from the decoupled-WBC replay fits, with the robot's feet 3 cm from the table. The v1.4 controller stands with its hands at table height, so at 3 cm they land on
 the table; the teleop data starts at 0.35 m (±10 cm). Each scene is loaded exactly (its environment_config, as
 `eval_decoupled_wbc --data-format lerobot` and the replay load it), with one change: the table, bottle, distractors and
 (Isaac) lights move 0.32 m away from the robot. The kit's legs, cover board and bin follow from the layout, imported at
@@ -42,6 +61,26 @@ teleop data. MuJoCo's one light is fixed at the origin, so the image is lit as i
 - the feet start 0.350 m from the table;
 - the table heights (−1.7, +0.3 cm) and bottle spots match the set's build record;
 - legs, cover board and bin line up with the moved table.
+
+*coffee_cart.* The fingers reach the cart handle about 5 cm ahead of the nominal start. With the scenes as built, 12 of
+30 had the hands within 3 cm of the cart and 6 had them inside it. The robot therefore starts 10 cm further back in every
+coffee_cart scene. Its starts then span x −0.20 to 0, as the teleop's lv3 coffee_cart setups do. The rest of each scene
+is unchanged.
+
+*All 90 scenes, checked (2026-09-30):*
+- each loads through the eval;
+- the robot stands 3 s on the walking policy: none fell (lowest pelvis 0.752 m), no errors;
+- the standing robot is more than 3 cm from the furniture in every scene.
+
+`results.json` records `pelvis_min_m` and `fell` (pelvis below 0.5 m) per episode.
+
+**Scene code.** The kits are imported from `~/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim` when that folder
+exists, else from the repository's `scenes/` (`HOLOBRAIN_SIM_DIR` overrides both). Checked on 2026-09-30 with the
+branch's `scenes/` copies:
+- all three tasks load, send the right instruction and stand;
+- over 150 steps the physics is bit-identical to the workstation's kits;
+- the VLA image is the same for bottle_bin and coffee_cart;
+- for bowl_sink it differs under the counter: the branch copy predates the 09-27 sink-cabinet toe space.
 
 Every scene gets a random start pose seeded by `--seed` + scene index. `--episode-start` and `--num-episodes` pick
 scenes (default all).

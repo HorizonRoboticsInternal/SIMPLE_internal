@@ -1,0 +1,37 @@
+[
+ {
+  "scene": 1,
+  "from": "Diamond",
+  "to": "Polyester_Herringbone_Silver"
+ },
+ {
+  "scene": 9,
+  "from": "Polycarbonate_Spectral_Smudges",
+  "to": "Gold_Scratched_Dark_Matte"
+ },
+ {
+  "scene": 13,
+  "from": "Glass_Optical_FK",
+  "to": "Mortar"
+ },
+ {
+  "scene": 17,
+  "from": "Iolite",
+  "to": "Gold_Metallic"
+ },
+ {
+  "scene": 20,
+  "from": "Glass_Clear_Heavy_Smudges",
+  "to": "Brass_Sheet_Red_Glossy_Imperfections"
+ },
+ {
+  "scene": 22,
+  "from": "Polyethylene_Cloudy",
+  "to": "Velvet_Orange"
+ },
+ {
+  "scene": 25,
+  "from": "Silk_Charmeuse_Blue",
+  "to": "Stone_Mediterranean"
+ }
+]

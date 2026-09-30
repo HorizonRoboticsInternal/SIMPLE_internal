@@ -15,10 +15,13 @@ http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
 | `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
 | `data/evals_scenes_benchmark/<task>/dr-level-3/` | the six original tasks' level-3 sets, 30 reachability-checked scenes each (section 1) |
 | `scenes/level3/` | the tools that built and checked them: candidate generation, per-scene reach fitting, motion-planner check, exact render ([README](scenes/level3/README.md)) |
-| `data/evals_scenes/…/dr-level-{0,1,2,3}/` | the three kitchens' level sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration; not reachability-checked |
+| `data/evals_scenes/…/dr-level-{0,1,2}/` | the three kitchens' level 0–2 sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration |
+| `data/evals_scenes/…/dr-level-3/` | the three kitchens' level-3 sets, 30 scenes each (2026-09-28): bottle_bin and bowl_sink rebuilt from the replay fits and checked graspable, coffee_cart the ±10 / ±5 / ±4 cm draw; used by the HoloMotion v1.4 VLA evaluation (section 4) |
 | `scenes/readme_img/` | the pictures of this README |
 | `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`, `src/simple/cli/{teleop_holomotion,holomotion_replay}.py` | the HoloMotion v1.4.1 controller (section 3) |
 | `docs/TELEOP_CONTROL_LOOP_SPEC.md`, `docs/holomotion_teleop.md`, `REAL_ROBOT_RUNBOOK.md` | the teleop stack's control-loop spec, the HoloMotion guide, the real-robot runbook |
+| `src/simple/cli/{teleop,replay,eval}_holomotion_v14.py`, `src/simple/agents/holomotion_v14_{agent,vla_agent}.py`, `src/simple/teleop/holomotion_v14/`, `third_party/holomotion_v14/`, `third_party/hbvcam_stereo/`, `scripts/teleop_holomotion_v14.sh`, `scripts/holomotion_v14_episode_server.py` | HoloMotion v1.4 (teleop-collection branch) on the G1 with the 3.2 kg backpack and the HBVCAM stereo fisheye head camera: PICO sim teleop with bit-exact replay, and the VLA evaluation (section 4) |
+| `docs/holomotion_v14_teleop.md`, `docs/holomotion_v14_eval.md`, `PICO_SIM_TELEOP_RUNBOOK.md` | their guides and the PICO runbook |
 
 Setup notes: the scene robot is the `g1comp` G1 (D455 head camera, Dex3 hands) in `scenes/bottle_bin/robot/g1_comp_45dof.xml`; its
 `robot/meshes` is a symlink to `data/robots/g1/meshes`, which comes from SIMPLE's `robots_g1.zip` like every other robot asset
@@ -332,8 +335,12 @@ Notes: recentred toward the middle of the range after a failed check: scenes 4, 
 Each is a SIMPLE task plus a replay tool: the real teleop recordings are played back inside the scene and scored by **gates**,
 ordered checks that latch when met, each only after the one before. Reward grows per gate; the last gate is success. One success
 each below. Each scene also ships as SIMPLE evaluation sets at **levels 0–3**, rendered in Isaac, ten scenes per level (2026-09-24).
-The same gate code scores the replays and the SIMPLE task. The kitchens are not part of the level-3 reachability work of
-section 1: their sets still use the unchecked ±10 cm / ±5 cm / ±4 cm offsets.
+The same gate code scores the replays and the SIMPLE task. The level-3 tables below describe the first, ten-scene level 3
+(2026-09-24). Level 3 now has 30 scenes per kit (2026-09-28):
+- bottle_bin and bowl_sink were rebuilt from the replay fits and checked graspable;
+- coffee_cart is the unchecked ±10 cm / ±5 cm / ±4 cm draw.
+
+Section 4 evaluates on those 30.
 
 On 2026-09-24 each scene was also run once with its deployed HoloBrain model through the standard evaluator
 (`simple.cli.eval_decoupled_wbc` with SIMPLE's `psi0_decoupled_wbc` agent, HTTP `/act`, a whole chunk per query, 8 demasking
@@ -473,3 +480,70 @@ PICO headset → HoloRetarget publisher → reference stream, 50 Hz → HoloMoti
 
 Lives in `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`.
 Full guide: [docs/holomotion_teleop.md](docs/holomotion_teleop.md).
+
+## 4 · HoloMotion v1.4: evaluating a VLA on the three kitchens
+
+The G1 with Dex3 hands, HoloMotion's 3.2 kg backpack and the HBVCAM stereo fisheye head camera
+(`third_party/hbvcam_stereo`), driven by HoloMotion v1.4's motion-tracking policy `model_22000` (the backpack model). The
+loop is SIMPLE's `eval_decoupled_wbc`: the VLA behind `HttpActionClient`'s `POST /act`, action chunks, task-check success,
+`eval_stats.txt` and a video per episode. The one change is the controller: the VLA returns the reference frames
+model_22000 tracks, the same frames the PICO headset streams in teleop.
+
+**Once per machine.** The model is not in git (1.6 GB). Copy it from NAS-28:
+
+```bash
+rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/
+(cd data/holomotion/v14_models_backpack_3p2 && sha256sum -c SHA256SUMS)
+```
+
+**Run.** Start your VLA server on port 21000, then one command per task. Each runs that task's 30 level-3 scenes.
+
+```bash
+python -m simple.cli.eval_holomotion_v14 --scene bottle_bin  --host 127.0.0.1 --port 21000
+python -m simple.cli.eval_holomotion_v14 --scene bowl_sink   --host 127.0.0.1 --port 21000
+python -m simple.cli.eval_holomotion_v14 --scene coffee_cart --host 127.0.0.1 --port 21000
+```
+
+**What the VLA sends and receives:**
+
+| | |
+|---|---|
+| request | `image["observation.images.ego_view"]` = the HBVCAM rectified left eye, 1280 × 720, tilted 10° down; the task instruction; `state` named like the teleop dataset (`observation.state`, `observation.base_pose`, `observation.base_vel`, `teleop.latest_obs`, `policy.mode`) |
+| reply | `action` (T, D), one row per frame at 50 Hz: `[0:65]` the reference frame (`dof_pos[29]`, `dof_vel[29]`, `root_pos[3]`, `root_rot_wxyz[4]`), exactly the dataset's `teleop.latest_obs`; then either 2 grips (D = 67) or 14 hand joint targets (D = 79), or nothing (D = 65, hands open) |
+
+**How an episode runs:**
+- the robot stands on the floor in a random start pose, on the walking policy;
+- after 0.5 s the VLA's frames stream in;
+- once the policy node has its 11 frames, motion tracking takes over (0.8 s in), as the operator's Y does in teleop;
+- success is the task's last gate (item placed), within 30 s by default.
+
+The controller runs on a clock that advances 20 ms per step, so VLA latency cannot change a rollout. That was
+checked: a server delayed 0.3 s per reply gave a bit-identical run.
+
+**Scenes.** `data/evals_scenes/<env>/dr-level-3`, loaded exactly, with two changes for the v1.4 standing pose (its
+hands sit at table height):
+- bottle_bin: the scenes were built with the feet 3 cm from the table, so each scene is moved 0.32 m away from the
+  robot, to the teleop's 0.35 m;
+- coffee_cart: the robot starts 10 cm further back; 6 of 30 scenes had the fingers inside the cart handle;
+- bowl_sink: used as built.
+
+All 90 scenes were checked on 2026-09-30: each loads, the robot stands 3 s without falling and more than 3 cm from the
+furniture.
+
+**Outputs.** `data/evals_holomotion_v14/<policy>/<env>/dr-level-3/` holds:
+- `results.json`: per episode, success, every gate, falls, VLA query count and latency;
+- `videos/`: the VLA image beside a third-person view;
+- `replay/`: a bit-exact replay log per episode, played with
+  `python -m simple.cli.replay_holomotion_v14 <that folder> --all --mode action`.
+
+**Checking the pipeline without a VLA.** `scripts/holomotion_v14_episode_server.py <teleop dataset> --episode N --port
+21000` serves a recorded teleop episode's own reference frames, for a pipeline check.
+
+**Scene code.** The kit code comes from `~/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim` when present, else from
+`scenes/`. The `scenes/bowl_sink` copy here predates the sink-cabinet toe space, so its image differs under the counter;
+the physics at the start is the same.
+
+**Full guide:** [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md). Collecting the teleop data in the same
+setting: [docs/holomotion_v14_teleop.md](docs/holomotion_v14_teleop.md) and
+[PICO_SIM_TELEOP_RUNBOOK.md](PICO_SIM_TELEOP_RUNBOOK.md):
+`scripts/teleop_holomotion_v14.sh --scene bottle_bin --record`.

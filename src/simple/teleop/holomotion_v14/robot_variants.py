@@ -71,7 +71,10 @@ def _write_variant(spec, rel: str) -> str:
     xml = spec.to_xml()
     dst = REPO_ROOT / "data" / rel
     if not dst.exists() or dst.read_text() != xml:
-        dst.write_text(xml)
+        import os
+        tmp = dst.with_name(f".{dst.name}.{os.getpid()}.tmp")    # atomic: a parallel run never reads a half-written file
+        tmp.write_text(xml)
+        os.replace(tmp, dst)
     return rel
 
 

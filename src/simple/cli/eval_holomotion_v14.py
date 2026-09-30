@@ -47,7 +47,22 @@ from simple.cli.teleop_holomotion_v14 import (
 )
 from simple.teleop.holomotion_v14.scene_setup import SceneSetups
 
-GATES = ("at_bowl", "grasped", "at_bin", "at_basin", "at_cart", "placed")
+GATES = ("at_bowl", "cart_pushed", "grasped", "cup_lifted", "at_bin", "at_basin", "at_cart", "placed")
+
+
+def _progress(info: dict) -> tuple[dict, dict]:
+    """The task's gates (and the times they were met): bottle_bin / bowl_sink report info["task_progress"],
+    coffee_cart info["progress"] (cart pushed, cup lifted, success = placed)."""
+    p = info.get("task_progress")
+    if p:
+        return ({g: bool(p[g]) for g in GATES if g in p},
+                {k: p[k] for k in p if k.startswith("t_") and p[k] is not None})
+    p = info.get("progress")
+    if p and "cart_pushed_ever" in p:
+        return {"cart_pushed": bool(p["cart_pushed_ever"]), "cup_lifted": bool(p["cup_lifted_ever"]),
+                "placed": bool(p["success"])}, {}
+    return {}, {}
+FELL_BELOW_M = 0.5            # pelvis height (m); the robot stands at ~0.76
 
 
 def _fetch_policy_info(host: str, port: int, timeout: float = 5.0) -> dict:
@@ -76,6 +91,10 @@ def _recorded_scenes(dataset: Path) -> list[dict]:
 
 
 TABLE_KEY = {"bottle_bin": "table_cx", "bowl_sink": "counter_cx", "coffee_cart": "table_cx"}   # the SIMPLE table's x in L
+# coffee_cart: standing in the v1.4 default pose the fingers reach the cart handle ~5 cm ahead of the nominal start, and
+# 6 of the 30 level-3 scenes start the robot up to 10 cm ahead (2026-09-30 check). As the teleop's lv3 coffee_cart
+# ranges (robot x -0.20..0), the robot starts 10 cm further back in those scenes; the rest of each scene is unchanged.
+ROBOT_BACK = {"coffee_cart": 0.10}
 
 
 def _eval_set_scenes(set_dir: Path, scene: str, setups: SceneSetups) -> list[dict]:
@@ -102,6 +121,8 @@ def _eval_set_scenes(set_dir: Path, scene: str, setups: SceneSetups) -> list[dic
             if isinstance(v, dict) and isinstance(v.get("pose"), dict) and "position" in v["pose"]:
                 v["pose"]["position"][0] = float(v["pose"]["position"][0]) + dx
         robot = next((dr["spatial"][k] for k in robot_keys if k in (dr.get("spatial") or {})), {"position": [0, 0, 0]})
+        if ROBOT_BACK.get(scene) and "position" in robot:
+            robot["position"][0] = float(robot["position"][0]) - ROBOT_BACK[scene]
         idx = int(e["episode_index"])
         setup = dict(setups.nominal(), eval_set=str(set_dir), eval_scene=idx, moved_m=round(dx, 4),
                      robot=dict(x=round(float(robot["position"][0]), 4), y=round(float(robot["position"][1]), 4), yaw_deg=0.0),
@@ -252,9 +273,8 @@ def main(
         for ep in episodes:
             ep["init_seed"] = ((seed + ep["index"]) * 7919 + 17) % 2 ** 32 if random_init_pose else None
         scene_tag = f"{set_dir.name}" if eval_set != "lv3" else "dr-level-3"
-        print(f"[eval] eval set {set_dir}: {len(episodes)} scenes, moved {episodes[0]['moved_m']:+.3f} m away from the robot "
-              f"(feet {mod.L['near_x'] - mod.L['toe_offset'] if 'toe_offset' in mod.L else float('nan'):.3f} m from the table)"
-              if episodes else f"[eval] eval set {set_dir}: no scenes")
+        print(f"[eval] eval set {set_dir}: {len(episodes)} scenes; scene moved {episodes[0]['moved_m']:+.3f} m away from "
+              f"the robot, robot {ROBOT_BACK.get(scene, 0.0):.2f} m further back" if episodes else f"[eval] eval set {set_dir}: no scenes")
     else:
         setups = SceneSetups(scene, mod, task, ranges=setup_ranges)
         episodes = []
@@ -313,6 +333,7 @@ def main(
                                             ffmpeg_params=["-pix_fmt", "yuv420p"])
             t_wall = time.perf_counter()
             success, steps, error = False, 0, None
+            pelvis_min = float(privileged_info["proprio"]["floating_base_pose"][2])
             try:
                 for steps in range(1, max_episode_steps + 1):
                     step_id["n"] += 1
@@ -327,6 +348,7 @@ def main(
                     if xlog is not None:
                         xlog.add_frame(action)
                     clock.advance(control_dt)
+                    pelvis_min = min(pelvis_min, float(privileged_info["proprio"]["floating_base_pose"][2]))
                     if not headless:
                         sonic_env.update_viewer()
                     if writer is not None:
@@ -334,9 +356,8 @@ def main(
                         left = cv2.resize(vla_img[:, :vla_img.shape[1] // (2 if image_camera == "fisheye" else 1)], (640, 360),
                                           interpolation=cv2.INTER_AREA)
                         frame = np.hstack([left, _third_person(sonic_env, setups.mod.L, third_box)]).copy()
-                        prog = privileged_info.get("task_progress") or {}
                         text = f"{label}  t={steps * control_dt:5.1f}s  {agent.phase}  " + " ".join(
-                            g for g in GATES if prog.get(g))
+                            g for g, v in _progress(privileged_info)[0].items() if v)
                         cv2.putText(frame, text, (10, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                         writer.append_data(frame)
                     if terminated:
@@ -348,11 +369,12 @@ def main(
                 error = f"{type(e).__name__}: {e}"
             if writer is not None:
                 writer.close()
-            prog = privileged_info.get("task_progress") or {}
+            gates, gate_times = _progress(privileged_info)
             res = dict(episode=label, index=int(ep["index"]), success=bool(success), steps=int(steps),
                        sim_seconds=round(steps * control_dt, 2), wall_seconds=round(time.perf_counter() - t_wall, 1),
-                       gates={g: bool(prog[g]) for g in GATES if g in prog},
-                       gate_times={k: prog[k] for k in prog if k.startswith("t_") and prog[k] is not None},
+                       gates=gates,
+                       pelvis_min_m=round(pelvis_min, 3), fell=bool(pelvis_min < FELL_BELOW_M),
+                       gate_times=gate_times,
                        seed=ep["setup"].get("seed"), table_dz=ep["setup"].get("table_dz"), error=error, **agent.summary())
             if xlog is not None and xlog.recording:
                 log_path = out_dir / "replay" / f"episode_{int(ep['index']):06d}.npz"
@@ -365,7 +387,7 @@ def main(
                 f.write(f"{label}: {success} \n")
             results_path.write_text(json.dumps(dict(run=run_meta, episodes=results), indent=1, default=str))
             gates = " ".join(g for g, v in res["gates"].items() if v) or "-"
-            print(f"[eval] {label}: {'SUCCESS' if success else 'fail'} after {res['sim_seconds']} s "
+            print(f"[eval] {label}: {'SUCCESS' if success else 'fail'}{' (FELL)' if res['fell'] else ''} after {res['sim_seconds']} s "
                   f"(gates: {gates}; {res['queries']} VLA queries, engaged at step {res['engaged_step']})"
                   + (f"; {error}" if error else ""), flush=True)
     except KeyboardInterrupt:
