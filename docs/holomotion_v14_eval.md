@@ -13,6 +13,13 @@ the 3.2 kg backpack model) tracks the reference frames the VLA returns.
 python -m simple.cli.eval_holomotion_v14 --scene bottle_bin --host 127.0.0.1 --port 21000
 ```
 
+The motion model is not in git. Copy it once from the NAS:
+
+```bash
+rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/
+(cd data/holomotion/v14_models_backpack_3p2 && sha256sum -c SHA256SUMS)
+```
+
 ## What is fixed to the teleop defaults
 
 | | |

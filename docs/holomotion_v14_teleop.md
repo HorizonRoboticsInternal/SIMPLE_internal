@@ -28,6 +28,16 @@ replaces ROS: `src/simple/teleop/holomotion_v14/` (ROS stubs, the sim node, the 
   - `velocity_tracking_model/` = HuggingFace `HorizonRobotics/HoloMotion_models/HoloMotion_velocity_tracking_model`
   - `motion_tracking_model/` → `data/holomotion/models/motion_tracking_model_v141.*` (identical to the official
     v1.4.1 release, SHA256 `2aabb53b…`)
+- The backpack model (`model_22000`, the default motion model; 1.6 GB, not in git). Copy it from the NAS (NAS-28,
+  `10.40.11.28:/volume1/NAS-28`, mounted at `/mnt/nas28`):
+
+  ```bash
+  rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/
+  (cd data/holomotion/v14_models_backpack_3p2 && sha256sum -c SHA256SUMS)
+  ```
+
+  The NAS folder is the complete loader layout with its links resolved: `motion_tracking_model/` (model_22000 +
+  config), `velocity_tracking_model/` (the public walking model), `README.txt`, `SHA256SUMS`.
 - The publisher env `~/miniconda3/envs/holomotion_teleop` (torch, smplx, smpl_sim, GMR, mink, pyzmq, xrobotoolkit_sdk)
   and an `SMPL_NEUTRAL.pkl` (found automatically in `~/wrk/HoloMotion_TELEOP/assets/smpl` or
   `~/wrk/robot-locomanip/models/smpl`; else `--smpl-dir` / `HOLOMOTION_SMPL_DIR`).
@@ -300,7 +310,7 @@ This is the default. The Dex3 G1 carries HoloMotion's backpack (`backpack_link` 
 tracking runs the v1.4.1 BrainCo 3.2 kg backpack model, `model_22000` (`--motion-model backpack`). The walking
 model is the public v1.4 one; the upstream lock pins the same file for the backpack deployment.
 
-The model lives in `data/holomotion/` (not in git; 1.6 GB):
+The model lives in `data/holomotion/` (not in git; 1.6 GB). The copy on the NAS is `/mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/` (see Setup):
 
 - `v14_models_backpack_3p2/motion_tracking_model/exported/model_22000.onnx`: the model under its original name,
   sha256 `d79ccce7…`, equal to the upstream lock.

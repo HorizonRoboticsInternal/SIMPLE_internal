@@ -11,6 +11,8 @@ ankle motion trackers. Verified with scripted input on 2026-09-29; the details b
 
 - XRoboToolkit PC service installed (`/opt/apps/roboticsservice`), XRoboToolkit app on the headset.
 - Policy models in `data/holomotion/v14_models/` (walking + motion tracking).
+- The backpack model (`model_22000`, the default) in `data/holomotion/v14_models_backpack_3p2/`, copied from the NAS:
+  `rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/`, then `sha256sum -c SHA256SUMS` in that folder.
 - Publisher env `~/miniconda3/envs/holomotion_teleop` (PICO body → SMPL → robot reference).
 
 ## 1. PC checks (every session)

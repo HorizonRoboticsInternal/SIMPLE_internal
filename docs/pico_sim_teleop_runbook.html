@@ -122,6 +122,9 @@ hostname -I                         <span class="c"># the PC's address for the h
         <tr><td>robot</td><td>G1 + Dex3 + HBVCAM head camera + 3.2 kg backpack, backpack motion model (<code>model_22000</code>)</td><td><code>--motion-model public --backpack-kg 0</code></td></tr>
       </tbody>
     </table></div>
+    <p>The backpack model (<code>model_22000</code>, 1.6 GB) is not in git. On a new machine, copy it once from the NAS:</p>
+    <div class="code"><pre>rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/
+(cd data/holomotion/v14_models_backpack_3p2 &amp;&amp; sha256sum -c SHA256SUMS)</pre><button class="copy" type="button">Copy</button></div>
     <p>Other scenes: <code>--scene bowl_sink</code> or <code>--scene coffee_cart</code>. A healthy start takes about 15 s:</p>
     <div class="log">[HoloMotion v1.4] policy node ready in 2.4 s
 [TCPServer] Ready for connections on 0.0.0.0:13579
