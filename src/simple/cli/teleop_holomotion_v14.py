@@ -168,10 +168,13 @@ def _check_dataset_dir(save_dir: str) -> None:
                                  f"out of {root} first:\n  {listing}")
 
 
-def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, ego_view_shape):
-    """The decoupled-WBC LeRobot schema (as the psi0 datasets) plus the v1.4 controller's own signals."""
+def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, ego_view_shape, realformat: bool = True):
+    """The decoupled-WBC LeRobot schema (as the psi0 datasets) plus the v1.4 controller's own signals, plus (realformat)
+    the real G1 recorder's extra fields (teleop/holomotion_v14/realformat.py)."""
+    import json
     from decoupled_wbc.data.exporter import Gr00tDataExporter
     from decoupled_wbc.data.utils import get_dataset_features, get_modality_config
+    from simple.teleop.holomotion_v14 import realformat as RF
 
     features = get_dataset_features(robot_model)
     set_ego_view_feature_shape(features, ego_view_shape)
@@ -184,8 +187,14 @@ def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, e
     features["policy.mode"] = {"dtype": "int64", "shape": (1,), "names": ["0=velocity,1=motion"]}
     features["policy.raw_action"] = {"dtype": "float32", "shape": (29,), "names": None}
     features["policy.target_real"] = {"dtype": "float32", "shape": (29,), "names": None}
-    return Gr00tDataExporter.create(save_root=save_dir, fps=50, features=features,
-                                    modality_config=get_modality_config(robot_model), task=task_prompt)
+    if realformat:
+        RF.add_features(features)
+    exporter = Gr00tDataExporter.create(save_root=save_dir, fps=50, features=features,
+                                        modality_config=get_modality_config(robot_model), task=task_prompt)
+    spec = Path(save_dir) / "meta" / "realformat.json"
+    if realformat and not spec.exists():
+        spec.write_text(json.dumps({**RF.REALFORMAT, "added_features": list(RF.FEATURES)}, indent=2))
+    return exporter
 
 
 def _env_config_json(task) -> str:
@@ -194,7 +203,7 @@ def _env_config_json(task) -> str:
     return json.dumps(task.state_dict(), cls=NumpyArrayEncoder)
 
 
-def _build_frame(robot_model, obj_names, observation, privileged_info, action):
+def _build_frame(robot_model, obj_names, observation, privileged_info, action, phys=None):
     proprio = privileged_info["proprio"]
     from simple.teleop.holomotion.protocol import DEX3_NATURAL_TO_MJCF
     inv = np.argsort(DEX3_NATURAL_TO_MJCF)                     # MJCF -> natural (thumb, middle, index)
@@ -220,6 +229,8 @@ def _build_frame(robot_model, obj_names, observation, privileged_info, action):
         "policy.raw_action": np.asarray(action["raw_action"], dtype=np.float32),
         "policy.target_real": np.asarray(action["target_real"], dtype=np.float32),
     }
+    if phys:                                                   # the real recorder's extra fields (realformat)
+        frame.update(phys)
     if obj_names:                                              # fixed slots; an absent distractor is NaN
         nan = np.full(7, np.nan)
         frame["observation.object_poses"] = np.concatenate(
@@ -357,6 +368,7 @@ def main(
                                                    "+-10 cm back/forward +-5 cm sideways, the level-3 target region, table / "
                                                    "counter / cart-box height +-4 cm, 3 distractors; records into level-3)")] = "lv3",
     exact_log: Annotated[bool, typer.Option(help="with --record: save the bit-exact replay log of every episode")] = True,
+    realformat: Annotated[bool, typer.Option(help="with --record: also record the real G1 recorder's fields (joint velocities and efforts, root pose and velocity, pelvis IMU, hand velocities and efforts, PD gains, the reference queue and the HoloMotion observation terms), as scripts/holomotion_sim_realformat.py derives them")] = True,
     save_model: Annotated[bool, typer.Option(help="with the exact log: also save the compiled MuJoCo model (.mjb, ~125 MB: meshes + collision trees)")] = False,
     backpack_kg: Annotated[float, typer.Option(help="HoloMotion's G1 backpack body on the robot, this mass (kg; 3.2 = what the backpack model was trained for, 0 = none)")] = 3.2,
     motion_model: Annotated[str, typer.Option(help="motion-tracking policy: backpack (v1.4.1 BrainCo 3.2 kg backpack, model_22000) or public (v1.4.1, model_16200)")] = "backpack",
@@ -517,6 +529,7 @@ def main(
         obj_names = [n for n in obj_names if not n.startswith("distractor_")] + [f"distractor_{i}" for i in range(max_distractors)]
     exporter = robot_model = None
     xlog = None
+    rf_sampler = None
     if record:
         from decoupled_wbc.control.robot_model.instantiation.g1 import instantiate_g1_robot_model
         robot_model = instantiate_g1_robot_model(waist_location="lower_body")
@@ -524,7 +537,11 @@ def main(
         run_save_dir = f"{os.path.abspath(save_dir)}/{env_id}/level-{dr_level}" + ("" if record_camera == "head" else f"_{record_camera}")
         _check_dataset_dir(run_save_dir)
         ego_shape = {"fisheye": (720, 2560, 3), "pinhole": (720, 1280, 3)}.get(record_camera, observation["head_stereo_left"].shape)
-        exporter = _init_exporter(run_save_dir, task.instruction, robot_model, obj_names, robot.joint_names, ego_shape)
+        exporter = _init_exporter(run_save_dir, task.instruction, robot_model, obj_names, robot.joint_names, ego_shape, realformat)
+        if realformat:
+            from simple.teleop.holomotion_v14 import realformat as RF
+            rf_sampler = RF.LiveSampler(sonic_env)
+            print(f"[Record] real-format fields on ({len(RF.FEATURES)} extra columns)")
         print(f"[Record] ego_view = {record_camera} camera, {ego_shape[1]} x {ego_shape[0]}")
         print(f"[Record] saving to {run_save_dir}")
         if exact_log:
@@ -552,6 +569,8 @@ def main(
         if exporter is not None and rec_state == RecordingState.RECORDING:
             exporter.skip_and_start_new_episode()
             print(f"[Record] {reason}: in-progress episode discarded")
+        if rf_sampler is not None:
+            rf_sampler.discard()
         if xlog is not None:
             xlog.discard()
         if pbar is not None:
@@ -571,6 +590,8 @@ def main(
             action = agent.get_action(observation, instruction=task.instruction, privileged_info=privileged_info)
             frame_obs = observation if ego_img is None else {**observation, "head_stereo_left": ego_img}
             frame_inputs = {"observation": frame_obs, "action": action, "privileged_info": privileged_info}
+            if rf_sampler is not None:                                   # every step: the first recorded frame is decided after it
+                frame_inputs["phys"] = rf_sampler.sample(action)          # the pre-step state, as observation.state
             if xlog is not None:
                 xlog.before_step()
             observation, reward, terminated, truncated, privileged_info = env.step(action)
@@ -599,6 +620,8 @@ def main(
             if exporter is not None:
                 if ev["abort"] and rec_state == RecordingState.RECORDING:
                     exporter.skip_and_start_new_episode()
+                    if rf_sampler is not None:
+                        rf_sampler.discard()
                     if xlog is not None:
                         xlog.discard()
                     rec_state = RecordingState.WAITING_FOR_LANDING
@@ -620,6 +643,8 @@ def main(
                     rec_state = RecordingState.EPISODE_DONE
                 if rec_state == RecordingState.RECORDING:
                     exporter.add_frame(_build_frame(robot_model, obj_names, **frame_inputs))
+                    if rf_sampler is not None:
+                        rf_sampler.frame_recorded()
                     if xlog is not None:
                         xlog.add_frame(frame_inputs["action"])
                     if pbar is not None:
@@ -629,9 +654,13 @@ def main(
                         print(f"[Record] task {'succeeded' if terminated else 'timed out'}; saving")
                 if rec_state == RecordingState.EPISODE_DONE:
                     ep_idx = exporter.episode_buffer["episode_index"]
+                    extra = {"scene_setup": setup, "init_pose": episode_init_pose}
+                    if rf_sampler is not None:
+                        RF.finish_episode(exporter.episode_buffer, rf_sampler)
+                        extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg), setup,
+                                                              xlog.model_sha if xlog is not None else "")
                     exporter.save_episode()
                     _save_episode_env_config(exporter, task, ep_idx)
-                    extra = {"scene_setup": setup, "init_pose": episode_init_pose}
                     if xlog is not None:
                         log_path = Path(run_save_dir) / "replay" / f"episode_{ep_idx:06d}.npz"
                         xlog.save(log_path, setup, dict(run_meta, episode_index=int(ep_idx), init_pose=episode_init_pose,
@@ -692,8 +721,12 @@ def main(
         if exporter is not None and rec_state == RecordingState.RECORDING:
             try:
                 ep_idx = exporter.episode_buffer["episode_index"]
-                exporter.save_episode()
                 extra = {"scene_setup": setup, "init_pose": episode_init_pose}
+                if rf_sampler is not None:
+                    RF.finish_episode(exporter.episode_buffer, rf_sampler)
+                    extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg), setup,
+                                                          xlog.model_sha if xlog is not None and xlog.recording else "")
+                exporter.save_episode()
                 if xlog is not None and xlog.recording:
                     log_path = Path(run_save_dir) / "replay" / f"episode_{ep_idx:06d}.npz"
                     xlog.save(log_path, setup, dict(run_meta, episode_index=int(ep_idx), init_pose=episode_init_pose,

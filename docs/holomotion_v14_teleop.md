@@ -283,6 +283,35 @@ LeRobot v2.1 at 50 fps, the decoupled-WBC schema (as the psi0 datasets) plus:
 reference frames model_22000 tracks (`teleop.latest_obs`), plus grips or hand targets. See
 [holomotion_v14_eval.md](holomotion_v14_eval.md).
 
+## The real recorder's fields (recorded live)
+
+Since 2026-09-30 every recording also carries the extra fields of the real G1 recorder (HDF5 format_version 1.1), the
+ones `scripts/holomotion_sim_realformat.py` used to derive afterwards from the replay logs: 19 columns per frame
+(`--no-realformat` turns them off).
+
+| columns | contents |
+|---|---|
+| `joint_targets.kp`, `.kd` | PD gains of the frame's action, 29 joints |
+| `states.robot.joint_velocity`, `.joint_effort` | 29 joint velocities and applied actuator forces |
+| `states.robot.root_pose`, `.root_velocity` | pelvis position + quaternion (xyzw); world linear + body angular velocity |
+| `states.robot.imu_quaternion`, `.imu_rpy`, `.imu_gyroscope`, `.imu_accelerometer` | the pelvis IMU at the stock mount (accelerometer with gravity) |
+| `states.dex3.{left,right}.joint_velocity`, `.joint_effort` | the hands, real order (thumb 0–2, index 0–1, middle 0–1) |
+| `reference_qpos`, `reference_actions` | the frame's reference, and the 11-block queue (current + 10 future frames) |
+| `holomotion_obs.*` | the three reference terms the real recorder computes |
+
+The values are sampled on a copy of the MuJoCo state right before each step (the state `observation.state` is taken
+from), so the physics and the replay logs are unchanged. The reference columns need the next 10 frames and are filled
+in when the episode is saved. `meta/realformat.json` holds the format spec, and each episode's `realformat` entry in
+`episodes.jsonl` the model hash, seed, backpack and tilt.
+
+Checked: the converter run on a live recording recomputes every column from the replay log and compares. All 19 match
+bit for bit (two episodes, 558 and 1116 frames), and the recording replays bit-exact. Running the converter on such a
+dataset now verifies the live columns instead of appending duplicates.
+
+Not recorded live: the Isaac ego-view render of `level-3_pinhole_realformat` (videos re-rendered with
+`scripts/render_teleop_isaac.py`, random look per episode). That stays a post-step; it cannot run inside the live
+MuJoCo loop.
+
 ## Bit-exact replay
 
 With `--record`, each saved episode also gets `replay/episode_XXXXXX.npz` (~125 KB per second):

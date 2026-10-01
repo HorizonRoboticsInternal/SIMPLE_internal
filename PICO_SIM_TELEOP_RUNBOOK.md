@@ -156,7 +156,11 @@ The app's own right **B** toggles its view, and B does nothing on the robot: if 
 Data: `data/teleop_holomotion_v14/simple/<env>/level-3_pinhole/` — `data/` (parquet), `videos/` (the recorded
 HBVCAM picture), `meta/` (task string, random setup per episode), `replay/` (bit-exact logs). The folder name is the
 setup ranges (`level-3`; `level-0` with `--setup-ranges teleop`) plus the recorded camera (`_pinhole`, `_fisheye`,
-none for `head`). Episodes recorded before 2026-09-30 are in `level-0` (head camera).
+none for `head`). Episodes recorded before 2026-09-30 are in `level-0` (head camera). Since 2026-09-30 the parquet
+also holds the real G1 recorder's fields (joint velocities and efforts, root pose and velocity, pelvis IMU, hand
+velocities and efforts, PD gains, the reference queue and the HoloMotion observation terms), recorded live, so a new
+recording already has everything `level-3_pinhole_realformat` has except the Isaac-rendered videos
+(`scripts/render_teleop_isaac.py`, a separate step).
 
 ```bash
 D=data/teleop_holomotion_v14/simple/G1WholebodyBottleBinTeleop-v0/level-3_pinhole
