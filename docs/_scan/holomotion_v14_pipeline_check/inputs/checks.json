@@ -1,0 +1,24 @@
+{
+ "replay": {
+  "bottle_bin": {
+   "ok": true,
+   "summary": "5/5 episodes bit-exact (action replay, model identical)",
+   "detail": "[replay] episode_000000.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000001.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000002.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000003.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000004.npz: 1500 frames, action replay, model identical: BIT-EXACT"
+  },
+  "bowl_sink": {
+   "ok": true,
+   "summary": "5/5 episodes bit-exact (action replay, model identical)",
+   "detail": "[replay] episode_000000.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000001.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000002.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000003.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000004.npz: 1500 frames, action replay, model identical: BIT-EXACT"
+  },
+  "coffee_cart": {
+   "ok": true,
+   "summary": "5/5 episodes bit-exact (action replay, model identical)",
+   "detail": "[replay] episode_000000.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000001.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000002.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000003.npz: 1500 frames, action replay, model identical: BIT-EXACT\n[replay] episode_000004.npz: 1500 frames, action replay, model identical: BIT-EXACT"
+  }
+ },
+ "repeat": {
+  "ok": false,
+  "summary": "bottle_bin scene 0 run twice through the live model (10 s, 21 queries each): the rollouts differ from frame 2: the model's replies are not deterministic (the chain up to the first reply is)",
+  "detail": "state0: identical\nphysics: DIFFERENT\nctrl: DIFFERENT\naction_target_q: DIFFERENT\naction_left_hand_q: DIFFERENT\naction_right_hand_q: DIFFERENT\nmodel hash equal: True\nengaged at step 15 / 15\nmodel latency mean 0.4263 / 0.4149 s"
+ }
+}

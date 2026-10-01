@@ -120,14 +120,38 @@ Other scene sources:
 ## How an episode runs
 
 1. **Reset and stand.** The setup is applied, the scene reset, and the robot placed standing in its (random) start
-   pose. The walking policy switches on as in the teleop quick start.
-2. **Settle.** The robot stands for `--settle-s` (0.5 s).
-3. **Stream the reference.** The VLA is queried and its frames stream into the policy node, one per 50 Hz control step,
-   right before the node's step, where the teleop fed the publisher's frames. A new chunk is queried when the current
-   one runs out.
-4. **Switch to motion tracking.** The node needs 11 frames (its 10-frame window plus one) before it can switch. Then
-   the eval presses the motion-tracking button, as the operator's Y (about 0.8 s into the episode).
-5. **Run.** Motion tracking follows the VLA's frames until success or `--max-episode-steps` (1500 = 30 s).
+   pose. The walking policy switches on at the first step, as in the teleop quick start.
+2. **Walking mode until the VLA's frames are valid.** The VLA is asked from the first step. Its frames stream into the
+   policy node, one per 50 Hz control step, right before the node's step, where the teleop fed the publisher's frames.
+   A new chunk is queried when the current one runs out. Meanwhile the walking policy, with no walking command, keeps
+   the robot standing in place. It moves the arms and wrists to its own posture within about 0.2 s, exactly as in
+   teleop before the operator's Y.
+   - A reply is used only if it parses, has shape (T, 65 | 67 | 79), is finite, and its root quaternions have unit norm.
+   - A failed query or an unusable reply feeds nothing: the robot keeps walking and the next step asks again.
+3. **Switch to motion tracking, automatically.** The node needs 11 valid frames (its 10-frame window plus one). Then
+   the eval presses the motion-tracking button, as the operator's Y. With a VLA that answers from the start, that is
+   step 14 (0.28 s).
+4. **Run.** Motion tracking follows the VLA's frames. If a reply is unusable, no frame goes in that step. The node then
+   treats it as a stalled stream on the robot: the reference holds, and freezes once it is older than 0.6 s.
+5. **End.** The episode ends the moment the task check passes (bottle_bin: the bottle in the bin and released), at
+   `--max-episode-steps` (1500 = 30 s), or with a "no valid VLA frames" error if none arrive within
+   `--engage-timeout-s` (10 s).
+
+`results.json` records each episode's controller timeline (for example `step 0: POLICY / velocity | step 14: POLICY /
+motion`), the first valid VLA step, and how many replies were not used and why. `--settle-s` adds standing time before
+the first query (default 0).
+
+Checked 2026-09-30 with the stand-in VLA:
+
+| case | first valid frames | motion tracking from | until then |
+|---|---|---|---|
+| answers from the start (bottle_bin) | step 2 | step 14 | walking, standing in place |
+| first 10 replies NaN (bowl_sink) | step 12 (10 replies not used) | step 24 | walking |
+| no server (coffee_cart, 2 scenes) | none | never | walking; each episode ends after the 2 s test timeout with the reason |
+
+None fell, and the episodes replay bit-exact. Standing in walking mode for 6 s with no VLA (5 start poses), the robot
+moved 1.2–2.2 cm and turned less than 1°. Holding the arms at the start pose instead, against the walking policy, was
+tried and dropped: the robot drifted 29–90 cm and fell once.
 
 The controller stack (the vendored node and the agent) runs on a clock that moves exactly 20 ms per control step
 (`teleop/holomotion_v14/sim_clock.py`). On the wall clock, VLA latency would age the reference (the node freezes it
@@ -158,7 +182,7 @@ python -m simple.cli.eval_holomotion_v14 --scenes-from <teleop dataset> --episod
 ```
 
 - **The recorded scene:** the eval rebuilt the scene of teleop episode 9 as a byte-identical model.
-- **The motion:** motion tracking engaged at step 40. The robot walked to the table, reached around the bottle, then
+- **The motion:** motion tracking engaged at step 40 (with the first version's fixed 0.5 s settle; now step 14). The robot walked to the table, reached around the bottle, then
   turned and walked to the bin. Open-loop, the grasp missed; the bottle ended up on its side.
 - **Replay:** the eval's replay log replays bit-exact (900 frames).
 - **VLA latency:** with the server delayed 0.3 s per reply (0.316 s mean vs 0.013 s), the rollout was bit-identical in
@@ -167,6 +191,33 @@ python -m simple.cli.eval_holomotion_v14 --scenes-from <teleop dataset> --episod
 **Found on the way:** SIMPLE's scene randomizers draw the distractor pick, their turn, the materials and stable poses
 from Python's `random`, which the setups did not seed. Seeding both numpy and `random` since 2026-09-30 makes a setup
 seed fix the whole scene. Recorded episodes are unaffected, because they keep their exact scene.
+
+## Pipeline check with a real model (2026-09-30)
+
+The three HoloBrain G1 deploy models (`~/wrk/robot_orchard_deploy/models`, presets `chipcan_nativec9`, `bowltosink_c9`,
+`cart_c19`, served by `holobrain_g1_deploy/scripts/serve.sh`) were put in the loop, one per task. They command the
+decoupled WBC (upper-body targets + a walking command), so `scripts/holomotion_v14_vla_bridge.py` sits between the eval
+and the model server: it sends the model its training format (`rgb_head_stereo_left` 640 × 360, `states` 32) and
+turns each reply (24 × 36 rows at 50 Hz) into 24 × 79 reference frames: legs at the default standing pose, waist and
+arms from the model, root integrated from its vx / vy / vyaw, hands reordered. A check of the pipeline, not of the models.
+
+```bash
+cd ~/wrk/robot_orchard_deploy/holobrain_g1_deploy && PORT=8014 bash scripts/serve.sh chipcan_nativec9 --steps 8 --replan 15
+cd ~/wrk/SIMPLE && .venv/bin/python scripts/holomotion_v14_vla_bridge.py --upstream-port 8014 --port 21000 --preset chipcan_nativec9 --log bridge.jsonl
+python -m simple.cli.eval_holomotion_v14 --scene bottle_bin --port 21000 --image-size 640x360 --num-episodes 5
+```
+
+Result, 5 level-3 scenes per task (report: http://10.40.11.11:8899/holomotion_v14_pipeline_check/index.html, generator
+`docs/_scan/holomotion_v14_pipeline_check/build.py`):
+- every query reached the model with a 640 × 360 image and a finite 32-state; every reply was 24 × 36 and finite;
+- every bridge frame passed the eval's validity check (0 of 977 replies rejected);
+- motion tracking engaged at step 15 in all 15 episodes; all ran the full 30 s, no errors, no falls;
+- model latency median 766 ms (three servers on one GPU; 420 ms alone);
+- all 15 replay logs replay bit-exact;
+- the same scene run twice differs from the first reply on: the models sample (grouped diffusion); each run is still
+  reproducible from its log.
+- Task gates: bowl_sink reached `at_bowl` in 3 of 5 scenes (its model walks toward the counter); nothing else, as
+  expected with faked references, an unfamiliar camera and, for bottle_bin, a model trained on the chip can.
 
 **Not the same as `eval_decoupled_wbc`:** one worker per process, MuJoCo only (no Isaac rendering), no policy-specific
 agents. The VLA protocol above replaces the per-baseline agents.

@@ -42,10 +42,12 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=21000)
     ap.add_argument("--chunk", type=int, default=16, help="rows per reply")
     ap.add_argument("--delay", type=float, default=0.0, help="seconds to wait before each reply (a slow VLA)")
+    ap.add_argument("--invalid-first", type=int, default=0, help="the first N replies of each session are NaN (a VLA not ready yet)")
     a = ap.parse_args()
     rows = load_rows(a.dataset, a.episode)
     print(f"[episode server] {a.dataset} episode {a.episode}: {len(rows)} rows of {rows.shape[1]} on :{a.port}", flush=True)
     cursors: dict[str, int] = {}
+    replies: dict[str, int] = {}
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -73,12 +75,16 @@ def main() -> None:
             hist = req.get("history") or {}
             sid = str(hist.get("session_id", ""))
             if hist.get("reset") or sid not in cursors:
-                cursors[sid] = 0
+                cursors[sid] = replies[sid] = 0
                 img = next(iter(req["image"].values()))
                 print(f"[episode server] session {sid}: image {getattr(img, 'shape', None)}, state keys {sorted(req['state'])}", flush=True)
             if a.delay > 0:
                 import time
                 time.sleep(a.delay)
+            replies[sid] += 1
+            if replies[sid] <= a.invalid_first:
+                self._send(ResponseMessage(action=np.full((a.chunk, rows.shape[1]), np.nan, np.float32), err=0.0).serialize())
+                return
             c = cursors[sid]
             idx = np.minimum(np.arange(c, c + a.chunk), len(rows) - 1)
             cursors[sid] = c + a.chunk

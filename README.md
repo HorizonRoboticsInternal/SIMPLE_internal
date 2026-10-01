@@ -512,9 +512,12 @@ python -m simple.cli.eval_holomotion_v14 --scene coffee_cart --host 127.0.0.1 --
 | reply | `action` (T, D), one row per frame at 50 Hz: `[0:65]` the reference frame (`dof_pos[29]`, `dof_vel[29]`, `root_pos[3]`, `root_rot_wxyz[4]`), exactly the dataset's `teleop.latest_obs`; then either 2 grips (D = 67) or 14 hand joint targets (D = 79), or nothing (D = 65, hands open) |
 
 **How an episode runs:**
-- the robot stands on the floor in a random start pose, on the walking policy;
-- after 0.5 s the VLA's frames stream in;
-- once the policy node has its 11 frames, motion tracking takes over (0.8 s in), as the operator's Y does in teleop;
+- the robot stands on the floor in a random start pose, on the walking policy, which moves the arms to its own
+  posture within 0.2 s, as in the teleop recordings before the operator's Y;
+- the VLA is asked from the first step; the robot keeps walking (standing in place) until its replies are valid
+  (right shape, finite, unit root quaternions), and a failed or unusable reply is simply asked again;
+- once the policy node has 11 valid frames, motion tracking takes over automatically, as the operator's Y does in
+  teleop (step 14, 0.28 s, with a VLA that answers from the start);
 - success is the task's last gate (item placed), within 30 s by default.
 
 The controller runs on a clock that advances 20 ms per step, so VLA latency cannot change a rollout. That was
@@ -538,6 +541,13 @@ furniture.
 
 **Checking the pipeline without a VLA.** `scripts/holomotion_v14_episode_server.py <teleop dataset> --episode N --port
 21000` serves a recorded teleop episode's own reference frames, for a pipeline check.
+
+**Pipeline check with a real model (2026-09-30).** The three HoloBrain G1 deploy models were run in the loop through
+`scripts/holomotion_v14_vla_bridge.py`, which gives the model its training format and fakes HoloMotion reference frames
+from its decoupled-WBC rows (legs at the standing pose, waist and arms from the model, root from its walking command).
+15 episodes, 987 queries: every stage passed, all replay logs bit-exact; the models sample, so a scene is not
+repeatable. Report: http://10.40.11.11:8899/holomotion_v14_pipeline_check/index.html (generator
+`docs/_scan/holomotion_v14_pipeline_check/`); details in [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md).
 
 **Scene code.** The kit code comes from `~/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim` when present, else from
 `scenes/`. The `scenes/bowl_sink` copy here predates the sink-cabinet toe space, so its image differs under the counter;
