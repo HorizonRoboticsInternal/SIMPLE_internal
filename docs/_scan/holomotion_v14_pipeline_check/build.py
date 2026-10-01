@@ -138,7 +138,9 @@ def stage_rows(d: dict) -> list[tuple[str, str, bool]]:
     ok = all(t["health"].get("status") == "ok" for t in T.values()) and len(T) == 3
     rows.append(("Model servers up", ", ".join(f"{t['preset']} ({t['health'].get('ckpt_step', '?')})" for t in T.values()), ok))
     ok = all(all(b["image"][:2] == [360, 640] for b in t["bridge"]) for t in T.values()) and all(t["bridge"] for t in T.values())
-    rows.append(("Images reach the model", "every query carried the HBVCAM rectified left eye, resized to 640 × 360 (the training size)", ok))
+    renderer = next((t["run"].get("renderer", "mujoco") for t in d["tasks"].values()), "mujoco")
+    rendered = "rendered in Isaac (SIMPLE's standard mujoco_isaac mode)" if renderer == "isaac" else "rendered by MuJoCo"
+    rows.append(("Images reach the model", f"every query carried the HBVCAM rectified left eye {rendered}, resized to 640 × 360 (the training size)", ok))
     ok = all(all(b["rows"] == 24 for b in t["bridge"]) for t in T.values())
     rows.append(("Model replies", "24 rows × 36 at 50 Hz per query, all finite", ok))
     ok = all(all(b["out"]["finite"] and b["out"]["shape"] == [24, 79] and abs(b["out"]["quat_norm"] - 1) < 1e-3 for b in t["bridge"]) for t in T.values())
@@ -165,6 +167,7 @@ def stage_rows(d: dict) -> list[tuple[str, str, bool]]:
 
 def build() -> None:
     d = load()
+    renderer = next((t["run"].get("renderer", "mujoco") for t in d["tasks"].values()), "mujoco")
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "img").mkdir(exist_ok=True)
     for f in (OUT / "img").glob("*.jpg"):
@@ -225,6 +228,9 @@ ul{margin:0;padding-left:1.2em;max-width:70ch}li{margin:3px 0}.flow{display:flex
 <div class="card"><h3>What it returns</h3><ul><li>24 rows at 50 Hz, 36 each: hands 14, arms 14, torso roll/pitch/yaw, height, vx vy vyaw target_yaw</li><li>one query per 24 control steps (0.48 s of sim)</li></ul></div>
 <div class="card"><h3>How the bridge fakes the reference</h3><ul><li>legs: HoloMotion's default standing angles</li><li>waist and arms: the model's targets, same motor order</li><li>joint velocities: finite differences along the chunk</li><li>root: the model's vx, vy, vyaw integrated 20 ms per row from the robot's pose at the first query; yaw-only rotation</li><li>hands: the model's 14 Dex3 targets, reordered to SIMPLE's MJCF order</li></ul></div>
 </div></section>""")
+    if renderer == "isaac":
+        H[-1] = H[-1].replace("MuJoCo scene<br><i>level-3 set, G1 + backpack + HBVCAM</i>",
+                              "Isaac scene<br><i>level-3 set, G1 + backpack + HBVCAM &middot; MuJoCo physics, Isaac rendering (SIMPLE's standard mode)</i>")
 
     # per task
     for task, T in d["tasks"].items():

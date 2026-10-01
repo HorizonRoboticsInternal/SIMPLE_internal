@@ -181,6 +181,10 @@ def main(
     engage_timeout_s: Annotated[float, typer.Option(help="seconds to wait for valid VLA frames (walking) before the episode fails")] = 10.0,
     max_episode_steps: Annotated[int, typer.Option(help="control steps per episode (50 per second)")] = 1500,
     success_criteria: Annotated[float, typer.Option(help="task reward for success (bottle_bin: 1.0 placed, 0.6 grasped + at bin)")] = 0.9,
+    sim_mode: Annotated[str, typer.Option(help="simple = SIMPLE's standard Isaac rendering (mujoco_isaac: MuJoCo physics, the VLA "
+                                               "image and the video from Isaac, as simple.cli.eval_decoupled_wbc); mujoco = MuJoCo "
+                                               "renders (the teleop's own views)")] = "simple",
+    isaac_warmup: Annotated[int, typer.Option(help="Isaac steps on the first frame of each episode before the VLA is asked (renderer settle)")] = 24,
     save_video: Annotated[bool, typer.Option(help="per episode: the VLA image | a third-person view")] = True,
     exact_log: Annotated[bool, typer.Option(help="a bit-exact replay log per episode (replay/)")] = True,
     headless: Annotated[bool, typer.Option()] = True,
@@ -199,6 +203,12 @@ def main(
         raise typer.BadParameter("--image-camera is pinhole or fisheye; --robot is stereo or stock")
     if robot_kind != "stereo":
         raise typer.BadParameter("the VLA image is the HBVCAM camera: --robot stereo")
+    engine_mode = {"simple": "mujoco_isaac", "mujoco_isaac": "mujoco_isaac", "isaac": "mujoco_isaac", "mujoco": "mujoco"}.get(sim_mode)
+    if engine_mode is None:
+        raise typer.BadParameter("--sim-mode is simple (Isaac rendering, the default) or mujoco")
+    use_isaac = engine_mode == "mujoco_isaac"
+    if use_isaac and image_camera != "pinhole":
+        raise typer.BadParameter("--sim-mode simple renders the HBVCAM rectified left eye only: --image-camera pinhole")
     if motion_model_bundle:
         from simple.teleop.holomotion_v14.robot_variants import backpack_models_dir
         models_dir = backpack_models_dir(motion_model_bundle)
@@ -227,7 +237,7 @@ def main(
     sonic_config = _load_sonic_config()
     render_hz = 50
     dr_level = 3 if setup_ranges == "lv3" else 0
-    env = gym.make(mod.ENV_ID, sim_mode="mujoco", render_hz=render_hz, physics_dt=sonic_config["SIMULATE_DT"],
+    env = gym.make(mod.ENV_ID, sim_mode=engine_mode, render_hz=render_hz, physics_dt=sonic_config["SIMULATE_DT"],
                    headless=headless, max_episode_steps=10 ** 9, sonic_config=sonic_config,
                    target=getattr(mod, "TARGET", None), dr_level=dr_level, success_criteria=success_criteria)
     sonic_env = env.unwrapped
@@ -236,19 +246,83 @@ def main(
     if head_tilt_deg:
         tilt_head_sensor(task, head_tilt_deg)
     control_dt = 4 * robot.sim_dt
-    view = FisheyeView(sonic_env) if image_camera == "fisheye" else PinholeView(sonic_env)
+    if use_isaac and os.environ.get(f"{scene.upper()}_LIGHT_LEVEL"):
+        # SIMPLE's DR manager puts lighting in "fixed" mode at every level > 0: give the randomizer the task's own config
+        # (the scene's bright / dim ranges), as scripts/render_teleop_isaac.py does. Isaac-only; physics unchanged.
+        from copy import deepcopy
+        task.dr.randomizers["lighting"].cfg = deepcopy(task.dr_cfgs["lighting"])
+    view = None if use_isaac else (FisheyeView(sonic_env) if image_camera == "fisheye" else PinholeView(sonic_env))
     cache = {"step": None, "img": None}
     step_id = {"n": 0}
+    isaac = {"cam": None, "third": None, "robot": None, "model": None, "hooked": False, "blank": 0}
+
+    def _isaac_views_for_episode():
+        """After a reset: the HBVCAM camera + third-person camera (once per Isaac stage) and the robot prims (per compiled
+        model), and the engine's per-step Isaac call hooked so both follow MuJoCo before Isaac renders."""
+        from simple.teleop.holomotion_v14.isaac_views import IsaacFreeCamera, MujocoRobot, PinholeCamera
+        from simple.teleop.holomotion_v14.robot_variants import PINHOLE_CAMERA
+        m = sonic_env.mujoco.mjModel
+        if isaac["cam"] is None or not isaac["cam"].cam.prim.IsValid():
+            isaac["cam"] = PinholeCamera()
+        L = mod.L
+        lookat = [L.get("plan_cx", 0.6), L.get("plan_cy", 0.0), 0.5]
+        new_third = isaac["third"] is None or not isaac["third"].cam.prim.IsValid()
+        if new_third:
+            isaac["third"] = IsaacFreeCamera(lookat, 3.4, 200.0, -38.0)
+        isaac["cam"].clip_like(m)
+        isaac["robot"], isaac["model"] = MujocoRobot(sonic_env), m
+        if new_third:
+            # the MuJoCo third-person pose can stand inside the HSSD room's walls or furniture (black image): move in along
+            # the view axis until under half the pixels are black, as holobrain_g1_deploy/sim/pipeline_test.py does
+            for k in (1.0, 0.65, 0.45, 0.3):
+                isaac["third"].place(lookat, 3.4 * k, 200.0, -38.0)
+                for _ in range(4):
+                    sonic_env.isaac.step(sonic_env.mujoco)
+                img = isaac["third"].rgb()
+                black = float((img.max(axis=2) < 8).mean()) if img is not None else 1.0
+                if black < 0.5:
+                    break
+            print(f"[eval] Isaac third-person camera at {3.4 * k:.2f} m ({black:.0%} black)", flush=True)
+        if not isaac["hooked"]:
+            orig_step = sonic_env.isaac.step
+
+            def step_with_views(mujoco_env=None):
+                mm, dd = sonic_env.mujoco.mjModel, sonic_env.mujoco.mjData
+                if isaac["robot"] is not None and isaac["model"] is mm:
+                    isaac["cam"].follow(mm, dd, PINHOLE_CAMERA)
+                    isaac["robot"].update(dd)
+                return orig_step(mujoco_env)
+
+            sonic_env.isaac.step = step_with_views
+            isaac["hooked"] = True
+        for _ in range(max(1, isaac_warmup)):            # the renderer settles on the start pose; the first VLA image is valid
+            sonic_env.isaac.step(sonic_env.mujoco)
 
     def vla_image() -> np.ndarray:
         """The VLA image of the current (pre-step) state, rendered once per step."""
         if cache["step"] != step_id["n"]:
-            img = np.hstack(view.render()) if image_camera == "fisheye" else view.render()
+            if use_isaac:
+                from simple.teleop.holomotion_v14.robot_variants import PINHOLE_H, PINHOLE_W
+                img = isaac["cam"].rgb()
+                if img is None or img.shape[:2] != (PINHOLE_H, PINHOLE_W):
+                    isaac["blank"] += 1
+                    if isaac["blank"] <= 3:
+                        print(f"[eval] Isaac HBVCAM frame missing at step {step_id['n']} (blank sent)", flush=True)
+                    img = np.zeros((PINHOLE_H, PINHOLE_W, 3), np.uint8)
+            else:
+                img = np.hstack(view.render()) if image_camera == "fisheye" else view.render()
             if resize:
                 import cv2
                 img = cv2.resize(img, resize, interpolation=cv2.INTER_AREA)
             cache.update(step=step_id["n"], img=img)
         return cache["img"]
+
+    def third_person_frame() -> np.ndarray:
+        if use_isaac:
+            import cv2
+            img = isaac["third"].rgb() if isaac["third"] is not None else None
+            return cv2.resize(img, (640, 360), interpolation=cv2.INTER_AREA) if img is not None else np.zeros((360, 640, 3), np.uint8)
+        return _third_person(sonic_env, setups.mod.L, third_box)
 
     # ---- VLA and controller
     from simple.agents.holomotion_v14_vla_agent import HoloMotionV14VlaAgent
@@ -258,6 +332,7 @@ def main(
                                   settle_s=settle_s, engage_timeout_s=engage_timeout_s, image_key=image_key)
     clocked = clock.install()
     print(f"[eval] controller clock: {len(clocked)} modules on sim time; policies from {models_dir}")
+    print(f"[eval] renderer: {'Isaac (SIMPLE standard, mujoco_isaac)' if use_isaac else 'MuJoCo'}; sim-mode {sim_mode}")
     print(f"[eval] robot {robot.mjcf_path}; VLA image {image_camera}{' -> ' + image_size if resize else ''}; "
           f"reference frames at {reference_hz:g} Hz")
 
@@ -294,6 +369,7 @@ def main(
 
     prefix = SCENE_ENV_PREFIX.get(scene, "\0")
     run_meta = dict(scene=scene, scene_root=str(scene_root()), env_id=mod.ENV_ID, dr_level=dr_level,
+                    sim_mode=engine_mode, renderer="isaac" if use_isaac else "mujoco",
                     env_knobs={k: v for k, v in os.environ.items() if k.startswith(prefix) or k.startswith("SIMPLE_")},
                     setup_ranges=None if scenes_from else setup_ranges, backpack_kg=backpack_kg, robot=robot_kind,
                     head_tilt_deg=head_tilt_deg, robot_mjcf=robot.mjcf_path, physics_dt=sonic_config["SIMULATE_DT"],
@@ -316,7 +392,10 @@ def main(
                 observation, privileged_info = env.reset()
             if ep.get("init_seed") is not None:                # drawn after the reset: it needs the loaded robot's joints
                 ep["init_pose"] = _draw_init_pose(np.random.RandomState(ep["init_seed"]), robot, init_pose_scale)
+            isaac["robot"] = None                            # the reset compiles a new model: prims rebuilt below
             placed = _stand_on_floor(sonic_env, agent, ep["init_pose"])
+            if use_isaac:
+                _isaac_views_for_episode()
             observation, privileged_info = sonic_env._get_obs(), sonic_env._get_info()
             agent.reset_episode(placed[agent.mjcf_to_real], episode_index=int(ep["index"]))
             instr = instruction or task.instruction
@@ -355,7 +434,7 @@ def main(
                         import cv2
                         left = cv2.resize(vla_img[:, :vla_img.shape[1] // (2 if image_camera == "fisheye" else 1)], (640, 360),
                                           interpolation=cv2.INTER_AREA)
-                        frame = np.hstack([left, _third_person(sonic_env, setups.mod.L, third_box)]).copy()
+                        frame = np.hstack([left, third_person_frame()]).copy()
                         text = f"{label}  t={steps * control_dt:5.1f}s  {agent.phase}  " + " ".join(
                             g for g, v in _progress(privileged_info)[0].items() if v)
                         cv2.putText(frame, text, (10, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
@@ -375,7 +454,8 @@ def main(
                        gates=gates,
                        pelvis_min_m=round(pelvis_min, 3), fell=bool(pelvis_min < FELL_BELOW_M),
                        gate_times=gate_times,
-                       seed=ep["setup"].get("seed"), table_dz=ep["setup"].get("table_dz"), error=error, **agent.summary())
+                       seed=ep["setup"].get("seed"), table_dz=ep["setup"].get("table_dz"), error=error,
+                       isaac_blank_frames=int(isaac["blank"]) if use_isaac else None, **agent.summary())
             if xlog is not None and xlog.recording:
                 log_path = out_dir / "replay" / f"episode_{int(ep['index']):06d}.npz"
                 xlog.save(log_path, ep["setup"], dict(run_meta, episode_index=int(ep["index"]), init_pose=ep["init_pose"],
