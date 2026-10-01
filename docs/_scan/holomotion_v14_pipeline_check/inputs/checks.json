@@ -18,7 +18,7 @@
  },
  "repeat": {
   "ok": false,
-  "summary": "bottle_bin scene 0 run twice through the live model (10 s, 21 queries each): the rollouts differ from frame 2: the model's replies are not deterministic (the chain up to the first reply is)",
-  "detail": "state0: identical\nphysics: DIFFERENT\nctrl: DIFFERENT\naction_target_q: DIFFERENT\naction_left_hand_q: DIFFERENT\naction_right_hand_q: DIFFERENT\nmodel hash equal: True\nengaged at step 15 / 15\nmodel latency mean 0.4263 / 0.4149 s"
+  "summary": "bottle_bin scene 0 run twice through the live model (10.0 s, 21 queries each): the rollouts differ from frame 15: the model's replies are not deterministic (the chain up to the first reply is)",
+  "detail": "state0: identical\nphysics: DIFFERENT\nctrl: DIFFERENT\naction_target_q: DIFFERENT\naction_left_hand_q: identical\naction_right_hand_q: DIFFERENT\naction_band: identical\naction_band_state: identical\nmodel hash equal: True\nengaged at step 15 / 15\nmodel latency mean 0.3854 / 0.3797 s"
  }
 }

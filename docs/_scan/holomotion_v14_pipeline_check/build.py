@@ -257,7 +257,7 @@ ul{margin:0;padding-left:1.2em;max-width:70ch}li{margin:3px 0}.flow{display:flex
                      f'(min {min(c[0] for c in cmd):+.2f}, max {max(c[0] for c in cmd):+.2f}), vyaw {statistics.mean(c[2] for c in cmd):+.2f} rad/s; '
                      f'right hand closed in {100 * statistics.mean(c[3] for c in cmd):.0f} % of the replies.</p>')
         H.append(f'<div class="cols" style="margin-top:12px"><div class="card"><h3>Model latency, {len(lat)} queries</h3>{latency_svg(lat, "var(--accent)")}'
-                 f'<p class="muted">median {statistics.median(lat) * 1000:.0f} ms, p90 {pct(lat, 0.9) * 1000:.0f} ms, max {max(lat) * 1000:.0f} ms. The controller runs on sim time, so latency does not change the rollout. The three model servers shared one GPU during this run, hence the two latency groups.</p></div></div>')
+                 f'<p class="muted">median {statistics.median(lat) * 1000:.0f} ms, p90 {pct(lat, 0.9) * 1000:.0f} ms, max {max(lat) * 1000:.0f} ms. The controller runs on sim time, so latency does not change the rollout. The three model servers ran one at a time in this run, each alone on the GPU.</p></div></div>')
         frames = d["manifest"].get(task, {}).get("frames", {})
         for ep, lst in frames.items():
             if not lst:

@@ -18,6 +18,13 @@ for log in sorted(pipe.glob("replay_*.log")):
                            "detail": "\n".join(lines)}
 
 
+
+def _lat(e):
+    """mean model latency of the episode, whichever key the results carry"""
+    for k in ("latency_mean_s", "latency_mean", "query_seconds_mean"):
+        if k in e: return e[k]
+    return "?"
+
 def repeat_check():
     a = sorted(glob.glob(str(pipe / "repeat_a" / "**" / "replay" / "*.npz"), recursive=True))
     b = sorted(glob.glob(str(pipe / "repeat_b" / "**" / "replay" / "*.npz"), recursive=True))
@@ -38,7 +45,7 @@ def repeat_check():
         first_diff = int(d[0]) + 1 if len(d) else None
     lines += [f"model hash equal: {ia.get('model_sha256') == ib.get('model_sha256')}",
               f"engaged at step {ea.get('engaged_step')} / {eb.get('engaged_step')}",
-              f"model latency mean {ea.get('latency_mean_s', ea.get('latency_mean', '?'))} / {eb.get('latency_mean_s', eb.get('latency_mean', '?'))} s"]
+              f"model latency mean {_lat(ea)} / {_lat(eb)} s"]
     secs = ea.get("sim_seconds", "?"); q = ea.get("queries", "?")
     identical = all(same(k) for k in keys)
     summary = (f"{ia['scene']} scene 0 run twice through the live model ({secs} s, {q} queries each): "

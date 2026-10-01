@@ -1,345 +1,345 @@
 {
  "bottle_bin": {
-  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/8c40e913-4e1e-4a48-82bd-486b2ab20a27/scratchpad/pipe/eval_bottle_bin/vla/chipcan_nativec9-20260930T223253.G1WholebodyBottleBinTeleop-v0/dr-level-3",
+  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/47056e3f-7af4-43f2-b3fc-07c6f74c9831/scratchpad/pipe_isaac/eval_bottle_bin/vla/chipcan_nativec9-20261001T110648.G1WholebodyBottleBinTeleop-v0/dr-level-3",
   "frames": {
    "scene_00": [
     [
      0.3,
-     "bottle_bin_scene_00_t0.3.910a9815.jpg"
+     "bottle_bin_scene_00_t0.3.6219d354.jpg"
     ],
     [
      5.0,
-     "bottle_bin_scene_00_t5.08bc3f23.jpg"
+     "bottle_bin_scene_00_t5.751f662e.jpg"
     ],
     [
      10.0,
-     "bottle_bin_scene_00_t10.387cd783.jpg"
+     "bottle_bin_scene_00_t10.91cf8dd8.jpg"
     ],
     [
      20.0,
-     "bottle_bin_scene_00_t20.b63b42e9.jpg"
+     "bottle_bin_scene_00_t20.e17a0f01.jpg"
     ],
     [
      29.5,
-     "bottle_bin_scene_00_t29.5.503c7abe.jpg"
+     "bottle_bin_scene_00_t29.5.8a166d65.jpg"
     ]
    ],
    "scene_01": [
     [
      0.3,
-     "bottle_bin_scene_01_t0.3.165d4644.jpg"
+     "bottle_bin_scene_01_t0.3.6cf8daae.jpg"
     ],
     [
      5.0,
-     "bottle_bin_scene_01_t5.1b16643f.jpg"
+     "bottle_bin_scene_01_t5.d948e03e.jpg"
     ],
     [
      10.0,
-     "bottle_bin_scene_01_t10.11b19489.jpg"
+     "bottle_bin_scene_01_t10.cf81b861.jpg"
     ],
     [
      20.0,
-     "bottle_bin_scene_01_t20.ffc88dcd.jpg"
+     "bottle_bin_scene_01_t20.e72b692a.jpg"
     ],
     [
      29.5,
-     "bottle_bin_scene_01_t29.5.91bfaa0f.jpg"
+     "bottle_bin_scene_01_t29.5.c713eeff.jpg"
     ]
    ],
    "scene_02": [
     [
      0.3,
-     "bottle_bin_scene_02_t0.3.7a4c76c9.jpg"
+     "bottle_bin_scene_02_t0.3.678c736f.jpg"
     ],
     [
      5.0,
-     "bottle_bin_scene_02_t5.edbb4c0b.jpg"
+     "bottle_bin_scene_02_t5.cefb4e40.jpg"
     ],
     [
      10.0,
-     "bottle_bin_scene_02_t10.7b8306ea.jpg"
+     "bottle_bin_scene_02_t10.e5858af5.jpg"
     ],
     [
      20.0,
-     "bottle_bin_scene_02_t20.eeed1e00.jpg"
+     "bottle_bin_scene_02_t20.1ed6b818.jpg"
     ],
     [
      29.5,
-     "bottle_bin_scene_02_t29.5.3d161711.jpg"
+     "bottle_bin_scene_02_t29.5.39a24b08.jpg"
     ]
    ],
    "scene_03": [
     [
      0.3,
-     "bottle_bin_scene_03_t0.3.c1dac0b8.jpg"
+     "bottle_bin_scene_03_t0.3.7924ff71.jpg"
     ],
     [
      5.0,
-     "bottle_bin_scene_03_t5.18d5357b.jpg"
+     "bottle_bin_scene_03_t5.30dba757.jpg"
     ],
     [
      10.0,
-     "bottle_bin_scene_03_t10.17f60f68.jpg"
+     "bottle_bin_scene_03_t10.2e8345e1.jpg"
     ],
     [
      20.0,
-     "bottle_bin_scene_03_t20.3c7447dc.jpg"
+     "bottle_bin_scene_03_t20.9d41abad.jpg"
     ],
     [
      29.5,
-     "bottle_bin_scene_03_t29.5.7e19b157.jpg"
+     "bottle_bin_scene_03_t29.5.cb5e6d77.jpg"
     ]
    ],
    "scene_04": [
     [
      0.3,
-     "bottle_bin_scene_04_t0.3.55b828f3.jpg"
+     "bottle_bin_scene_04_t0.3.cdec50c6.jpg"
     ],
     [
      5.0,
-     "bottle_bin_scene_04_t5.3f419b70.jpg"
+     "bottle_bin_scene_04_t5.6e3685d9.jpg"
     ],
     [
      10.0,
-     "bottle_bin_scene_04_t10.c488856b.jpg"
+     "bottle_bin_scene_04_t10.338369dc.jpg"
     ],
     [
      20.0,
-     "bottle_bin_scene_04_t20.f714ef5e.jpg"
+     "bottle_bin_scene_04_t20.c3fde716.jpg"
     ],
     [
      29.5,
-     "bottle_bin_scene_04_t29.5.06ce6325.jpg"
+     "bottle_bin_scene_04_t29.5.384c6e3e.jpg"
     ]
    ]
   }
  },
  "bowl_sink": {
-  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/8c40e913-4e1e-4a48-82bd-486b2ab20a27/scratchpad/pipe/eval_bowl_sink/vla/bowltosink_c9-20260930T223327.G1WholebodyBowlSinkTeleop-v0/dr-level-3",
+  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/47056e3f-7af4-43f2-b3fc-07c6f74c9831/scratchpad/pipe_isaac/eval_bowl_sink/vla/bowltosink_c9-20261001T112449.G1WholebodyBowlSinkTeleop-v0/dr-level-3",
   "frames": {
    "scene_00": [
     [
      0.3,
-     "bowl_sink_scene_00_t0.3.f215583d.jpg"
+     "bowl_sink_scene_00_t0.3.b125de59.jpg"
     ],
     [
      5.0,
-     "bowl_sink_scene_00_t5.41d37ec1.jpg"
+     "bowl_sink_scene_00_t5.1fc43cf3.jpg"
     ],
     [
      10.0,
-     "bowl_sink_scene_00_t10.2f712eb7.jpg"
+     "bowl_sink_scene_00_t10.8098b173.jpg"
     ],
     [
      20.0,
-     "bowl_sink_scene_00_t20.d4bf3fe6.jpg"
+     "bowl_sink_scene_00_t20.978d48fd.jpg"
     ],
     [
      29.5,
-     "bowl_sink_scene_00_t29.5.01a5a31e.jpg"
+     "bowl_sink_scene_00_t29.5.187182df.jpg"
     ]
    ],
    "scene_01": [
     [
      0.3,
-     "bowl_sink_scene_01_t0.3.7e82fab7.jpg"
+     "bowl_sink_scene_01_t0.3.b878d4b8.jpg"
     ],
     [
      5.0,
-     "bowl_sink_scene_01_t5.8e9d30da.jpg"
+     "bowl_sink_scene_01_t5.11255c23.jpg"
     ],
     [
      10.0,
-     "bowl_sink_scene_01_t10.044cb126.jpg"
+     "bowl_sink_scene_01_t10.cec1d961.jpg"
     ],
     [
      20.0,
-     "bowl_sink_scene_01_t20.0c2f9474.jpg"
+     "bowl_sink_scene_01_t20.ca7e11e1.jpg"
     ],
     [
      29.5,
-     "bowl_sink_scene_01_t29.5.6f2b4ecc.jpg"
+     "bowl_sink_scene_01_t29.5.e49b483c.jpg"
     ]
    ],
    "scene_02": [
     [
      0.3,
-     "bowl_sink_scene_02_t0.3.5fb42d8f.jpg"
+     "bowl_sink_scene_02_t0.3.de31bec0.jpg"
     ],
     [
      5.0,
-     "bowl_sink_scene_02_t5.b00afeec.jpg"
+     "bowl_sink_scene_02_t5.ab102eeb.jpg"
     ],
     [
      10.0,
-     "bowl_sink_scene_02_t10.831f90c6.jpg"
+     "bowl_sink_scene_02_t10.437b2265.jpg"
     ],
     [
      20.0,
-     "bowl_sink_scene_02_t20.83b7a7de.jpg"
+     "bowl_sink_scene_02_t20.ddaf9245.jpg"
     ],
     [
      29.5,
-     "bowl_sink_scene_02_t29.5.a7e1af4d.jpg"
+     "bowl_sink_scene_02_t29.5.870689ac.jpg"
     ]
    ],
    "scene_03": [
     [
      0.3,
-     "bowl_sink_scene_03_t0.3.46baca98.jpg"
+     "bowl_sink_scene_03_t0.3.cb8f49bd.jpg"
     ],
     [
      5.0,
-     "bowl_sink_scene_03_t5.00ed0c2e.jpg"
+     "bowl_sink_scene_03_t5.2c562d18.jpg"
     ],
     [
      10.0,
-     "bowl_sink_scene_03_t10.5fa60dc6.jpg"
+     "bowl_sink_scene_03_t10.914f6bc0.jpg"
     ],
     [
      20.0,
-     "bowl_sink_scene_03_t20.6d075a9b.jpg"
+     "bowl_sink_scene_03_t20.b24cc914.jpg"
     ],
     [
      29.5,
-     "bowl_sink_scene_03_t29.5.48d5f1a5.jpg"
+     "bowl_sink_scene_03_t29.5.c984bd18.jpg"
     ]
    ],
    "scene_04": [
     [
      0.3,
-     "bowl_sink_scene_04_t0.3.cad6d0c4.jpg"
+     "bowl_sink_scene_04_t0.3.47f46ea5.jpg"
     ],
     [
      5.0,
-     "bowl_sink_scene_04_t5.4bd226ad.jpg"
+     "bowl_sink_scene_04_t5.71ed07c5.jpg"
     ],
     [
      10.0,
-     "bowl_sink_scene_04_t10.234a57c8.jpg"
+     "bowl_sink_scene_04_t10.4162e7c5.jpg"
     ],
     [
      20.0,
-     "bowl_sink_scene_04_t20.7dfad1b4.jpg"
+     "bowl_sink_scene_04_t20.d9114bb5.jpg"
     ],
     [
      29.5,
-     "bowl_sink_scene_04_t29.5.08c4b112.jpg"
+     "bowl_sink_scene_04_t29.5.f9428f9a.jpg"
     ]
    ]
   }
  },
  "coffee_cart": {
-  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/8c40e913-4e1e-4a48-82bd-486b2ab20a27/scratchpad/pipe/eval_coffee_cart/vla/cart_c19-20260930T223330.G1WholebodyCoffeeCartTeleop-v0/dr-level-3",
+  "run_dir": "/tmp/claude-1000/-home-Horizon-wrk-SIMPLE/47056e3f-7af4-43f2-b3fc-07c6f74c9831/scratchpad/pipe_isaac/eval_coffee_cart/vla/cart_c19-20261001T113920.G1WholebodyCoffeeCartTeleop-v0/dr-level-3",
   "frames": {
    "scene_00": [
     [
      0.3,
-     "coffee_cart_scene_00_t0.3.21e1e468.jpg"
+     "coffee_cart_scene_00_t0.3.6483f174.jpg"
     ],
     [
      5.0,
-     "coffee_cart_scene_00_t5.6aedba61.jpg"
+     "coffee_cart_scene_00_t5.75fcc4f0.jpg"
     ],
     [
      10.0,
-     "coffee_cart_scene_00_t10.ca4807e5.jpg"
+     "coffee_cart_scene_00_t10.6bbed36f.jpg"
     ],
     [
      20.0,
-     "coffee_cart_scene_00_t20.ab6dc3b6.jpg"
+     "coffee_cart_scene_00_t20.512a991f.jpg"
     ],
     [
      29.5,
-     "coffee_cart_scene_00_t29.5.a91ddaef.jpg"
+     "coffee_cart_scene_00_t29.5.9f94cd90.jpg"
     ]
    ],
    "scene_01": [
     [
      0.3,
-     "coffee_cart_scene_01_t0.3.03f5a180.jpg"
+     "coffee_cart_scene_01_t0.3.31acc560.jpg"
     ],
     [
      5.0,
-     "coffee_cart_scene_01_t5.c0b7d09b.jpg"
+     "coffee_cart_scene_01_t5.cea6cfd5.jpg"
     ],
     [
      10.0,
-     "coffee_cart_scene_01_t10.025b1f14.jpg"
+     "coffee_cart_scene_01_t10.6ee6bcd6.jpg"
     ],
     [
      20.0,
-     "coffee_cart_scene_01_t20.1f0716d8.jpg"
+     "coffee_cart_scene_01_t20.cb2658f8.jpg"
     ],
     [
      29.5,
-     "coffee_cart_scene_01_t29.5.c5f97f27.jpg"
+     "coffee_cart_scene_01_t29.5.990244f2.jpg"
     ]
    ],
    "scene_02": [
     [
      0.3,
-     "coffee_cart_scene_02_t0.3.15b2b0d0.jpg"
+     "coffee_cart_scene_02_t0.3.7f0615d1.jpg"
     ],
     [
      5.0,
-     "coffee_cart_scene_02_t5.6f761571.jpg"
+     "coffee_cart_scene_02_t5.14be9d83.jpg"
     ],
     [
      10.0,
-     "coffee_cart_scene_02_t10.9c3e77b1.jpg"
+     "coffee_cart_scene_02_t10.706f89b3.jpg"
     ],
     [
      20.0,
-     "coffee_cart_scene_02_t20.ce48bd89.jpg"
+     "coffee_cart_scene_02_t20.e849b451.jpg"
     ],
     [
      29.5,
-     "coffee_cart_scene_02_t29.5.2793bcba.jpg"
+     "coffee_cart_scene_02_t29.5.578cdd4e.jpg"
     ]
    ],
    "scene_03": [
     [
      0.3,
-     "coffee_cart_scene_03_t0.3.6635ad58.jpg"
+     "coffee_cart_scene_03_t0.3.15c62414.jpg"
     ],
     [
      5.0,
-     "coffee_cart_scene_03_t5.ac550a35.jpg"
+     "coffee_cart_scene_03_t5.9525816c.jpg"
     ],
     [
      10.0,
-     "coffee_cart_scene_03_t10.8a741f46.jpg"
+     "coffee_cart_scene_03_t10.1fc3b25b.jpg"
     ],
     [
      20.0,
-     "coffee_cart_scene_03_t20.491a4281.jpg"
+     "coffee_cart_scene_03_t20.2d90caa8.jpg"
     ],
     [
      29.5,
-     "coffee_cart_scene_03_t29.5.43407550.jpg"
+     "coffee_cart_scene_03_t29.5.f37ae078.jpg"
     ]
    ],
    "scene_04": [
     [
      0.3,
-     "coffee_cart_scene_04_t0.3.6c31d573.jpg"
+     "coffee_cart_scene_04_t0.3.38da60f6.jpg"
     ],
     [
      5.0,
-     "coffee_cart_scene_04_t5.b31f7505.jpg"
+     "coffee_cart_scene_04_t5.3d3cab02.jpg"
     ],
     [
      10.0,
-     "coffee_cart_scene_04_t10.3555bf66.jpg"
+     "coffee_cart_scene_04_t10.767f6229.jpg"
     ],
     [
      20.0,
-     "coffee_cart_scene_04_t20.fc9d9ad1.jpg"
+     "coffee_cart_scene_04_t20.ea2bc5e3.jpg"
     ],
     [
      29.5,
-     "coffee_cart_scene_04_t29.5.cd0bd5ae.jpg"
+     "coffee_cart_scene_04_t29.5.fd47ca68.jpg"
     ]
    ]
   }
