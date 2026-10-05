@@ -1,12 +1,5 @@
 # Bowl-to-sink kitchen scene (g1comp, MuJoCo) + SIMPLE task + real-run replay
 
-Built 2026-09-23 from the hand drawing `~/Downloads/20260922-235520.jpg` (numbers in cm; the "mm" on the sheet are cm),
-checked against the deployment run of 2026-09-21 (`runs/20260921_172723_bowltosink_c96`: client log with the executed
-36-D rows at 30 Hz, the head-camera AVI, IMU yaw; DJI clips in `~/wrk/ICRA27_VIDEO EDITING/bowltosink_v2`) and **tuned
-against the 55 teleop episodes of `SIMPLE/data/real_recordings/psi0/BowlToSink_0918`** (session 2026-09-18-00-04-41).
-Same recipe as `../bottle_bin/` (robot model, pose 3, D455 camera, engine patches).
-Page: http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html
-
     MUJOCO_GL=glfw DISPLAY=:1 ~/wrk/SIMPLE/.venv/bin/python build_scene.py     # scene.xml, layout.json, renders/, plan
     MUJOCO_GL=egl  ~/wrk/SIMPLE/.venv/bin/python replay_in_scene.py --probe    # the scene inside SIMPLE
     python make_report.py                                                       # site/index.html

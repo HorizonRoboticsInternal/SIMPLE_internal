@@ -90,3 +90,18 @@ MUJOCO_LOG.TXT
 .claude/*
 .runtime-state/
 .robo-nix/
+
+# Generated scene reports, previews, and diagnostic runs
+/scenes/*/renders/
+/scenes/readme_img/
+/scenes/readme_vid/
+/scenes/*/site/
+/scenes/*/replay/
+/scenes/*/report.html
+/docs/_scan/holomotion_v14_pipeline_check/inputs/
+/*_report.html
+/*_review.html
+/tabletop_annotation.html
+/video_viewer.html
+/docs/TELEOP_CONTROL_LOOP_SPEC.html
+/docs/pico_sim_teleop_runbook.html

@@ -65,14 +65,6 @@ scene's 0.245). The real bottle position varied per episode (+-4 cm), so no sing
 
 ## Page and kit
 
-`make_report.py` writes `site/` (index.html + img/ + vid/, relative links, no external fonts) = the online page
-http://10.40.11.11:8899/holobrain_bottle_bin_scene/index.html (copy `site/index.html site/img site/vid` into
-`/mnt/nas26/alan.jiang/fleet_status/holobrain_bottle_bin_scene/`; dev007 serves that folder), plus `report.html` (standalone).
-Videos go to `site/vid/` first: `ffmpeg -i replay/<run>.mp4 -c copy -movflags +faststart site/vid/<name>.mp4`
-(the 02-25-56 verification pass as s0225_epNNN.mp4, the 00-16-29 finals as s0016_epNNN.mp4).
-The SIMPLE tasks kit on nas28 with this scene: `/mnt/nas28/alan.jiang/holobrain_simple_tasks_20260917/` (the 09-09 kit +
-`holobrain_g1_deploy/sim/bottle_bin/` + `docs/bottle_bin_scene/`).
-
 ## 2026-09-23: layout refitted on all 97 kept episodes; task gates
 
 - **Can** at pelvis-frame (0.270, -0.004) = 11.5 cm from the near edge (`BOTTLE_FROM_FRONT` 0.115): the middle of a plateau

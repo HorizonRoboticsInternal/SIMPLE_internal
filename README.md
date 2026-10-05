@@ -1,15 +1,10 @@
 # Scenes for the G1: level-3 scenes, three real kitchens, and the HoloMotion controller
 
-What was built, where it lives, and the one command that runs each. This is the README of the
-`feat/new-simple-eval-tasks` branch; the upstream SIMPLE README is kept as [README_SIMPLE.md](README_SIMPLE.md).
-The videos open in GitHub's player from `scenes/readme_vid/`; the served copy of this page, with every scene grid, is at
-http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
-
 ## What is on this branch
 
 | where | what |
 |---|---|
-| `scenes/bottle_bin/`, `scenes/bowl_sink/`, `scenes/coffee_cart/` | the three real-world scenes as SIMPLE tasks (`<kit>_task.py` registers `simple/G1Wholebody{BottleBin,BowlSink,CoffeeCart}Teleop-v0` on import), their MuJoCo scene (`build_scene.py` → `scene.xml`, `layout.json`, `assets/`), the replay tool (`replay_in_scene.py`, scored by the same gates as the task), renders and a README each |
+| `scenes/bottle_bin/`, `scenes/bowl_sink/`, `scenes/coffee_cart/` | the three real-world scenes as SIMPLE tasks (`<kit>_task.py` registers `simple/G1Wholebody{BottleBin,BowlSink,CoffeeCart}Teleop-v0` on import), their MuJoCo scene (`build_scene.py` → `scene.xml`, `layout.json`, `assets/`), the replay tool (`replay_in_scene.py`, scored by the same gates as the task), a README each |
 | `scenes/make_levels.py` | writes the level 0–3 evaluation sets of a kit (LeRobot format, one `environment_config` per scene) into `data/evals_scenes/<env>/dr-level-<N>/`, plus `meta/scene_env.json` with the kit knobs the set was generated with |
 | `scenes/eval_scene.py` | runs SIMPLE's `eval_decoupled_wbc` on a kit's task: registers the task, re-applies `scene_env.json`, then the standard evaluator |
 | `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
@@ -17,7 +12,6 @@ http://10.40.11.11:8899/simple_scenes_readme/index.html (lab network only).
 | `scenes/level3/` | the tools that built and checked them: candidate generation, per-scene reach fitting, motion-planner check, exact render ([README](scenes/level3/README.md)) |
 | `data/evals_scenes/…/dr-level-{0,1,2}/` | the three kitchens' level 0–2 sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration |
 | `data/evals_scenes/…/dr-level-3/` | the three kitchens' level-3 sets, 30 scenes each (2026-09-28): bottle_bin and bowl_sink rebuilt from the replay fits and checked graspable, coffee_cart the ±10 / ±5 / ±4 cm draw; used by the HoloMotion v1.4 VLA evaluation (section 4) |
-| `scenes/readme_img/` | the pictures of this README |
 | `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`, `src/simple/cli/{teleop_holomotion,holomotion_replay}.py` | the HoloMotion v1.4.1 controller (section 3) |
 | `docs/TELEOP_CONTROL_LOOP_SPEC.md`, `docs/holomotion_teleop.md`, `REAL_ROBOT_RUNBOOK.md` | the teleop stack's control-loop spec, the HoloMotion guide, the real-robot runbook |
 | `src/simple/cli/{teleop,replay,eval}_holomotion_v14.py`, `src/simple/agents/holomotion_v14_{agent,vla_agent}.py`, `src/simple/teleop/holomotion_v14/`, `third_party/holomotion_v14/`, `third_party/hbvcam_stereo/`, `scripts/teleop_holomotion_v14.sh`, `scripts/holomotion_v14_episode_server.py` | HoloMotion v1.4 (teleop-collection branch) on the G1 with the 3.2 kg backpack and the HBVCAM stereo fisheye head camera: PICO sim teleop with bit-exact replay, and the VLA evaluation (section 4) |
@@ -108,8 +102,6 @@ python -m simple.cli.eval simple/G1WholebodyTabletopGraspMP-v0 psi0 train --data
 
 <details><summary><b>TabletopGrasp</b> · 30 level-3 scenes · planner-checked</summary>
 
-![TabletopGrasp: 30 level-3 Isaac scenes](scenes/readme_img/grid_TabletopGraspMP_lv3_30.jpg)
-
 Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
@@ -144,8 +136,6 @@ Notes: recentred toward the middle of the range after a failed check: scenes 2, 
 </details>
 
 <details><summary><b>BendPick</b> · 30 level-3 scenes · planner-checked</summary>
-
-![BendPick: 30 level-3 Isaac scenes](scenes/readme_img/grid_BendPickMP_lv3_30.jpg)
 
 Per scene (cm):
 
@@ -182,8 +172,6 @@ Notes: recentred toward the middle of the range after a failed check: scenes 1, 
 
 <details><summary><b>XMovePick</b> · 30 level-3 scenes · planner-checked</summary>
 
-![XMovePick: 30 level-3 Isaac scenes](scenes/readme_img/grid_XMovePickTeleop_lv3_30.jpg)
-
 Per scene (cm):
 
 | scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
@@ -216,8 +204,6 @@ Per scene (cm):
 </details>
 
 <details><summary><b>Handover</b> · 30 level-3 scenes · planner-checked</summary>
-
-![Handover: 30 level-3 Isaac scenes](scenes/readme_img/grid_HandoverTeleop_lv3_30.jpg)
 
 Per scene (cm):
 
@@ -256,8 +242,6 @@ Notes: recentred toward the middle of the range after a failed check: scenes 2, 
 </details>
 
 <details><summary><b>LocoPickBetweenTables</b> · 30 level-3 scenes · planner-checked</summary>
-
-![LocoPickBetweenTables: 30 level-3 Isaac scenes](scenes/readme_img/grid_LocomotionPickBetweenTablesTeleop_lv3_30.jpg)
 
 Per scene (cm):
 
@@ -312,27 +296,6 @@ model server.
 
 ### Bottle → bin
 
-![bottle_bin scene](scenes/readme_img/scene_bottle_bin.jpg)
-_Scene: table, 500 ml bottle, trash bin behind the robot's right._
-
-- **task** Pick up the bottle, turn, drop it in the trash bin. `simple/G1WholebodyBottleBinTeleop-v0`
-- **gates**
-  1. **grasped**: the right hand touches the bottle and it is 3 cm off the table, upright, for 0.5 s
-  2. **at the bin**: after the grasp, walked ≥ 0.5 m, within 0.8 m of the bin, standing still 0.4 s
-  3. **placed**: released inside the bin's opening, below the rim, and still there 0.5 s later
-- **built from** the user's measurements; bin fitted to the release points of 97 real episodes
-- **run** `cd scenes/bottle_bin && MUJOCO_GL=egl python replay_in_scene.py --session 2026-09-17-02-25-56-G1-sim --episodes 12`
-- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_bottle_bin.mp4),
-  the recorded episode (session 02-25-56 episode 10) replayed in the level-0 scene: left Isaac third person, middle Isaac head
-  camera, right the real head camera, in step
-- **deployed model** `chipcan_nativec9` (job `qwen3_2b_posttrain_96d_g1_teleop_chipcantotrash_base_native_tokenizer_norm_20260917_131811`,
-  checkpoint_9 of 0..19; stage-2 24-task ckpt4 init, lr 3e-5, pretraining tokenizer quantiles, ChipCanToTrash 02-25-56 session, 97
-  episodes): [video](scenes/readme_vid/pipetest_bottle_bin_isaac.mp4). Gating on this episode:
-  grasped, at bin, placed all never met. The bottle rose at most 10.3 cm but never counted as grasped (that needs a hand on it,
-  the bottle within 60° of upright and 3 cm up for 0.5 s), so it was knocked about rather than held; the robot came within 1.55 m
-  of the bin (0.8 m and a 0.4 s stop count as at the bin). Checker evaluated at every one of the 1701 control steps (34 s at
-  50 Hz, the 5 s stand-up included); no success.
-
 Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
 Level 2: + new object pose, the bottle moved ±3 cm across and ±8 cm along the table. Level 3: + new layout, everything above
 re-randomised in every scene and the table top height and the robot's start change per scene.
@@ -346,33 +309,7 @@ re-randomised in every scene and the table top height and the robot's start chan
 Starts are inside ±10 cm forward/back and ±5 cm sideways (+ = forward / left); heights inside ±4 cm. The ten offsets are spread
 evenly over each range and shuffled by the seed, so every scene gets a distinct pair.
 
-![bottle_bin levels](scenes/readme_img/grid_bottle_bin_rows.jpg)
-_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_bottle_bin_scene/index.html)
-
 ### Bowl → sink
-
-![bowl_sink scene](scenes/readme_img/scene_bowl_sink.jpg)
-_Scene: L-shaped kitchen, green bowl at the counter edge, sink on the right._
-
-- **task** Pick up the bowl, turn right, walk to the sink, place it in the basin. `simple/G1WholebodyBowlSinkTeleop-v0`
-- **gates**
-  1. **at the bowl**: moved ≥ 5 cm, bowl within 0.6 m and 60° ahead, standing still 0.4 s
-  2. **grasped**: hand on the bowl, lifted 5 cm and held 0.3 s
-  3. **at the sink**: walked ≥ 0.2 m since the grasp, basin within 0.8 m and 75°, still 0.4 s
-  4. **placed**: released, bowl inside the basin footprint, below the rim
-- **built from** a hand drawing, corrected on the bench; start pose tuned on 55 real episodes
-- **run** `cd scenes/bowl_sink && MUJOCO_GL=egl REPLAY_FAST=1 python replay_in_scene.py --session psi0/BowlToSink_0918 --episodes 7 --nav-gain 1.3`
-- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_bowl_sink.mp4),
-  the recorded episode (BowlToSink_0918 episode 41, walking gain 1.5, robot start 0.38 m from the counter edge, moved back on
-  2026-09-24 so the walk-in stops short of the cabinet) replayed in the level-0 scene: left Isaac third person, middle Isaac head
-  camera, right the real head camera, in step
-- **deployed model** `bowltosink_c9` (job `qwen3_2b_posttrain_96d_grouped_diffusion_bowltosink_20260918_103225`, checkpoint_9,
-  last of 0..9; stage-2 24-task ckpt4 init, lr 1e-4, BowlToSink_0918, 55 episodes):
-  [video](scenes/readme_vid/pipetest_bowl_sink_isaac.mp4). Gating on this episode: at bowl met at
-  9.1 s; grasped, at basin, placed never met. The robot was within reach of the bowl from 9.1 s, a hand touched the bowl for 17.4 s
-  in total, the bowl rose at most 4.5 cm (below the 5 cm a grasp needs, held 0.3 s); the ladder stalled at grasped. Checker
-  evaluated at every one of the 2501 control steps (50 s at 50 Hz, the 5 s stand-up included); no success; closest pelvis-bowl
-  0.268 m, closest pelvis-basin 0.865 m.
 
 Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
 Level 2: + new object pose, the bowl moved ±8 cm along the counter edge, never toward it. Level 3: + new layout, everything above
@@ -386,33 +323,7 @@ re-randomised in every scene and the counter top height and the robot's start ch
 
 Same ranges and shuffling as above.
 
-![bowl_sink levels](scenes/readme_img/grid_bowl_sink_rows.jpg)
-_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html) ·
-[Success videos](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html#success) ·
-[The four gates](http://10.40.11.11:8899/holobrain_bowl_sink_scene/index.html#gates)
-
 ### Coffee cart → desk
-
-![coffee_cart scene](scenes/readme_img/scene_coffee_cart.jpg)
-_Scene: service cart with a box and a coffee cup, table to deliver to._
-
-- **task** Push the cart to the desk, take the cup, put it on the desk. `simple/G1WholebodyCoffeeCartTeleop-v0`
-- **gates**
-  1. **cart pushed**: the cart has travelled ≥ 0.5 m from its start
-  2. **cup lifted**: the cup is 5 cm above its rest on the box
-  3. **placed**: the cup stands upright on the table, released, for 0.5 s
-- **built from** a hand drawing; tuned on all 97 real episodes
-- **run** `cd scenes/coffee_cart && MUJOCO_GL=egl python replay_in_scene.py --fast --video --episodes 84`
-- **success, rendered in Isaac** (level 0, scene 0): [video](scenes/readme_vid/isaac_coffee_cart.mp4),
-  the recorded episode (CartCoffeeCup_0919 episode 64) replayed in the level-0 scene (room hssd:scene31 with its furniture hidden
-  since 2026-09-24: open floor between the cart and the desk and beyond it, no wall at the end of the push): left Isaac third
-  person, middle Isaac head camera, right the real head camera, in step
-- **deployed model** `cart_c19` (job `qwen3_2b_posttrain_96d_grouped_diffusion_cartcoffeecup_20260920_122057`, checkpoint_19, last
-  of 0..19; stage-2 24-task ckpt4 init, no camera model, lr 1e-4, CartCoffeeCup_0919, 97 episodes):
-  [video](scenes/readme_vid/pipetest_coffee_cart_isaac.mp4). Gating on this episode: cart pushed,
-  cup lifted, placed all never met. Hand contact with the cup from 7.5 s, the cup rose at most 4.1 cm (5 cm counts as lifted) and
-  ended on its side (tilt 87°) off its rest on the cart, not on the table; the cart moved 0.05 m (0.5 m counts as pushed). Checker
-  evaluated at every one of the 3201 control steps (64 s at 50 Hz, the 5 s stand-up included); no success.
 
 Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
 Level 2: + new object pose, the cup placed anywhere on the near half of the box top. Level 3: + new layout, everything above
@@ -425,9 +336,6 @@ re-randomised in every scene and the cart-box top height and the robot's start c
 | cart-box top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
 
 Same ranges and shuffling as above.
-
-![coffee_cart levels](scenes/readme_img/grid_coffee_cart_rows.jpg)
-_One row per level, ten scenes each._ [Scene page](http://10.40.11.11:8899/holobrain_coffee_cart_scene/index.html)
 
 ## 3 · HoloMotion v1.4.1 controller
 
@@ -503,13 +411,6 @@ furniture.
 
 **Checking the pipeline without a VLA.** `scripts/holomotion_v14_episode_server.py <teleop dataset> --episode N --port
 21000` serves a recorded teleop episode's own reference frames, for a pipeline check.
-
-**Pipeline check with a real model (2026-09-30).** The three HoloBrain G1 deploy models were run in the loop through
-`scripts/holomotion_v14_vla_bridge.py`, which gives the model its training format and fakes HoloMotion reference frames
-from its decoupled-WBC rows (legs at the standing pose, waist and arms from the model, root from its walking command).
-15 episodes, 987 queries: every stage passed, all replay logs bit-exact; the models sample, so a scene is not
-repeatable. Report: http://10.40.11.11:8899/holomotion_v14_pipeline_check/index.html (generator
-`docs/_scan/holomotion_v14_pipeline_check/`); details in [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md).
 
 **Scene code.** The kit code comes from `~/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim` when present, else from
 `scenes/`. The `scenes/bowl_sink` copy here predates the sink-cabinet toe space, so its image differs under the counter;
