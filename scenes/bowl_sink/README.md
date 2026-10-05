@@ -1,9 +1,5 @@
 # Bowl-to-sink kitchen scene (g1comp, MuJoCo) + SIMPLE task + real-run replay
 
-    MUJOCO_GL=glfw DISPLAY=:1 ~/wrk/SIMPLE/.venv/bin/python build_scene.py     # scene.xml, layout.json, renders/, plan
-    MUJOCO_GL=egl  ~/wrk/SIMPLE/.venv/bin/python replay_in_scene.py --probe    # the scene inside SIMPLE
-    python make_report.py                                                       # site/index.html
-
 World frame: pelvis at the origin at the start pose, x toward the bowl counter, z up, the robot's right = −y.
 
 | item | value | source / knob |
@@ -117,14 +113,6 @@ basin, or resting on the rim).
 
 ## Files
 
-    build_scene.py  scene.xml  layout.json  assets/  renders/    the scene, its numbers, the generated meshes
-    bowl_sink_task.py                                            SIMPLE task simple/G1WholebodyBowlSinkTeleop-v0
-    bowl_sink_gates.py                                           the four task gates (task reward/success + replay scoring)
-    replay_in_scene.py  replay/                                  replay of a real run inside the scene
-      replay/run_fit_parallel.sh  replay/run_verify.sh           the tuning sweep and the fixed-scene verification
-      replay/fit_points_0918.json  replay/batch_par.jsonl        per-episode measurements and replay results
-    make_report.py  site/  report.html                           the page
-
 `bowl_sink_task.py` reads `layout.json` and honours `BOWL_SINK_ROBOT_TO_EDGE`, `BOWL_SINK_BOWL_XY="x,y"`,
 `BOWL_SINK_SINK_ALONG`, `BOWL_SINK_SINK_REF`, `BOWL_SINK_BOWL_MASS`, `BOWL_SINK_INSTRUCTION`.
 `replay_in_scene.py` takes `--session psi0/BowlToSink_0918` (or `--client-log` for a holobrain deployment run),
@@ -143,10 +131,10 @@ The same level design as SIMPLE's benchmark sets, rendered in Isaac in the plain
 | 3 | + alternative layout: 10 scenes, each with a different robot start (up to 10 cm back/forward, 5 cm sideways) AND a different table height (±4 cm; SIMPLE's DR manager shifts the table, the counter cabinet and sink counter (basin and gate heights follow) follow through per-height mesh variants `<asset>_p031`/`_m040`) | `ROBOT_BACK`, `ROBOT_LEFT`, `LEVEL3_EPISODES` in `../make_levels.py`; the start is stored in each scene's state, so eval needs no env var |
 
 ```
-python sim/make_levels.py bowl_sink --levels 0 1 2 3 --episodes 10 --out data/evals_scenes
+python scenes/make_levels.py bowl_sink --levels 0 1 2 3 --episodes 10 --out data/evals_scenes
     -> data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-<n>/  (LeRobot set as data/evals_new20; frames/ep*.png = Isaac head camera AFTER the same stabilisation the eval runs, i.e. the controller's start pose;
        meta/scene_env.json = the env vars used, re-applied by eval_scene.py)
-python sim/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
+python scenes/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
     --data-dir data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-3 --port 21000 --headless --num-episodes 20
 ```
 
@@ -157,7 +145,7 @@ Isaac-rendered replay (`../replay_isaac.py`): runs this kit's `replay_in_scene.p
 the set's; the middle video panel is then the Isaac head camera). The wall-clock-paced replays get bowl_sink's VirtualClock
 installed from outside and ticked per `env.step`, so the controller runs deterministically at 50 Hz despite Isaac's slow steps.
 ```
-python sim/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0      # -> replay/isaac_level0_ep<N>.mp4
+python scenes/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0      # -> replay/isaac_level0_ep<N>.mp4
 ```
 
 Isaac third person (final recipe, 2026-09-24): two passes per episode plus a separate composer, because nothing can run after a kit
@@ -167,8 +155,8 @@ openings prims are hidden) and saves an Isaac third-person + head JPEG every con
 then swaps the left panel in; the panels are frame-synchronous by construction: kit frame k (written every 2nd tick after the settle)
 is tick S + 2k with S = M - 2N (M captured ticks, N kit frames), no image matching.
 ```
-python sim/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0 --no-third                                   # pass A -> replay/isaac_level0_ep7.mp4
-python sim/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0 --hide-shell --out sim/bowl_sink/replay/passB_ep7.mp4   # pass B -> replay/third_bowl_sink_ep7/f*.jpg h*.jpg
-python sim/compose_third.py sim/bowl_sink/replay/isaac_level0_ep7.mp4 sim/bowl_sink/replay/third_bowl_sink_ep7 sim/bowl_sink/replay/isaac_level0_ep7_3p.mp4 sim/bowl_sink/replay/isaac_level0_ep7_3p.jpg 0
+python scenes/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0 --no-third                                   # pass A -> replay/isaac_level0_ep7.mp4
+python scenes/replay_isaac.py bowl_sink --episode 7 --nav-gain 1.5 --scene 0 --hide-shell --out sim/bowl_sink/replay/passB_ep7.mp4   # pass B -> replay/third_bowl_sink_ep7/f*.jpg h*.jpg
+python scenes/compose_third.py sim/bowl_sink/replay/isaac_level0_ep7.mp4 sim/bowl_sink/replay/third_bowl_sink_ep7 sim/bowl_sink/replay/isaac_level0_ep7_3p.mp4 sim/bowl_sink/replay/isaac_level0_ep7_3p.jpg 0
 ```
 Level-3 heights: `SIMPLE_LEVEL3_TABLE_DZ` (set by make_levels.py, 0.04) is the half-range of the per-scene table offset; the kit reads the actual table top at reset and loads the matching furniture variant.

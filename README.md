@@ -1,422 +1,436 @@
-# Scenes for the G1: level-3 scenes, three real kitchens, and the HoloMotion controller
+<h1 align="center">SIMPLE: Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation
+</h1>
 
-## What is on this branch
+<div align="center">
 
-| where | what |
-|---|---|
-| `scenes/bottle_bin/`, `scenes/bowl_sink/`, `scenes/coffee_cart/` | the three real-world scenes as SIMPLE tasks (`<kit>_task.py` registers `simple/G1Wholebody{BottleBin,BowlSink,CoffeeCart}Teleop-v0` on import), their MuJoCo scene (`build_scene.py` → `scene.xml`, `layout.json`, `assets/`), the replay tool (`replay_in_scene.py`, scored by the same gates as the task), a README each |
-| `scenes/make_levels.py` | writes the level 0–3 evaluation sets of a kit (LeRobot format, one `environment_config` per scene) into `data/evals_scenes/<env>/dr-level-<N>/`, plus `meta/scene_env.json` with the kit knobs the set was generated with |
-| `scenes/eval_scene.py` | runs SIMPLE's `eval_decoupled_wbc` on a kit's task: registers the task, re-applies `scene_env.json`, then the standard evaluator |
-| `scenes/replay_isaac.py`, `scenes/compose_third.py`, `scenes/screen_episodes.sh` | replay a recorded episode in a level scene with Isaac rendering (third person + head camera + real head camera in one video); screen episodes in MuJoCo only |
-| `data/evals_scenes_benchmark/<task>/dr-level-3/` | the five original tasks' level-3 sets, 30 reachability-checked scenes each (section 1) |
-| `scenes/level3/` | the tools that built and checked them: candidate generation, per-scene reach fitting, motion-planner check, exact render ([README](scenes/level3/README.md)) |
-| `data/evals_scenes/…/dr-level-{0,1,2}/` | the three kitchens' level 0–2 sets (ten scenes each, 2026-09-24), committed so the evaluator runs without regeneration |
-| `data/evals_scenes/…/dr-level-3/` | the three kitchens' level-3 sets, 30 scenes each (2026-09-28): bottle_bin and bowl_sink rebuilt from the replay fits and checked graspable, coffee_cart the ±10 / ±5 / ±4 cm draw; used by the HoloMotion v1.4 VLA evaluation (section 4) |
-| `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`, `src/simple/cli/{teleop_holomotion,holomotion_replay}.py` | the HoloMotion v1.4.1 controller (section 3) |
-| `docs/TELEOP_CONTROL_LOOP_SPEC.md`, `docs/holomotion_teleop.md`, `REAL_ROBOT_RUNBOOK.md` | the teleop stack's control-loop spec, the HoloMotion guide, the real-robot runbook |
-| `src/simple/cli/{teleop,replay,eval}_holomotion_v14.py`, `src/simple/agents/holomotion_v14_{agent,vla_agent}.py`, `src/simple/teleop/holomotion_v14/`, `third_party/holomotion_v14/`, `third_party/hbvcam_stereo/`, `scripts/teleop_holomotion_v14.sh`, `scripts/holomotion_v14_episode_server.py` | HoloMotion v1.4 (teleop-collection branch) on the G1 with the 3.2 kg backpack and the HBVCAM stereo fisheye head camera: PICO sim teleop with bit-exact replay, and the VLA evaluation (section 4) |
-| `docs/holomotion_v14_teleop.md`, `docs/holomotion_v14_eval.md`, `PICO_SIM_TELEOP_RUNBOOK.md` | their guides and the PICO runbook |
+[![arXiv](https://img.shields.io/badge/arXiv-2606.08278-df2a2a.svg)](https://arxiv.org/abs/2606.08278)
+[![Documentation](https://img.shields.io/badge/Documentation-a)](https://psi-lab.ai/SIMPLE/docs/)
+[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/USC-PSI-Lab/psi-model)
+[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/datasets/USC-PSI-Lab/psi-data)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-Setup notes: the scene robot is the `g1comp` G1 (D455 head camera, Dex3 hands) in `scenes/bottle_bin/robot/g1_comp_45dof.xml`; its
-`robot/meshes` is a symlink to `data/robots/g1/meshes`, which comes from SIMPLE's `robots_g1.zip` like every other robot asset
-(the other two kits' `robot/` links point at bottle_bin's). The replay tools read the real recordings from `data/real_recordings/`,
-which are not in the repository. `make_report.py` in each kit rebuilds that kit's report page and still points at the drawings
-and the ffmpeg of the workstation it was written on.
+</div>
 
-Rebuild a kit's level sets (Isaac; `frames/ep<i>.png` previews are written next to them but not committed) and replay a
-recorded episode inside a level scene:
 
-```bash
-python scenes/make_levels.py bowl_sink --levels 0 1 2 3 --episodes 20 --out data/evals_scenes
-python scenes/replay_isaac.py bowl_sink --episode 41 --nav-gain 1.5 --out scenes/bowl_sink/replay/isaac_level0_ep41.mp4
+<p align="center">
+  <img src="assets/teaser.webp" alt="SIMPLE teaser image" />
+</p>
+
+
+Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://nizhenhao-3.github.io/)\*, [Jie Liu](https://jie0530.github.io/)\*, [Zhenyu Zhao](https://zhenyuzhao.com/)\*, [Junjie Ye](https://junjieye.com/), [Hongyi Jing](https://hongyijing.me/), Junkai Xia, [Xiawei Liu](https://www.xiaweiliu.com/), [Michael Leong](https://leongmichael.github.io/), [Liang Heng](https://liangheng121.github.io/), Di Huang, [Yue Wang](https://yuewang.xyz/)†
+
+> 
+
+
+## 📢 News & Updates
++ [x] [2026-08-30] [Integrate SONIC whole-body controller](#quick-start-for-sonic-wholebody-vla).
++ [x] [2026-07-14] We released support for World Action Models: [Cosmos3](https://github.com/songlin/cosmos-framework/blob/main/docs/action_policy_simple_posttrain.md) and [DreamZero](https://github.com/physical-superintelligence-lab/Psi0/blob/main/baselines/dreamzero/README.md). 
+
+
+## Table of Contents
+- [What is SIMPLE?](#what～is～SIMPLE)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+  - [[Option 1] UV setup (Quickest)](#option-1-uv-setup-quickest)
+  - [[Option 2] Nix setup](#option-2-nix-setup)
+  - [[Option 3] Docker setup](#option-3-docker-setup)
+- [Quick start for SONIC wholebody VLA](#quick-start-for-sonic-wholebody-vla)
+- [Data Generation & Pipeline](#-data-generation--pipeline)
+- [Evaluation in SIMPLE](#-evaluation-in-simple)
+- [📊 Simulation Benchmarking Results](#-simulation-benchmarking-results)
+- [Citation](#citation)
+- [License](#license)
+
+## What is SIMPLE?
+
+SIMPLE stands for SIMulation-based Policy Learning and Evaluation.
+
+It is a `simple` simulation environment supports:
+  + multiple agents: (franka arm/aloha bimanual arms/dexmate wheeled robot and unitree g1 humanoid!)
+  + 1000+ Objaverse assets
+  + 50+ Habitat HSSD scenes
+  + 50+ humanoid wholebody loco-manipulation tasks
+
+## System Requirements
+
+SIMPLE is built on top of `IsaacSim 4.5` and `MuJoCo 3.3`, and requires an RTX-class NVIDIA GPU on Ubuntu 22.04.
+
+> 📖 **See the full hardware and software requirements at [psi-lab.ai/SIMPLE/docs](https://psi-lab.ai/SIMPLE/docs/).**
+
+## Installation
+
+Clone the project:
+
+
 ```
 
-Evaluate a kit's task the standard way (the Psi-0 server on `--port`, Isaac rendering, one level set):
+git clone git@github.com:physical-superintelligence-lab/SIMPLE.git
 
-```bash
-python scenes/eval_scene.py bowl_sink simple/G1WholebodyBowlSinkTeleop-v0 psi0_decoupled_wbc train \
-    --data-format lerobot --data-dir data/evals_scenes/G1WholebodyBowlSinkTeleop-v0/dr-level-0 \
-    --port 21000 --headless --num-episodes 10
 ```
 
-## 1 · Level-3 scenes for SIMPLE
+Change directory to the project root:
 
-The five original tasks in new scenes: 30 level-3 scenes each, rendered in Isaac, every one inside the range where the G1
-can still do the task. Every level-3 scene changes all of these at once:
 
-1. **Scene**: new distractors and a new table material
-2. **Lighting**: new lighting
-3. **Objects**: new object poses
-4. **Layout**: a different robot start and table-top height, chosen per scene inside the range where the G1 can still do
-   the task (within ±10 cm forward/back and ±5 cm sideways at most)
-
-**How the ranges were set.** The robot start is chosen after the scene's object pose is drawn, so that the target, seen from
-the start, stays where the G1 can reach it. For the two motion-planner tasks the reach and height limits come from the
-planner that generated their training data, and every final scene was solved by it (grasp and lift executed, up to four
-random grasp draws). The four teleop tasks were checked with their motion-planning twins (same G1 and planner): the robot
-stands where the teleop demonstrations stood when they lifted the object (from their recorded base and object poses) and
-must grasp and lift it at least 5 cm; Handover's twin also hands the object to the left hand. Scenes that failed a check
-were moved toward the middle of their range and re-checked. Every scene was also stepped for 20 s with the robot standing:
-the object must stay put. See-through table materials (glass, gems, water, thin fabrics) were replaced by opaque ones:
-Isaac drew objects resting on them hollow. Tools, steps and the calibration are in
-[scenes/level3/README.md](scenes/level3/README.md).
-
-Level 3 ranges per task (cm; forward = toward the table; + = forward / left / up):
-
-| task | grasp | robot start, forward | robot start, sideways | table height | target ahead of the start | target left of the start | checked by |
-|---|---|---|---|---|---|---|---|
-| TabletopGrasp | standing grasp | −3.0 to 9.2 | −2.7 to 5.0 | −4.0 to 0 | 27.4 to 39.8 | −7.0 to 2.7 | motion planner, 30/30 solved; can stays put 30/30 |
-| BendPick | bend grasp | −7.4 to 8.2 | −5.0 to 2.9 | −2.0 to 2.0 | 22.2 to 42.6 | −8.0 to 0 | motion planner, 30/30 solved; box stays put 30/30 |
-| XMovePick | walk, then standing grasp | −10.0 to 5.1 | −2.7 to 3.5 | −4.0 to 0 | 48.0 to 74.7 | −8.0 to −4.1 | planner twin, walk then grasp: 30/30 |
-| Handover | standing grasp | −3.4 to 4.4 | −4.8 to 4.5 | −3.0 to 0 | 24.9 to 29.8 | −3.9 to 2.0 | planner twin: right-hand grasp 30/30, left-hand takeover 19/30 (3/6 on level 0) |
-| LocoPickBetweenTables | standing grasp, then walk | −2.5 to 1.9 | −5.0 to 5.0 | −3.0 to 0 | 30.5 to 33.5 | −3.9 to 4.0 | planner twin, grasp from the start: 30/30 |
-
-Motion-planner calibration: training scenes still solvable after one change.
-
-| change | TabletopGrasp | BendPick |
-|---|---|---|
-| table 4 / 2 cm lower | 3/4 · 3/4 | 0/4 · 3/4 |
-| table 2 / 4 cm higher | 0/4 · 0/4 | 3/4 · 0/4 |
-| robot 6 / 3 cm back | 0/4 · 1/4 | 4/4 · 3/4 |
-| robot 3 / 6 cm forward | 4/4 · 4/4 | 4/4 · 4/4 |
-| robot 4 cm right / left | 2/4 · 3/4 | 4/4 · 0/4 |
-
-TabletopGrasp cannot start further away or with a higher table: the can is then out of reach, or the arms' start pose hits
-the raised table. Where a combination of changes still failed a check, that scene was moved toward the middle of its range
-and re-checked; in two scenes a distractor standing in the grasp path was moved back (TabletopGrasp 30, Handover 24). BendPick
-boxes sit 0.5–3.4 cm behind the table edge, as in SIMPLE's own level 0 (0.6–3.3 cm); none moved in the 20 s check. Each scene
-is built on one of the task's 20 base layouts; scenes 21–30 reuse layouts 1–10 with everything else drawn anew. The sets are
-in `data/evals_scenes_benchmark/<task>/dr-level-3`: per-scene offsets in `meta/feasibility_build.json`, planner results in
-`meta/feasibility_planner.jsonl` (planner tasks) or `meta/feasibility_loco.jsonl` (planner twin of the teleop tasks), the
-stays-put check in `meta/feasibility_settle.jsonl`, replaced table materials in `meta/table_material_fix.json`. They have not
-been evaluated with Ψ0 yet.
-
-Evaluate a task on its set the standard way (Ψ0 server on `--port`, Isaac rendering):
-
-```bash
-python -m simple.cli.eval_decoupled_wbc simple/G1WholebodyXMovePickTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
-    --data-dir data/evals_scenes_benchmark/G1WholebodyXMovePickTeleop-v0/dr-level-3 --port 21000 --sim-mode mujoco_isaac --headless --num-episodes 30
-python -m simple.cli.eval simple/G1WholebodyTabletopGraspMP-v0 psi0 train --data-format lerobot \
-    --data-dir data/evals_scenes_benchmark/G1WholebodyTabletopGraspMP-v0/dr-level-3 --port 21000 --headless --num-episodes 30
 ```
 
-<details><summary><b>TabletopGrasp</b> · 30 level-3 scenes · planner-checked</summary>
+cd SIMPLE
 
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +7.4 | +4.3 | −0.5 | +4.5 | +3.9 | +5.7 | +9.2 | +4.7 | +8.6 | +5.2 |
-| start, sideways | −2.6 | +2.0 | −1.9 | −0.6 | +1.3 | +4.0 | +0.1 | +2.0 | −0.5 | −2.0 |
-| table height | −0.1 | −2.0 | −4.0 | −2.0 | −2.0 | −0.8 | −1.2 | −2.3 | −0.5 | −1.5 |
-| target ahead | 34.0 | 33.6 | 36.8 | 33.6 | 33.6 | 28.3 | 33.2 | 33.2 | 30.8 | 30.7 |
-| target left | 0 | −2.1 | 1.3 | −2.1 | −2.1 | −2.2 | −2.9 | −0.1 | −1.7 | −0.1 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +1.2 | +5.7 | −0.3 | +3.9 | +4.7 | +1.8 | −3.0 | +2.6 | +3.1 | +7.1 |
-| start, sideways | +3.0 | +0.3 | +3.1 | +2.4 | +2.3 | +3.8 | +4.8 | +0.8 | −1.5 | +1.8 |
-| table height | −3.7 | −2.0 | −1.9 | −3.3 | −2.0 | −2.0 | −2.1 | −2.9 | −2.5 | −2.3 |
-| target ahead | 35.5 | 33.6 | 36.5 | 31.7 | 33.6 | 33.6 | 37.7 | 33.8 | 36.7 | 32.2 |
-| target left | −2.4 | −2.1 | −0.2 | −0.9 | −2.1 | −2.1 | −2.9 | 1.4 | −0.2 | −0.2 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +1.1 | +1.0 | +3.9 | +2.2 | +1.0 | +2.8 | +8.7 | −1.1 | +5.9 | +3.3 |
-| start, sideways | 0 | +1.6 | +0.1 | +0.6 | −2.7 | −0.5 | +1.9 | +1.8 | −0.9 | +3.2 |
-| table height | −3.6 | −1.5 | −2.0 | −3.5 | 0 | −2.0 | −1.9 | −1.4 | −2.5 | −2.0 |
-| target ahead | 38.4 | 36.4 | 33.6 | 36.3 | 33.4 | 33.6 | 35.0 | 37.2 | 33.9 | 33.6 |
-| target left | 0.8 | −1.0 | −2.1 | 0.7 | 2.7 | −2.1 | 0.8 | 0.5 | −0.4 | −2.1 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-Notes: recentred toward the middle of the range after a failed check: scenes 2, 4, 5, 10, 12, 13, 15, 16, 19, 20, 23, 26, 30 · scene 1: robot start moved -3.4 cm sideways so the can is on its centre line: the right hand pushed it 2.4 cm at start-up · scene 30: distractor 46 moved 10 cm further back: it stood 14.7 cm behind the can in the grasp path
-
-</details>
-
-<details><summary><b>BendPick</b> · 30 level-3 scenes · planner-checked</summary>
-
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +0.3 | +4.9 | −5.0 | +2.6 | −6.7 | +4.7 | +8.2 | +0.1 | +7.1 | +4.6 |
-| start, sideways | +0.2 | −4.3 | −3.9 | +1.7 | +1.6 | −2.5 | −1.0 | −2.1 | −0.8 | −4.8 |
-| table height | +0.9 | +0.2 | −2.0 | −0.2 | +0.9 | +0.6 | +0.8 | −0.3 | +1.5 | +0.5 |
-| target ahead | 30.5 | 29.1 | 37.8 | 30.5 | 41.4 | 28.0 | 27.1 | 30.4 | 24.9 | 27.7 |
-| target left | −4.5 | −2.1 | −2.7 | −7.2 | −7.5 | −5.5 | −4.7 | −4.9 | −3.6 | −2.6 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −1.7 | −6.8 | −7.4 | +0.4 | +3.8 | −1.2 | −7.0 | −0.5 | −6.0 | +4.8 |
-| start, sideways | +0.8 | +1.7 | −3.6 | −1.2 | −0.7 | +0.4 | +2.9 | −3.3 | −3.6 | −3.1 |
-| table height | −0.9 | −0.8 | +0.2 | −0.7 | −0.6 | +0.8 | −0.1 | −0.9 | −0.5 | −0.6 |
-| target ahead | 34.0 | 40.7 | 42.0 | 30.8 | 29.8 | 33.3 | 36.5 | 32.4 | 37.5 | 28.9 |
-| target left | −4.9 | −6.1 | −2.7 | −4.3 | −4.8 | −6.0 | −7.7 | −2.8 | −2.4 | −1.1 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −5.6 | −4.2 | −1.5 | −0.3 | +1.8 | +3.5 | +5.9 | −5.9 | +1.7 | −2.4 |
-| start, sideways | −2.9 | −1.1 | +2.4 | −1.3 | −5.0 | −0.4 | −3.0 | −2.1 | −2.6 | −0.7 |
-| table height | −0.8 | +0.5 | +1.7 | −0.7 | +2.0 | −0.9 | +0.1 | +0.6 | −0.5 | +1.3 |
-| target ahead | 36.1 | 37.2 | 32.6 | 34.3 | 33.8 | 27.3 | 26.9 | 38.1 | 30.8 | 34.6 |
-| target left | −3.1 | −4.3 | −6.9 | −3.2 | −0.8 | −5.2 | −4.8 | −3.9 | −3.4 | −5.7 |
-| planner | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-Notes: recentred toward the middle of the range after a failed check: scenes 1, 2, 6, 10, 11, 14, 15, 16, 19, 21, 24, 26
-
-</details>
-
-<details><summary><b>XMovePick</b> · 30 level-3 scenes · planner-checked</summary>
-
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | 0 | +2.3 | −6.7 | −1.9 | −8.9 | +4.9 | +5.1 | −3.2 | +2.0 | +2.5 |
-| start, sideways | −0.5 | −1.5 | −1.8 | +3.5 | +3.2 | −0.2 | −1.3 | +1.0 | −1.0 | −2.7 |
-| table height | −0.1 | −1.7 | −4.0 | −2.2 | −1.1 | −0.8 | −1.2 | −2.3 | −0.5 | −1.0 |
-| target ahead | 52.5 | 50.6 | 58.5 | 52.9 | 62.6 | 49.1 | 49.7 | 53.5 | 49.9 | 48.4 |
-| target left | −6.5 | −4.2 | −4.8 | −7.6 | −7.7 | −7.3 | −6.2 | −6.0 | −5.9 | −4.4 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −4.3 | −8.6 | −9.5 | +0.1 | +2.9 | −3.0 | −7.4 | −4.2 | −10.0 | +2.2 |
-| start, sideways | +2.7 | +2.4 | −2.6 | +2.1 | −0.5 | +0.4 | +0.6 | −1.8 | 0 | −2.1 |
-| table height | −3.7 | −2.8 | −1.8 | −3.3 | −3.2 | −0.4 | −2.1 | −2.9 | −3.0 | −2.6 |
-| target ahead | 58.9 | 59.7 | 60.9 | 53.3 | 52.1 | 57.9 | 60.4 | 54.2 | 63.5 | 52.6 |
-| target left | −6.9 | −7.0 | −4.9 | −6.4 | −6.8 | −8.0 | −7.9 | −5.0 | −4.5 | −4.6 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −7.7 | −5.6 | −2.7 | −5.6 | −2.1 | +2.3 | +2.0 | −7.1 | −2.6 | −4.1 |
-| start, sideways | −1.6 | +0.2 | +0.8 | −0.2 | −0.9 | 0 | −1.9 | +0.3 | −0.7 | +1.3 |
-| table height | −3.6 | −1.5 | −0.3 | −3.5 | 0 | −3.9 | −1.9 | −1.4 | −2.5 | −0.7 |
-| target ahead | 62.5 | 59.6 | 57.0 | 57.8 | 55.4 | 48.0 | 51.1 | 59.0 | 53.2 | 57.6 |
-| target left | −5.2 | −6.1 | −7.5 | −5.3 | −4.1 | −7.2 | −5.6 | −5.7 | −5.4 | −6.7 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-</details>
-
-<details><summary><b>Handover</b> · 30 level-3 scenes · planner-checked</summary>
-
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | +2.1 | +1.6 | −1.0 | −1.6 | −1.5 | +4.4 | −0.7 | −0.2 | +0.4 | −1.7 |
-| start, sideways | +1.5 | −2.3 | −0.1 | +4.5 | +2.1 | +0.2 | −1.9 | +1.2 | +0.2 | +0.5 |
-| table height | −0.1 | −1.5 | −1.5 | −1.7 | −0.8 | −0.6 | −0.9 | −1.8 | −0.4 | −1.5 |
-| target ahead | 26.4 | 27.4 | 27.4 | 26.8 | 29.5 | 25.2 | 25.4 | 27.1 | 25.6 | 27.4 |
-| target left | −1.7 | −0.9 | −0.9 | −2.8 | −3.5 | −2.9 | −1.4 | −0.9 | −0.6 | −0.9 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| handed over | ✓ | · | · | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −2.3 | −0.2 | −3.3 | +1.1 | +2.3 | −0.9 | −0.3 | −0.6 | −1.0 | +0.2 |
-| start, sideways | −0.8 | +0.7 | −4.0 | +1.3 | −1.3 | +0.9 | +0.4 | −0.7 | +2.2 | +1.7 |
-| table height | −2.8 | −2.1 | −1.3 | −2.5 | −2.4 | −0.3 | −1.6 | −1.5 | −1.5 | −1.5 |
-| target ahead | 28.1 | 29.3 | 29.6 | 26.6 | 26.1 | 27.8 | 28.9 | 27.4 | 27.4 | 27.4 |
-| target left | −2.3 | −2.5 | 0 | −1.5 | −2.2 | −3.9 | −3.7 | −0.9 | −0.9 | −0.9 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| handed over | · | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | · | · |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.2 | −2.6 | −1.1 | −1.1 | +0.1 | +3.8 | −0.2 | −2.7 | −0.7 | −1.3 |
-| start, sideways | −1.5 | −0.5 | +4.3 | −2.0 | −3.5 | +3.8 | −2.8 | −2.3 | −2.6 | +1.6 |
-| table height | −2.7 | −1.1 | −0.2 | −1.5 | 0 | −2.9 | −1.5 | −1.0 | −1.9 | −0.5 |
-| target ahead | 29.1 | 28.4 | 27.6 | 27.4 | 27.3 | 24.9 | 25.9 | 28.8 | 26.9 | 27.9 |
-| target left | 0.4 | −1.1 | −2.5 | −0.9 | 2.0 | −2.5 | −0.3 | −0.4 | 0 | −1.9 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| handed over | · | · | ✓ | ✓ | ✓ | ✓ | · | · | · | ✓ |
-
-Notes: recentred toward the middle of the range after a failed check: scenes 2, 3, 10, 18, 19, 20, 24 · scene 24: distractor 1 (sugar box) moved from 14 cm behind-right of the box to 20 cm: it stood in the right arm's grasp path
-
-</details>
-
-<details><summary><b>LocoPickBetweenTables</b> · 30 level-3 scenes · planner-checked</summary>
-
-Per scene (cm):
-
-| scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −1.2 | +0.4 | −0.7 | +0.6 | −0.6 | +0.7 | −0.1 | +0.9 | −0.9 | −1.4 |
-| start, sideways | −1.0 | −1.4 | −3.7 | +1.1 | +1.2 | +1.8 | −2.3 | +1.8 | +1.5 | +1.8 |
-| table height | −0.1 | −1.5 | −3.0 | −1.7 | −0.8 | −1.5 | −1.5 | −1.8 | −0.4 | −1.5 |
-| target ahead | 31.4 | 32.0 | 32.8 | 31.6 | 33.3 | 32.0 | 32.0 | 31.9 | 30.9 | 32.0 |
-| target left | −1.5 | 0.1 | 2.5 | −3.2 | −3.4 | 0.1 | 0.1 | 1.0 | 1.1 | 0.1 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −0.5 | −1.6 | −0.3 | +0.4 | +1.0 | +1.0 | −0.7 | −0.4 | −2.2 | +0.2 |
-| start, sideways | −1.3 | +3.4 | −2.2 | +2.5 | +3.2 | +5.0 | +0.6 | −3.1 | −4.5 | −2.0 |
-| table height | −2.8 | −2.1 | −1.3 | −2.5 | −1.5 | −0.3 | −1.6 | −2.2 | −2.3 | −2.0 |
-| target ahead | 32.5 | 33.2 | 33.4 | 31.5 | 32.0 | 32.2 | 33.0 | 32.0 | 33.5 | 31.3 |
-| target left | −2.5 | −1.1 | 2.4 | 0.4 | 0.1 | −1.4 | −3.7 | 1.9 | 0.5 | 2.9 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-| scene | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| start, forward | −2.5 | −1.2 | −0.9 | −0.6 | +0.6 | −0.2 | +0.8 | +0.1 | −0.9 | −1.1 |
-| start, sideways | −0.3 | −1.4 | +1.6 | −3.1 | −5.0 | −1.6 | +0.3 | −0.8 | +1.6 | +0.6 |
-| table height | −2.7 | −1.1 | −0.2 | −2.6 | 0 | −1.5 | −1.5 | −1.0 | −1.9 | −0.5 |
-| target ahead | 33.1 | 32.7 | 32.1 | 32.6 | 31.9 | 32.0 | 31.1 | 32.9 | 31.7 | 32.4 |
-| target left | 2.0 | −0.5 | −2.8 | 0.3 | 2.2 | 0.1 | 1.1 | 0.7 | 2.2 | −1.2 |
-| grasp (twin) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-Notes: recentred toward the middle of the range after a failed check: scenes 2, 6, 7, 10, 15, 26
-
-</details>
-
-## 2 · Real-world scenes rebuilt in MuJoCo
-
-Each is a SIMPLE task plus a replay tool: the real teleop recordings are played back inside the scene and scored by **gates**,
-ordered checks that latch when met, each only after the one before. Reward grows per gate; the last gate is success. One success
-each below. Each scene also ships as SIMPLE evaluation sets at **levels 0–3**, rendered in Isaac, ten scenes per level (2026-09-24).
-The same gate code scores the replays and the SIMPLE task. The level-3 tables below describe the first, ten-scene level 3
-(2026-09-24). Level 3 now has 30 scenes per kit (2026-09-28):
-- bottle_bin and bowl_sink were rebuilt from the replay fits and checked graspable;
-- coffee_cart is the unchecked ±10 cm / ±5 cm / ±4 cm draw.
-
-Section 4 evaluates on those 30.
-
-On 2026-09-24 each scene was also run once with its deployed HoloBrain model through the standard evaluator
-(`simple.cli.eval_decoupled_wbc` with SIMPLE's `psi0_decoupled_wbc` agent, HTTP `/act`, a whole chunk per query, 8 demasking
-steps, horizon 15, level-0 set, Isaac rendering). None succeeded, which was expected; the gate readings below show the checker
-responding to what actually happened. Those runs used `sim/pipeline_test.sh` of the `holobrain_g1_deploy` package, which starts the
-model server.
-
-### Bottle → bin
-
-Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
-Level 2: + new object pose, the bottle moved ±3 cm across and ±8 cm along the table. Level 3: + new layout, everything above
-re-randomised in every scene and the table top height and the robot's start change per scene.
-
-| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
-| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
-| table top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
-
-Starts are inside ±10 cm forward/back and ±5 cm sideways (+ = forward / left); heights inside ±4 cm. The ten offsets are spread
-evenly over each range and shuffled by the seed, so every scene gets a distinct pair.
-
-### Bowl → sink
-
-Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
-Level 2: + new object pose, the bowl moved ±8 cm along the counter edge, never toward it. Level 3: + new layout, everything above
-re-randomised in every scene and the counter top height and the robot's start change per scene.
-
-| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
-| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
-| counter top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
-
-Same ranges and shuffling as above.
-
-### Coffee cart → desk
-
-Levels 0–3 in Isaac, ten scenes each. Level 0: three GraspNet distractors and a new table material. Level 1: + new lighting.
-Level 2: + new object pose, the cup placed anywhere on the near half of the box top. Level 3: + new layout, everything above
-re-randomised in every scene and the cart-box top height and the robot's start change per scene.
-
-| level 3, scene | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| robot start, forward (cm) | −6 | +8 | −1 | +10 | −8 | +3 | +6 | −3 | −10 | +1 |
-| robot start, sideways (cm) | −2 | +1 | −4 | −3 | +5 | +4 | −5 | +2 | +3 | −1 |
-| cart-box top height (cm) | +3 | 0 | −4 | −2 | −3 | +4 | +2 | −1 | +1 | 0 |
-
-Same ranges and shuffling as above.
-
-## 3 · HoloMotion v1.4.1 controller
-
-A second way to drive the G1 in SIMPLE: the HoloMotion motion-tracking policy instead of the decoupled whole-body controller,
-with the publisher vendored so no separate checkout is needed.
-
-PICO headset → HoloRetarget publisher → reference stream, 50 Hz → HoloMotion ONNX → 29 joint targets
-
-- **teleop and record**: `third_party/holomotion/run_publisher.sh` then
-  `teleop-holomotion simple/G1WholebodyLocomotionPickBetweenTablesHoloMotionTeleop-v0`
-- **replay without a headset**: `holomotion-replay --hand-demo` or `holomotion-replay path/to/recording.npz`
-
-Lives in `third_party/holomotion/`, `src/simple/teleop/holomotion/`, `src/simple/agents/holomotion_pico_agent.py`.
-Full guide: [docs/holomotion_teleop.md](docs/holomotion_teleop.md).
-
-## 4 · HoloMotion v1.4: evaluating a VLA on the three kitchens
-
-The G1 with Dex3 hands, HoloMotion's 3.2 kg backpack and the HBVCAM stereo fisheye head camera
-(`third_party/hbvcam_stereo`), driven by HoloMotion v1.4's motion-tracking policy `model_22000` (the backpack model). The
-loop is SIMPLE's `eval_decoupled_wbc`: the VLA behind `HttpActionClient`'s `POST /act`, action chunks, task-check success,
-`eval_stats.txt` and a video per episode. The one change is the controller: the VLA returns the reference frames
-model_22000 tracks, the same frames the PICO headset streams in teleop.
-
-**Once per machine.** The model is not in git (1.6 GB). Copy it from NAS-28:
-
-```bash
-rsync -a /mnt/nas28/alan.jiang/holomotion_models/v14_models_backpack_3p2/ data/holomotion/v14_models_backpack_3p2/
-(cd data/holomotion/v14_models_backpack_3p2 && sha256sum -c SHA256SUMS)
 ```
 
-**Run.** Start your VLA server on port 21000, then one command per task. Each runs that task's 30 level-3 scenes.
+Pull all submodules
 
-```bash
-python -m simple.cli.eval_holomotion_v14 --scene bottle_bin  --host 127.0.0.1 --port 21000
-python -m simple.cli.eval_holomotion_v14 --scene bowl_sink   --host 127.0.0.1 --port 21000
-python -m simple.cli.eval_holomotion_v14 --scene coffee_cart --host 127.0.0.1 --port 21000
 ```
 
-**What the VLA sends and receives:**
+git submodule update --init --recursive
 
-| | |
-|---|---|
-| request | `image["observation.images.ego_view"]` = the HBVCAM rectified left eye, 1280 × 720, tilted 10° down; the task instruction; `state` named like the teleop dataset (`observation.state`, `observation.base_pose`, `observation.base_vel`, `teleop.latest_obs`, `policy.mode`) |
-| reply | `action` (T, D), one row per frame at 50 Hz: `[0:65]` the reference frame (`dof_pos[29]`, `dof_vel[29]`, `root_pos[3]`, `root_rot_wxyz[4]`), exactly the dataset's `teleop.latest_obs`; then either 2 grips (D = 67) or 14 hand joint targets (D = 79), or nothing (D = 65, hands open) |
+```
 
-**How an episode runs:**
-- the robot stands on the floor in a random start pose, on the walking policy, which moves the arms to its own
-  posture within 0.2 s, as in the teleop recordings before the operator's Y;
-- the VLA is asked from the first step; the robot keeps walking (standing in place) until its replies are valid
-  (right shape, finite, unit root quaternions), and a failed or unusable reply is simply asked again;
-- once the policy node has 11 valid frames, motion tracking takes over automatically, as the operator's Y does in
-  teleop (step 14, 0.28 s, with a VLA that answers from the start);
-- success is the task's last gate (item placed), within 30 s by default.
+We offer three options for setting up SIMPLE:
 
-The controller runs on a clock that advances 20 ms per step, so VLA latency cannot change a rollout. That was
-checked: a server delayed 0.3 s per reply gave a bit-identical run.
+### [Option 1] UV setup (Quickest)
 
-**Scenes.** `data/evals_scenes/<env>/dr-level-3`, loaded exactly, with two changes for the v1.4 standing pose (its
-hands sit at table height):
-- bottle_bin: the scenes were built with the feet 3 cm from the table, so each scene is moved 0.32 m away from the
-  robot, to the teleop's 0.35 m;
-- coffee_cart: the robot starts 10 cm further back; 6 of 30 scenes had the fingers inside the cart handle;
-- bowl_sink: used as built.
 
-All 90 scenes were checked on 2026-09-30: each loads, the robot stands 3 s without falling and more than 3 cm from the
-furniture.
+Prerequisits:
+```
+sudo apt-get update
+sudo apt-get install curl cmake python3-dev ffmpeg
+sudo apt-get install gstreamer1.0-libav
+sudo apt-get install git-lfs && git lfs install && git lfs pull
+```
 
-**Outputs.** `data/evals_holomotion_v14/<policy>/<env>/dr-level-3/` holds:
-- `results.json`: per episode, success, every gate, falls, VLA query count and latency;
-- `videos/`: the VLA image beside a third-person view;
-- `replay/`: a bit-exact replay log per episode, played with
-  `python -m simple.cli.replay_holomotion_v14 <that folder> --all --mode action`.
+Install `uv` if not already done
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-**Checking the pipeline without a VLA.** `scripts/holomotion_v14_episode_server.py <teleop dataset> --episode N --port
-21000` serves a recorded teleop episode's own reference frames, for a pipeline check.
+```
 
-**Scene code.** The kit code comes from `~/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim` when present, else from
-`scenes/`. The `scenes/bowl_sink` copy here predates the sink-cabinet toe space, so its image differs under the counter;
-the physics at the start is the same.
+Install all dependencies at once
 
-**Full guide:** [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md). Collecting the teleop data in the same
-setting: [docs/holomotion_v14_teleop.md](docs/holomotion_v14_teleop.md) and
-[PICO_SIM_TELEOP_RUNBOOK.md](PICO_SIM_TELEOP_RUNBOOK.md):
-`scripts/teleop_holomotion_v14.sh --scene bottle_bin --record`.
+```
+UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
+
+```
+
+> **If the sync fails with** `Unable to uninstall lerobot==0.3.3. distutils-installed
+> distributions do not include the metadata required to uninstall safely.` — the `lerobot`
+> wheel ships a stray top-level `lerobot-<ver>.egg-info` file next to its `.dist-info`, and
+> uv reads it as a second, legacy copy of the package. Delete it and re-run the sync:
+>
+> ```
+> rm -f .venv/lib/python3.10/site-packages/lerobot-*.egg-info
+> ```
+
+Install CuRobo
+
+```
+bash scripts/install_curobo.sh
+
+```
+
+Activate the environment:
+
+```
+source .venv/bin/activate
+
+```
+
+Verify the installation by printing the version number
+
+```
+python -c "import simple; print(simple.__version__)"
+
+```
+
+[Optional] Build the docs.
+
+```
+make live
+
+```
+
+Open http://127.0.0.1:8005 in a browser to view the documentation.
+
+> See [Installation Troubleshootings](docs/source/troubleshooting.md)
+
+
+> The document are working in progress. Feel free to raise questions using github issue, we will try to complete the document construction as soon as possible.
+
+### [Option 2] Nix setup
+
+We recommend [nix](https://nixos.org/) on a fresh Linux host; if you already have the NVIDIA driver and CUDA installed, `uv` is the faster path.
+
+> 📖 **See the full Nix setup and runtime guide at [psi-lab.ai/SIMPLE/docs/nix-setup](https://psi-lab.ai/SIMPLE/docs/nix-setup/).**
+
+### [Option 3] Docker setup
+
+We also support building and running SIMPLE in docker. Please refer to the documents for [docker setup](https://psi-lab.ai/SIMPLE/docs/docker.html).
+
+---
+
+## Quick start for SONIC wholebody VLA
+
+Evaluate a trained Psi-0 policy on the whole-body carry-box task with both sides in
+Docker. The two terminals below run **two different images from two different
+repositories** — the server on Psi-0's image, the client on SIMPLE's — and both are
+published on the GitHub Container Registry:
+
+```bash
+# Psi-0 server image
+docker pull ghcr.io/physical-superintelligence-lab/psi0:latest
+docker tag  ghcr.io/physical-superintelligence-lab/psi0:latest psi:train
+
+# SIMPLE client image
+docker pull ghcr.io/physical-superintelligence-lab/simple:latest
+docker tag  ghcr.io/physical-superintelligence-lab/simple:latest simple:latest
+```
+
+The retags matter: each `docker-compose.yml` refers to its image by a bare local
+tag (`psi:${PSI_TAG:-train}` and `simple:${DATE:-latest}`), so **neither `docker
+compose run` below pulls from ghcr on its own** — without the retag the Psi-0
+service cannot resolve its image and the SIMPLE service rebuilds from source
+instead.
+
+The remaining prerequisites — checkpoint, eval episodes — and a native `uv`
+alternative are in
+[Wholebody Loco-manipulation](docs/source/tutorials/wholebody_loco_manipulation.md).
+
+**Terminal A — policy server** (`psi:train`), from the [Psi-0](https://github.com/physical-superintelligence-lab/Psi0#docker-support) workspace:
+
+```bash
+export RUN=sonic-wbcbox.neckle.flow1000.cosine.lr1.0e-04.b256.gpus8.2608260223
+
+docker compose run --rm serve-psi0-sonic-http \
+    --policy psi0 \
+    --port 8014 \
+    --ckpt-step 40000 \
+    --run-dir .runs/finetune/$RUN \
+    --rtc \
+    --action-exec-horizon 24
+```
+
+Wait for `Server listens on 0.0.0.0:8014`, then leave it running.
+
+**Terminal B — evaluation client** (`simple:latest`), from the SIMPLE repository root:
+
+```bash
+GPUs=1 docker compose run --rm eval-sonic-wbc \
+    simple/G1WholebodyXMoveBendCarryBoxSonic-v0 psi0 \
+    --data-dir data/simple/G1WholebodyXMoveBendCarryBoxSonic-v0/dr-level-0 \
+    --host 127.0.0.1 \
+    --port 8014 \
+    --episode-start 0 \
+    --num-episodes 5 \
+    --dr-level 0 \
+    --eval-dir data/eval/sonic-psi0
+```
+
+Both compose stacks are host-networked, so `127.0.0.1` reaches across them; `--port`
+must match the server's. Keep `--data-dir` and `--eval-dir` under `data/` — only that
+tree is bind-mounted. Per-episode videos land in
+`data/eval/sonic-psi0/psi0/G1WholebodyXMoveBendCarryBoxSonic-v0/level-0/episode_*/`.
+
+---
+
+## ⚙️ Data Generation & Pipeline
+
+SIMPLE provides a scalable pipeline to generate, process, and train policies using synthesized simulation data — covering data collection (teleoperation and automated motion planning), post-processing, and fine-tuning.
+
+> 📖 **See the full documentation at [psi-lab.ai/SIMPLE/docs](https://psi-lab.ai/SIMPLE/docs/).**
+
+## 🎯 Evaluation in SIMPLE
+
+To rigorously evaluate the robustness and generalization of learned policies, we benchmark our foundation model [Psi-0](https://github.com/physical-superintelligence-lab/Psi0) using a decoupled **Client-Server architecture**. The server hosts the model inference, while the SIMPLE client runs the simulation environment.
+
+---
+
+### 🖥️ Server Side: Model Inference (Executed in the Psi-0 Repository)
+
+#### Step 1: Environment & Checkpoint Setup
+Configure the evaluation environment variables and paths within your **Psi-0** project workspace.
+
+1. **Configure Environment Variables:** Inside the **Psi-0** project root, create and source your `.env` file based on the sample:
+```bash
+  cp .env.sample .env
+  # Edit .env to include your HF_TOKEN, WANDB variables, and PSI_HOME path
+  source .env
+  echo $PSI_HOME # Verify the path is correctly set
+```
+
+2. **Download Pre-trained Weights:** Pull the Psi-0 checkpoints for the SIMPLE benchmark from our Hugging Face repository. Psi0's pre-trained weights for the SIMPLE benchmark are hosted on the Hugging Face Model Hub at [USC-PSI-Lab/psi-model](https://huggingface.co/USC-PSI-Lab/psi-model).
+
+```bash
+hf download USC-PSI-Lab/psi-model \
+  --include="psi0/simple-checkpoints/*" \
+  --local-dir=$PSI_HOME/.runs \
+  --repo-type=model
+
+```
+
+### Step 2: Start the Psi-0 Inference Server
+
+Before launching the simulation, initialize the model inference server.
+
+```bash
+# Set your target run directory and checkpoint step
+export RUN_DIR=xxxx
+export CKPT_STEP=40000
+
+# Start the server (Listens on port 22085 by default)
+bash scripts/deploy/serve_psi0_simple.sh $RUN_DIR $CKPT_STEP
+
+```
+
+> ⚠️ **Important:** Keep this terminal window open. The server must remain active for the duration of the evaluation.
+
+### Step 3: Run the SIMPLE Simulation Client
+
+Open a **new terminal window** to launch the environment. The execution parameters differ slightly based on the data source of the task:
+
+* **For Teleop Tasks (suffix `*Teleop-v0`):** Use decoupled Whole-Body Control.
+* `export entry=eval_decoupled_wbc`
+* `export agent=psi0_decoupled_wbc`
+
+
+* **For Motion Planning Tasks (suffix `*MP-v0`):** Use standard evaluation.
+* `export entry=eval`
+* `export agent=psi0`
+
+
+
+**Execution Example (Teleop Task):**
+
+
+#### Option A: UV Environment
+
+```bash
+export task=G1WholebodyXMovePickTeleop-v0
+export agent=psi0_decoupled_wbc
+export dr=level-0
+
+TASK_NAME=$task uv run eval-decoupled-wbc \
+    simple/$task \
+    $agent \
+    train \
+    --data-format lerobot \
+    --data-dir data/evals/simple-eval/$task/$dr \
+    --host 127.0.0.1 \
+    --port 21000 \
+    --headless
+```
+
+#### Option B: Nix Environment
+
+```bash
+export task=G1WholebodyXMovePickTeleop-v0
+export entry=eval_decoupled_wbc
+export agent=psi0_decoupled_wbc
+export dr=level-0
+
+env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' develop -c \
+  python -m simple.cli.$entry \
+  simple/$task \
+  $agent \
+  train \
+  --data-format lerobot \
+  --data-dir data/evals/simple-eval/$task/$dr \
+  --host 127.0.0.1 \
+  --port 21000 \
+  --headless
+```
+
+### Step 4: View Evaluation Results & Videos
+
+**Task Success Rate Statistics:**
+Upon completion, the terminal will display a summary of the results. A detailed log is also preserved automatically:
+
+```bash
+cat data/evals_decoupled_wbc/eval_stats.txt
+
+```
+
+**Execution Videos:**
+Visual records of each episode are automatically rendered and saved. The files are named using the pattern `episode_id/cam_name_{success_flag}.mp4` (e.g., `success` or `failed`).
+
+```bash
+# Example: Play a successful teleop evaluation video
+mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/level-0/episode_0/head_stereo_left_success.mp4
+
+# Example: Play a successful motion planning evaluation video
+mpv data/evals/psi0/G1WholebodyBendPickMP-v0/level-0/episode_0/front_stereo_left_success.mp4
+
+```
+
+
+
+
+## 📊 Simulation Benchmarking Results
+
+> This is a preliminary benchmark with 6 tasks accompanying the [Psi-0](https://github.com/physical-superintelligence-lab/Psi0) project. Please also checkout Psi-0 for more details of intergrating Psi-0 with SIMPLE.
+
+To rigorously evaluate the robustness and generalization of the learned policies, we design three evaluation levels with progressive out-of-distribution variations applied to the training environment:
+
+> The evaluation environments are provided in the huggingface repository [USC-PSI-Lab/psi-data](https://huggingface.co/datasets/USC-PSI-Lab/psi-data/tree/main/simple-eval).
+
+* **Level 0 (Visual & Distractors):** Randomizes table materials and the types/initial positions of distractor objects.
+* **Level 1 (Lighting):** Includes Level 0 variations + extreme changes in lighting conditions.
+* **Level 2 (Spatial pose):** Includes Level 1 variations + perturbations to the initial positions of the target objects.
+
+_Success rates are reported out of 10 evaluation trials per level (**Level 0 | Level 1 | Level 2**)._
+| Baseline / Task | G1Wholebody<br>XMove<br>PickTeleop-v0 | G1Wholebody<br>BendPickMP-v0 | G1Wholebody<br>Handover<br>Teleop-v0 | G1Wholebody<br>Locomotion<br>PickBetweenTables<br>Teleop-v0 | G1Wholebody<br>Tabletop<br>GraspMP-v0 | G1Wholebody<br>XMove<br>BendPick<br>Teleop-v0 |
+| :--------------- | :-----------------------------------: | :--------------------------: | :----------------------------------: | :---------------------------------------------------------: | :-----------------------------------: | :-------------------------------------------: |
+| **Psi0** | 10 &#124; 10 &#124; 6 | 10 &#124; 10 &#124; 10 | 7 &#124; 7 &#124; 10 | 7 &#124; 5 &#124; 6 | 10 &#124; 10 &#124; 8 | 10 &#124; 9 &#124; 9 |
+| **GR00T N1.6** | 10 &#124; 10 &#124; 7 | 7 &#124; 7 &#124; 6 | 1 &#124; 3 &#124; 3 | 0 &#124; 0 &#124; 0 | 9 &#124; 9 &#124; 7 | 4 &#124; 4 &#124; 1 |
+| **OpenPi π0.5** | 7 &#124; 5 &#124; 1 | 10 &#124; 10 &#124; 8 | 5 &#124; 4 &#124; 5 | 3 &#124; 3 &#124; 3 | 10 &#124; 10 &#124; 8 | 0 &#124; 0 &#124; 0 |
+| **InternVLA-M1** | 0 &#124; 0 &#124; 0 | 5 &#124; 5 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 3 &#124; 5 &#124; 7 |
+| **H-RDT** | 0 &#124; 0 &#124; 2 | 0 &#124; 0 &#124; 1 | 0 &#124; 1 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 | 0 &#124; 0 &#124; 0 |
+| **DreamZero** | 10 &#124; 10 &#124; 10 | 9 &#124; 9 &#124; 8 | 7 &#124; 8 &#124; 9 | 5 &#124; 3 &#124; 3 | 9 &#124; 10 &#124; 7 | 0 &#124; 0 &#124; 1 |
+| **EgoVLA** | 0 &#124; 1 &#124; 2 | 7 &#124; 5 &#124; 8 | 0 &#124; 4 &#124; 3 | 0 &#124; 0 &#124; 0 | 10 &#124; 10 &#124; 7 | 3 &#124; 5 &#124; 4 |
+| **Diff. Policy** | 3 &#124; 3 &#124; 2 | 10 &#124; 8 &#124; 6 | 3 &#124; 2 &#124; 4 | 4 &#124; 0 &#124; 0 | 8 &#124; 9 &#124; 8 | 0 &#124; 0 &#124; 0 |
+| **ACT** | 10 &#124; 9 &#124; 6 | 10 &#124; 9 &#124; 9 | 4 &#124; 4 &#124; 6 | 6 &#124; 5 &#124; 7 | 10 &#124; 10 &#124; 8 | 6 &#124; 8 &#124; 8 |
+
+_More interesting tasks, including articulated objects._
+
+| Baseline / Task | G1Wholebody<br>CloseDoor<br>Teleop-v0 | G1Wholebody<br>OpenOven<br>Teleop-v0 | G1Wholebody<br>OpenFaucet<br>Teleop-v0 | G1Wholebody<br>PickAndPlace<br>AndHugContainer<br>Teleop-v0 | 
+| :--------------- | :-----------------------------------: | :--------------------------: | :----------------------------------: | :---------------------------------------------------------: | 
+| **Psi0** | 10 &#124; 10 &#124; 10 | 7 &#124; 5 &#124; 4 | 3 &#124; 3 &#124; 4 | 7 &#124; 6 &#124; 3 | 
+
+## Citation
+
+> Please also consider citing `Psi-0` if you use its training code.
+
+```
+@article{wei2026simple,
+  title={SIMPLE: Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation},
+  author={Wei, Songlin and Ni, Zhenhao and Liu, Jie and Zhao, Zhenyu and Ye, Junjie and Jing, Hongyi and Xia, Junkai and Liu, Xiawei and Leong, Michael and Heng, Liang and Huang, Di and Wang, Yue},
+  journal={arXiv preprint arXiv:2606.08278},
+  year={2026}
+}
+```
+
+```
+@article{wei2026psi0,
+  title={{$\Psi_0$}: An Open Foundation Model Towards Universal Humanoid Loco-Manipulation},
+  author={Wei, Songlin and Jing, Hongyi and Li, Boqian and Zhao, Zhenyu and Mao, Jiageng and Ni, Zhenhao and He, Sicheng and Liu, Jie and Liu, Xiawei and Kang, Kaidi and others},
+  journal={arXiv preprint arXiv:2603.12263},
+  year={2026}
+}
+```
+
+## License
+
+This project is licensed under the MIT.
+
+See the [LICENSE](https://www.google.com/search?q=license.md) file for details.
+
+
+## Reproducible evaluation
+
+See [opt-in determinism controls](docs/determinism.md) for simulation clocks, episode RNGs and renderer settings.
+
+## Three scene evaluation tasks
+
+See [scenes/README.md](scenes/README.md) for bottle-bin, bowl-sink, and coffee-cart evaluation.
+
+## HoloMotion support
+
+See [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md) for HoloMotion VLA evaluation and [docs/holomotion_v14_teleop.md](docs/holomotion_v14_teleop.md) for collection and replay.

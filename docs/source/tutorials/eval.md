@@ -8,7 +8,7 @@ Benchmark tasks for $\Psi_0$
 | G1WholebodyHandoverTeleop-v0  | x  | v  | v
 | G1WholebodyLocomotionPickBetweenTablesTeleop-v0  | v | x  | v
 | G1WholebodyTabletopGraspMP-v0  | x  | v  | x
-|  | v  | x | v
+| G1WholebodyXMoveBendCarryBoxSonic-v0  | v  | x | v
 | G1WholebodyXMovePickTeleop-v0  | v  | x  | v
 
 

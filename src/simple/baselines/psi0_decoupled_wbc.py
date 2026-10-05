@@ -1,9 +1,5 @@
-"""
-SIMPLE: SIMulation-based Policy Learning and Evaluation
-
-Copyright (c) 2025 Songlin Wei and Contributors
-Licensed under the terms in LICENSE file.
-"""
+# Copyright (c) 2025-2026 The SIMPLE Authors
+# SPDX-License-Identifier: MIT
 
 import os
 import time
@@ -181,4 +177,3 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._last_pred_action = None
         self._reset_history = True
         self._last_base_height_cmd = 0.74
-        self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.74])

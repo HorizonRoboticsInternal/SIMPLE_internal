@@ -4,12 +4,6 @@ Built 2026-09-23 from the hand drawing `~/Downloads/servingcoffeewithcart.jpg` (
 220 cm, the same slip as the bowl-sink sheet) and tuned against all 97 episodes of
 `SIMPLE/data/real_recordings/psi0/CartCoffeeCup_0919`. Same recipe as `../bottle_bin/` and `../bowl_sink/`.
 
-    MUJOCO_GL=glfw DISPLAY=:1 ~/wrk/SIMPLE/.venv/bin/python build_scene.py          # scene.xml, layout.json, renders/, plan.png (defaults = the tuned route 2.8 / 0.4 since 2026-09-24)
-    MUJOCO_GL=egl  ~/wrk/SIMPLE/.venv/bin/python probe_scene.py                     # the task inside SIMPLE -> probe/
-    MUJOCO_GL=egl  ~/wrk/SIMPLE/.venv/bin/python replay_in_scene.py --fast --jobs 4 --episodes 0 12 24   # replay (deterministic)
-    MUJOCO_GL=egl  ~/wrk/SIMPLE/.venv/bin/python replay_in_scene.py --fast --video --episodes 84         # + mp4, same result
-    python collect_replay.py --baseline-tag rc020_rt280_tl040 --video replay_ep84.mp4 && python make_report.py
-
 World frame: pelvis at the origin at the start pose, x the way the robot faces, z up, the robot's right = -y.
 
 | item | value | source |
@@ -45,10 +39,6 @@ env's DDS domain overflows beyond that and the robot silently ignores commands (
 Knobs: `--robot-to-cart`, `--route-forward`, `--table-from-line`, `--cup-xy`, `--cart-mass`, `--wheel-friction`, `--handle-top`,
 `--post-turn-gain`, `--waist-mode`, `--cart-attach` (default none), sweeps via `--sweep-*` / `--table-pairs`.
 
-Results: see `site/index.html` (make_report.py) - route 2.8 / 0.4: cart pushed in 95/96 episodes (2.21 m mean), cup lifted 39/96,
-cup placed upright on the table 9/96 (+11 tipped onto it). Episode 77 is a 2.3 s aborted recording. The ceiling is the open-loop
-push distance spread (release x 1.8-2.8 m against a 0.6 m table depth); a post-turn nav gain does not help.
-
 ## Levels 0-3 in Isaac (2026-09-24)
 
 The same level design as SIMPLE's benchmark sets, rendered in Isaac in the plain HSSD room `scene2` (no living-room furniture; `../make_levels.py`; the Isaac renderer needs the
@@ -62,10 +52,10 @@ The same level design as SIMPLE's benchmark sets, rendered in Isaac in the plain
 | 3 | + alternative layout: 10 scenes, each with a different robot start (up to 10 cm back/forward, 5 cm sideways) AND a different table height (±4 cm; SIMPLE's DR manager shifts the table, the cart box (the cup's support) and table legs follow through per-height mesh variants `<asset>_p031`/`_m040`) | `ROBOT_BACK`, `ROBOT_LEFT`, `LEVEL3_EPISODES` in `../make_levels.py`; the start is stored in each scene's state, so eval needs no env var |
 
 ```
-python sim/make_levels.py coffee_cart --levels 0 1 2 3 --episodes 10 --out data/evals_scenes
+python scenes/make_levels.py coffee_cart --levels 0 1 2 3 --episodes 10 --out data/evals_scenes
     -> data/evals_scenes/G1WholebodyCoffeeCartTeleop-v0/dr-level-<n>/  (LeRobot set as data/evals_new20; frames/ep*.png = Isaac head camera AFTER the same stabilisation the eval runs, i.e. the controller's start pose;
        meta/scene_env.json = the env vars used, re-applied by eval_scene.py)
-python sim/eval_scene.py coffee_cart simple/G1WholebodyCoffeeCartTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
+python scenes/eval_scene.py coffee_cart simple/G1WholebodyCoffeeCartTeleop-v0 psi0_decoupled_wbc train --data-format lerobot \
     --data-dir data/evals_scenes/G1WholebodyCoffeeCartTeleop-v0/dr-level-3 --port 21000 --headless --num-episodes 20
 ```
 
@@ -84,7 +74,7 @@ Isaac-rendered replay (`../replay_isaac.py`): runs this kit's `replay_in_scene.p
 the set's; the middle video panel is then the Isaac head camera). The wall-clock-paced replays get bowl_sink's VirtualClock
 installed from outside and ticked per `env.step`, so the controller runs deterministically at 50 Hz despite Isaac's slow steps.
 ```
-python sim/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock   # ep 84 (the MuJoCo showcase) does not survive the level-0 scene; 64/70/93 do      # -> replay/isaac_level0_ep<N>.mp4
+python scenes/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock   # ep 84 (the MuJoCo showcase) does not survive the level-0 scene; 64/70/93 do      # -> replay/isaac_level0_ep<N>.mp4
 ```
 
 Isaac third person (final recipe, 2026-09-24): two passes per episode plus a separate composer, because nothing can run after a kit
@@ -94,9 +84,9 @@ openings prims are hidden) and saves an Isaac third-person + head JPEG every con
 then swaps the left panel in; the panels are frame-synchronous by construction: kit frame k (written every 2nd tick after the settle)
 is tick S + 2k with S = M - 2N (M captured ticks, N kit frames), no image matching.
 ```
-python sim/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock --no-third                                   # pass A -> replay/isaac_level0_ep64.mp4
-python sim/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock --hide-shell --out sim/coffee_cart/replay/passB_ep64.mp4   # pass B -> replay/third_coffee_cart_ep64/f*.jpg h*.jpg
-python sim/compose_third.py sim/coffee_cart/replay/isaac_level0_ep64.mp4 sim/coffee_cart/replay/third_coffee_cart_ep64 sim/coffee_cart/replay/isaac_level0_ep64_3p.mp4 sim/coffee_cart/replay/isaac_level0_ep64_3p.jpg 0
+python scenes/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock --no-third                                   # pass A -> replay/isaac_level0_ep64.mp4
+python scenes/replay_isaac.py coffee_cart --episode 64 --scene 0 --ext-clock --hide-shell --out sim/coffee_cart/replay/passB_ep64.mp4   # pass B -> replay/third_coffee_cart_ep64/f*.jpg h*.jpg
+python scenes/compose_third.py sim/coffee_cart/replay/isaac_level0_ep64.mp4 sim/coffee_cart/replay/third_coffee_cart_ep64 sim/coffee_cart/replay/isaac_level0_ep64_3p.mp4 sim/coffee_cart/replay/isaac_level0_ep64_3p.jpg 0
 ```
 
 Isaac room furniture: the task sets `isaac_hidden_scene_groups = ("furniture",)`, so SIMPLE's Isaac engine hides the HSSD room's own furniture group (a 1 m high island of hssd:scene31 spans the whole cart route and a cabinet row stands where the desk is; with it visible the head camera showed "objects between cart and desk" and a "wall" at the end of the push). Visual only: MuJoCo has no room. Probe: scratchpad isaac_smoke/room31_probe.py prints every furniture / wall bbox and flags the ones inside the corridor.
