@@ -480,6 +480,7 @@ def _define_task():
 
     @TaskRegistry.register(TASK_UID)
     class G1WholebodyBowlSinkTeleop(parent):
+        isaac_hidden_scene_groups = ("furniture",)
         uid: str = TASK_UID
         label: str = "G1 Bowl Sink Teleop"
         isaac_cameras_follow_mujoco = True          # the Isaac head camera copies the MuJoCo (patched, measured D455) camera pose every step
