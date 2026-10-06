@@ -79,7 +79,7 @@ from simple.teleop.holomotion_v14 import DEFAULT_REFERENCE_URI
 from simple.teleop.holomotion_v14.exact_log import ExactLog
 from simple.teleop.holomotion_v14.scene_setup import SceneSetups
 
-SCENES = {"bottle_bin": "bottle_bin_task", "bowl_sink": "bowl_sink_task", "coffee_cart": "coffee_cart_task"}
+SCENES = {name: f"simple.tasks.g1_wholebody_{name}_teleop" for name in ("bottle_bin", "bowl_sink", "coffee_cart")}
 # Where the robot starts, as the scene's own knob (front of the feet -> first obstacle; everything but the robot moves).
 # The scenes' defaults were fitted to decoupled-WBC replays that start with the hands raised above the table. The v1.4
 # controller stands up with its forearms at table height, so at bottle_bin's 3 cm the hands land on the table and the
@@ -87,15 +87,9 @@ SCENES = {"bottle_bin": "bottle_bin_task", "bowl_sink": "bowl_sink_task", "coffe
 START_KNOB = {"bottle_bin": "BOTTLE_BIN_ROBOT_TO_EDGE", "bowl_sink": "BOWL_SINK_ROBOT_TO_EDGE",
               "coffee_cart": "COFFEE_CART_ROBOT_TO_CART"}
 START_DEFAULT = {"bottle_bin": 0.35}           # m; bowl_sink (0.38) and coffee_cart (0.20) keep their own
-LIVE_SCENE_ROOT = Path.home() / "wrk/robot_orchard_deploy/holobrain_g1_deploy/sim"      # the kits' working copies
-REPO_SCENE_ROOT = Path(__file__).resolve().parents[3] / "scenes"                          # the copies in this repo
-
-
 def scene_root() -> Path:
-    """HOLOBRAIN_SIM_DIR if set, else the live kit folder on the workstation, else the repo's scenes/."""
-    if os.environ.get("HOLOBRAIN_SIM_DIR"):
-        return Path(os.environ["HOLOBRAIN_SIM_DIR"])
-    return LIVE_SCENE_ROOT if LIVE_SCENE_ROOT.is_dir() else REPO_SCENE_ROOT
+    """Return the packaged scene implementation directory."""
+    return Path(__file__).resolve().parents[1] / "tasks"
 
 
 SCENE_ENV_PREFIX = {"bottle_bin": "BOTTLE_BIN_", "bowl_sink": "BOWL_SINK_", "coffee_cart": "COFFEE_CART_"}
@@ -110,11 +104,8 @@ def load_scene(name: str, start_distance: float | None = None):
         os.environ[START_KNOB[name]] = f"{dist:.4f}"
     if START_KNOB[name] in os.environ:
         print(f"[HoloMotion v1.4] {name}: robot start {START_KNOB[name]}={os.environ[START_KNOB[name]]} m")
-    scene_dir = scene_root() / name
-    if not scene_dir.is_dir():
-        raise typer.BadParameter(f"scene folder not found: {scene_dir} (set HOLOBRAIN_SIM_DIR)")
-    sys.path.insert(0, str(scene_dir))
-    return importlib.import_module(SCENES[name])
+    module = importlib.import_module(SCENES[name])
+    return importlib.reload(module)
 
 
 class SimControls:

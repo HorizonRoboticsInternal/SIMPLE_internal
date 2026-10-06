@@ -93,7 +93,7 @@ def zero_stale_leading_rows(rel, max_lead=10):
 def make_env():
     """Env with gravity compensation ON: feed-forward g(q) on the arms so the commanded pose is the held pose."""
     import gymnasium as gym
-    import coffee_cart_task as T
+    import simple.tasks.g1_wholebody_coffee_cart_teleop as T
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     cfg["enable_gravity_compensation"] = True                      # user 2026-09-23: hold the pose we set, no sag

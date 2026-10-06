@@ -52,3 +52,9 @@ from .g1_wholebody_bend_handover_teleop import G1WholebodyBendHandoverTeleop
 from .g1_wholebody_bend_pick_and_place_teleop import G1WholebodyBendPickAndPlaceTeleop
 from .g1_wholebody_bend_pick_teleop import G1WholebodyBendPickTeleop
 from .g1_wholebody_xmove_bend_carry_box_sonic import G1WholebodyXMoveBendCarryBoxTaskSonic
+
+from .g1_wholebody_bottle_bin_teleop import G1WholebodyBottleBinTeleop
+
+from .g1_wholebody_bowl_sink_teleop import G1WholebodyBowlSinkTeleop
+
+from .g1_wholebody_coffee_cart_teleop import G1WholebodyCoffeeCartTeleop

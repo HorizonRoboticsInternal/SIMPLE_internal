@@ -1,0 +1,109 @@
+{
+ "layout": {
+  "pelvis_to_edge": 0.155,
+  "toe_offset": 0.125,
+  "near_x": 0.155,
+  "far_x": 0.755,
+  "left_y": 0.56,
+  "right_y": -1.51,
+  "table_cx": 0.455,
+  "table_cy": -0.475,
+  "bottle_x": 0.27,
+  "bottle_y": -0.004,
+  "bottle_side": "left",
+  "robot_side": "left",
+  "bin_x": -0.36,
+  "bin_y": -1.53,
+  "plan_cx": 0.3,
+  "plan_cy": -0.635,
+  "plan_extent": 2.1,
+  "plan_w": 1400,
+  "plan_h": 1000
+ },
+ "pose": {
+  "pose": 3,
+  "pelvis_height": 0.74,
+  "hip_pitch": -0.3823843589148523,
+  "knee": 0.8143286590102424,
+  "ankle_pitch": -0.43194430009539014,
+  "head_pan_deg": 0.0,
+  "head_tilt_deg": 10.032
+ },
+ "ego_camera": {
+  "pos": [
+   0.0875,
+   -0.001,
+   1.2309
+  ],
+  "axis": [
+   0.5334,
+   -0.0189,
+   -0.8457
+  ],
+  "pitch_down_deg": 57.74,
+  "hfov_deg": 90.0,
+  "fovy_deg": 58.72,
+  "size": [
+   1280,
+   720
+  ]
+ },
+ "bodies": {
+  "pelvis": [
+   0.0,
+   0.0,
+   0.74
+  ],
+  "torso_link": [
+   -0.004,
+   0.0,
+   0.784
+  ],
+  "bottle": [
+   0.27,
+   -0.004,
+   0.72
+  ],
+  "trash_bin": [
+   -0.36,
+   -1.53,
+   0.0
+  ],
+  "left_wrist_yaw_link": [
+   0.1673,
+   0.1487,
+   0.9501
+  ],
+  "right_wrist_yaw_link": [
+   0.1673,
+   -0.1487,
+   0.9501
+  ],
+  "left_hand_index_1_link": [
+   0.2802,
+   0.1532,
+   1.0738
+  ],
+  "right_hand_index_1_link": [
+   0.2802,
+   -0.1532,
+   1.0738
+  ]
+ },
+ "bottle": {
+  "diameter": 0.065,
+  "height": 0.212,
+  "mass": 0.5
+ },
+ "bin": {
+  "w": 0.36,
+  "d": 0.24,
+  "h": 0.39,
+  "corner_radius": 0.04,
+  "wall": 0.008,
+  "yaw_deg": -90.0,
+  "along_x": 0.36,
+  "along_y": 0.24
+ },
+ "contacts": []
+}

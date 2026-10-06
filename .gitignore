@@ -48,10 +48,37 @@ Thumbs.db
 # -----------------------
 # data settings
 # -----------------------
-data/*
-!data/README.md
-!data/_download.py
-!data/_download.sh
+# Existing bucket downloads/datasets stay ignored; new data components are visible.
+/data/.cache/
+/data/assets/
+/data/assets_graspnet.zip
+/data/evals/
+/data/evals_scenes/
+/data/evals_scenes_benchmark/
+/data/robots_g1_sonic.zip
+/data/scene-archives/
+/data/scenes/
+/data/scenes_hssd_107734119_175999932.zip
+/data/simple-assets-download.log
+/data/vMaterials-download.log
+/data/vMaterials_2/
+/data/vMaterials_2.zip
+/data/vMaterials_2.zip.corrupt-20260803
+/data/robots/g1/
+/data/robots/g1_sonic/
+
+# Generated outputs are never fixed resources.
+/data/**/renders/
+/data/**/replay/
+/data/**/probe/
+/data/**/site/
+/data/**/logs/
+/data/**/*.log
+/data/**/*.html
+/data/real_scenes/**/*_[pm][0-9][0-9][0-9].obj
+/data/real_scenes/**/*_[pm][0-9][0-9][0-9].usda
+/data/generated/
+
 !.env.sample
 
 # Sphinx build artifacts

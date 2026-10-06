@@ -31,8 +31,7 @@ D._make_sonic_config = lambda: {**_mk(), "DOMAIN_ID": DOM}
 if a.kit.startswith("simple/"):                               # a benchmark teleop task (no kit module): the env id itself
     mod = type("M", (), {"ENV_ID": a.kit})
 else:
-    sys.path.insert(0, str(SIM / a.kit))
-    mod = importlib.import_module(f"{a.kit}_task")
+    mod = importlib.import_module(f"simple.tasks.g1_wholebody_{a.kit}_teleop")
 import gymnasium as gym  # noqa: E402
 import mujoco  # noqa: E402
 from simple.agents.pico_decoupled_agent import PicoDecoupledAgent  # noqa: E402

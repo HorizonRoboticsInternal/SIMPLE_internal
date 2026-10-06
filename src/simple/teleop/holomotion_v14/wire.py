@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-_VENDOR = Path(os.environ.get("HOLOMOTION_V14_VENDOR_DIR", Path(__file__).resolve().parents[4] / "third_party" / "holomotion_v14"))
+_VENDOR = Path(os.environ.get("HOLOMOTION_V14_VENDOR_DIR", Path(__file__).resolve().parent))
 if str(_VENDOR) not in sys.path:
     sys.path.insert(0, str(_VENDOR))
 from holomotion_teleop_ros2.latest_obs_zmq import pack_numpy_message, unpack_numpy_message  # noqa: E402

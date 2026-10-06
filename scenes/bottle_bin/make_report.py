@@ -386,7 +386,7 @@ MUJOCO_GL=glfw DISPLAY=:1 /path/to/SIMPLE/.venv/bin/python build_scene.py      #
 python make_report.py                                                           # site/index.html + img/ (+ vid/ if present)
 
 # 4. use the task from your own code
-import sys; sys.path.insert(0, "…/sim/bottle_bin"); import bottle_bin_task      # registers simple/G1WholebodyBottleBinTeleop-v0
+import sys; sys.path.insert(0, "…/sim/bottle_bin"); import simple.tasks.g1_wholebody_bottle_bin_teleop      # registers simple/G1WholebodyBottleBinTeleop-v0
 env = gym.make("simple/G1WholebodyBottleBinTeleop-v0", sim_mode="mujoco", sonic_config=cfg, headless=True, target="bottle_bin:bottle_500ml")</pre>
 <p class="sub">Knobs: <code>BOTTLE_BIN_ROBOT_TO_EDGE</code>, <code>BOTTLE_BIN_BOTTLE_MASS</code>, <code>BOTTLE_BIN_BIN_XY</code>, <code>BOTTLE_BIN_BOTTLE_XY</code>,
 <code>BOTTLE_BIN_TARGET</code> (env vars read by the task; the replay's flags set them). Every distance is in the pelvis frame of the start pose:

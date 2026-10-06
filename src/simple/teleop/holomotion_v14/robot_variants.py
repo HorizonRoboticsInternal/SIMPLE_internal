@@ -34,15 +34,23 @@ from pathlib import Path
 import numpy as np
 
 from simple.teleop.holomotion_v14 import MODELS_DIR, REPO_ROOT, VENDOR_DIR
+from simple.assets.scene_cache import scene_cache_dir
 
 BACKPACK_DIR = VENDOR_DIR / "backpack"
 BACKPACK_MESH = BACKPACK_DIR / "backpack_link.STL"
 BACKPACK_LOCK = BACKPACK_DIR / "v141.brainco_backpack_3p2.model.lock"
-BACKPACK_POS = (-0.094605, -0.0005, 0.165324)                          # in torso_link
+BACKPACK_POS = (-0.094605, -0.0005, 0.165324)  # in torso_link
 BACKPACK_REF_KG = 1.9
-BACKPACK_REF_INERTIA = (0.015510, 0.010909, 0.007288, 0.000017, 0.000563, 0.000059)   # ixx iyy izz ixy ixz iyz at 1.9 kg
+BACKPACK_REF_INERTIA = (
+    0.015510,
+    0.010909,
+    0.007288,
+    0.000017,
+    0.000563,
+    0.000059,
+)  # ixx iyy izz ixy ixz iyz at 1.9 kg
 
-BASE_MJCF = "robots/g1_sonic/g1_29dof_with_hand.xml"                  # G1Sonic.mjcf_path (under data/)
+BASE_MJCF = "robots/g1_sonic/g1_29dof_with_hand.xml"  # G1Sonic.mjcf_path (under data/)
 
 
 def _sha256(path: Path) -> str:
@@ -55,62 +63,100 @@ def _sha256(path: Path) -> str:
 
 def _add_backpack(spec, kg: float) -> None:
     import mujoco
-    spec.add_mesh(name="backpack_link", file=str(BACKPACK_MESH))          # absolute: meshdir does not apply
+
+    spec.add_mesh(
+        name="backpack_link", file=str(BACKPACK_MESH)
+    )  # absolute: meshdir does not apply
     s = kg / BACKPACK_REF_KG
-    body = spec.body("torso_link").add_body(name="backpack_link", pos=list(BACKPACK_POS))
+    body = spec.body("torso_link").add_body(
+        name="backpack_link", pos=list(BACKPACK_POS)
+    )
     body.mass = float(kg)
     body.ipos = [0.0, 0.0, 0.0]
     body.fullinertia = [v * s for v in BACKPACK_REF_INERTIA]
     body.explicitinertial = True
-    body.add_geom(name="backpack_link_visual", type=mujoco.mjtGeom.mjGEOM_MESH, meshname="backpack_link",
-                  contype=0, conaffinity=0, group=1, density=0.0, rgba=[0.9, 0.9, 0.9, 1.0])
+    body.add_geom(
+        name="backpack_link_visual",
+        type=mujoco.mjtGeom.mjGEOM_MESH,
+        meshname="backpack_link",
+        contype=0,
+        conaffinity=0,
+        group=1,
+        density=0.0,
+        rgba=[0.9, 0.9, 0.9, 1.0],
+    )
 
 
 def _write_variant(spec, rel: str) -> str:
-    spec.compile()                                                          # fail here, not inside the env
+    spec.compile()  # fail here, not inside the env
     xml = spec.to_xml()
-    dst = REPO_ROOT / "data" / rel
+    dst = scene_cache_dir("holomotion", {}) / Path(rel).name
     if not dst.exists() or dst.read_text() != xml:
         import os
-        tmp = dst.with_name(f".{dst.name}.{os.getpid()}.tmp")    # atomic: a parallel run never reads a half-written file
+
+        tmp = dst.with_name(
+            f".{dst.name}.{os.getpid()}.tmp"
+        )  # atomic: a parallel run never reads a half-written file
         tmp.write_text(xml)
         os.replace(tmp, dst)
-    return rel
+    return str(dst)
+
+
+def _robot_spec(base: str):
+    import mujoco
+
+    source = Path(os.environ.get("SIMPLE_DATA_DIR", str(REPO_ROOT / "data"))) / base
+    source = source.resolve()
+    spec = mujoco.MjSpec.from_file(str(source))
+    # Cached XML lives elsewhere; keep its fixed mesh/texture resources absolute.
+    spec.meshdir = str((source.parent / spec.meshdir).resolve())
+    spec.texturedir = str((source.parent / spec.texturedir).resolve())
+    return spec
 
 
 def backpack_mjcf(kg: float, base: str = BASE_MJCF) -> str:
-    """Write the G1 MJCF with a ``kg`` backpack next to the base one; returns its path relative to data/."""
-    import mujoco
+    """Write the G1 MJCF with a ``kg`` backpack into local cache; return its absolute path."""
 
     tag = f"{kg:.2f}".replace(".", "p")
     rel = str(Path(base).with_name(f"{Path(base).stem}_backpack_{tag}kg.xml"))
-    spec = mujoco.MjSpec.from_file(str(REPO_ROOT / "data" / base))
+    spec = _robot_spec(base)
     _add_backpack(spec, kg)
     return _write_variant(spec, rel)
 
 
 # ---- the G1 with the HBVCAM stereo head camera (third_party/hbvcam_stereo, the v1.4 collection robot's camera) ----
-STEREO_DIR = REPO_ROOT / "third_party" / "hbvcam_stereo"
-STEREO_MJCF = "robots/g1_sonic/g1_29dof_with_hand_hbvcam_stereo.xml"   # under data/, next to the stock meshes
-PINHOLE_CAMERA = "hbvcam_left_pinhole"                                 # the rectified left eye, 1280 x 720
+STEREO_DIR = Path(__file__).resolve().parents[2] / "resources" / "hbvcam_stereo"
+STEREO_MJCF = "robots/g1_sonic/g1_29dof_with_hand_hbvcam_stereo.xml"  # under data/, next to the stock meshes
+PINHOLE_CAMERA = "hbvcam_left_pinhole"  # the rectified left eye, 1280 x 720
 PINHOLE_W, PINHOLE_H = 1280, 720
-FISHEYE_PREFIX = "hbvcam"                                              # face cameras hbvcam_{left,right}_{front,...}
+FISHEYE_PREFIX = "hbvcam"  # face cameras hbvcam_{left,right}_{front,...}
 
 
 def install_stereo_mjcf() -> str:
-    """Copy the vendored stereo-camera G1 next to the stock G1 (its meshes are the stock ones); path under data/."""
-    src, dst = STEREO_DIR / Path(STEREO_MJCF).name, REPO_ROOT / "data" / STEREO_MJCF
-    if not dst.exists() or dst.read_bytes() != src.read_bytes():
-        dst.write_bytes(src.read_bytes())
-    return STEREO_MJCF
+    """Cache the stereo-camera G1 XML, referencing the stock meshes read-only."""
+    import xml.etree.ElementTree as ET
+
+    src = STEREO_DIR / Path(STEREO_MJCF).name
+    tree = ET.parse(src)
+    data_root = Path(os.environ.get("SIMPLE_DATA_DIR", str(REPO_ROOT / "data")))
+    tree.getroot().find("compiler").set(
+        "meshdir", str((data_root / Path(BASE_MJCF).parent / "meshes").resolve())
+    )
+    dst = scene_cache_dir("holomotion", {}) / src.name
+    tree.write(dst, encoding="utf-8")
+    return str(dst)
 
 
 def rectified_left(calib: Path = STEREO_DIR / "calibration" / "stereo_calib.yaml"):
     """(R1, P1) of the stereo calibration: the rectified left eye is a pinhole camera (f 493.6 px, 104.7 x 72.2 deg)."""
     import cv2
+
     fs = cv2.FileStorage(str(calib), cv2.FILE_STORAGE_READ)
     R1, P1 = fs.getNode("R1").mat(), fs.getNode("P1").mat()
-    size = (int(fs.getNode("image_width").real()), int(fs.getNode("image_height").real()))
+    size = (
+        int(fs.getNode("image_width").real()),
+        int(fs.getNode("image_height").real()),
+    )
     fs.release()
     assert size == (PINHOLE_W, PINHOLE_H), size
     return R1, P1
@@ -118,8 +164,10 @@ def rectified_left(calib: Path = STEREO_DIR / "calibration" / "stereo_calib.yaml
 
 def _add_pinhole(spec) -> None:
     """The rectified left eye as a MuJoCo camera at the left optical frame: orientation R_opt R1^T (optical: x right,
-    y down, z forward) turned to MuJoCo's camera axes (x right, y up, looking along -z); intrinsics from P1."""
+    y down, z forward) turned to MuJoCo's camera axes (x right, y up, looking along -z); intrinsics from P1.
+    """
     import mujoco
+
     site = next(s for s in spec.sites if s.name == "head_stereo_left_optical_frame")
     R_opt = np.zeros(9)
     mujoco.mju_quat2Mat(R_opt, np.asarray(site.quat, dtype=np.float64))
@@ -127,13 +175,18 @@ def _add_pinhole(spec) -> None:
     R_cam = R_opt.reshape(3, 3) @ R1.T @ np.diag([1.0, -1.0, -1.0])
     quat = np.zeros(4)
     mujoco.mju_mat2Quat(quat, R_cam.reshape(-1))
-    cam = site.parent.add_camera(name=PINHOLE_CAMERA, pos=list(site.pos), quat=list(quat))
+    cam = site.parent.add_camera(
+        name=PINHOLE_CAMERA, pos=list(site.pos), quat=list(quat)
+    )
     cam.resolution = [PINHOLE_W, PINHOLE_H]
-    cam.sensor_size = [float(PINHOLE_W), float(PINHOLE_H)]                  # 1 length unit = 1 pixel
+    cam.sensor_size = [float(PINHOLE_W), float(PINHOLE_H)]  # 1 length unit = 1 pixel
     cam.focal_pixel = [float(P1[0, 0]), float(P1[1, 1])]
     # MuJoCo's offset convention (measured): +x moves the principal point LEFT, +y moves it down, so OpenCV's
     # (cx, cy) is (W/2 - cx, cy - H/2); checked by projecting points, < 0.1 px
-    cam.principal_pixel = [float(PINHOLE_W / 2 - P1[0, 2]), float(P1[1, 2] - PINHOLE_H / 2)]
+    cam.principal_pixel = [
+        float(PINHOLE_W / 2 - P1[0, 2]),
+        float(P1[1, 2] - PINHOLE_H / 2),
+    ]
 
 
 def _tilt_cameras(spec, prefix: str, tilt_deg: float) -> None:
@@ -141,32 +194,39 @@ def _tilt_cameras(spec, prefix: str, tilt_deg: float) -> None:
     robot's left), each about its own position: the stereo rig as if mounted at another angle (both eyes lie on one
     line along y, so turning each about its own centre is turning the rig)."""
     import mujoco
+
     h = np.radians(tilt_deg) / 2.0
     qy = np.array([np.cos(h), 0.0, np.sin(h), 0.0])
     for cam in spec.cameras:
         if cam.name.startswith(prefix):
             if cam.alt.type != mujoco.mjtOrientation.mjORIENTATION_QUAT:
-                raise ValueError(f"camera {cam.name}: orientation not given as a quaternion")
+                raise ValueError(
+                    f"camera {cam.name}: orientation not given as a quaternion"
+                )
             q = np.zeros(4)
             mujoco.mju_mulQuat(q, qy, np.asarray(cam.quat, dtype=np.float64))
             cam.quat = q
 
 
 def _tilt_tag(tilt_deg: float) -> str:
-    return "_tilt" + f"{tilt_deg:+g}".replace("+", "p").replace("-", "m").replace(".", "p")
+    return "_tilt" + f"{tilt_deg:+g}".replace("+", "p").replace("-", "m").replace(
+        ".", "p"
+    )
 
 
-def teleop_mjcf(robot: str = "stereo", backpack_kg: float = 3.2, tilt_deg: float = 0.0) -> str:
+def teleop_mjcf(
+    robot: str = "stereo", backpack_kg: float = 3.2, tilt_deg: float = 0.0
+) -> str:
     """The teleop robot: "stereo" = the G1 with the HBVCAM stereo head camera plus its rectified left eye as the
     pinhole camera PINHOLE_CAMERA; "stock" = SIMPLE's G1. With a ``backpack_kg`` backpack if > 0 and the stereo
-    camera pitched ``tilt_deg`` further down (+) or up (-). Path under data/."""
-    import mujoco
+    camera pitched ``tilt_deg`` further down (+) or up (-). Generated XML is cached locally.
+    """
     if robot not in ("stereo", "stock"):
         raise ValueError(f"robot is 'stereo' or 'stock', got {robot!r}")
     base = install_stereo_mjcf() if robot == "stereo" else BASE_MJCF
     if robot == "stock" and backpack_kg <= 0:
         return base
-    spec = mujoco.MjSpec.from_file(str(REPO_ROOT / "data" / base))
+    spec = _robot_spec(base)
     name = Path(base).stem
     if backpack_kg > 0:
         _add_backpack(spec, backpack_kg)
@@ -175,11 +235,13 @@ def teleop_mjcf(robot: str = "stereo", backpack_kg: float = 3.2, tilt_deg: float
         # the bundle's five 90-degree cameras per eye (head_stereo_{eye}_{face}), which the fisheye stream renders,
         # renamed hbvcam_{eye}_{face}: clear of SIMPLE's head_stereo sensor cameras
         for cam in [c for c in spec.cameras if c.name.startswith("head_stereo_")]:
-            cam.name = FISHEYE_PREFIX + cam.name[len("head_stereo"):]
+            cam.name = FISHEYE_PREFIX + cam.name[len("head_stereo") :]
         _add_pinhole(spec)
         name += "_pinhole"
         if tilt_deg:
-            _tilt_cameras(spec, FISHEYE_PREFIX, tilt_deg)                  # every hbvcam_* camera, the pinhole included
+            _tilt_cameras(
+                spec, FISHEYE_PREFIX, tilt_deg
+            )  # every hbvcam_* camera, the pinhole included
             name += _tilt_tag(tilt_deg)
     return _write_variant(spec, str(Path(base).with_name(name + ".xml")))
 
@@ -188,16 +250,24 @@ def tilt_head_sensor(task, tilt_deg: float, cam_id: str = "head_stereo") -> None
     """Pitch the scene's head camera sensor (SIMPLE's ``head_stereo``, recorded as ego_view with --record-camera head)
     ``tilt_deg`` further down (+) or up (-), on top of the scene's own pose; call before env.reset. The scene kits
     apply a non-identity eye_in_head pose as a local offset of the stock mount (their _patch_head_camera_pose, the
-    same composition as their <KIT>_HEAD_TRIM_DEG); SIMPLE's engine alone accepts only the identity there."""
+    same composition as their <KIT>_HEAD_TRIM_DEG); SIMPLE's engine alone accepts only the identity there.
+    """
     import transforms3d as t3d
     from simple.engines.mujoco import MujocoSimulator
+
     cfg = task.sensor_cfgs[cam_id]
-    pose0 = task.__dict__.setdefault("_head_sensor_pose0", {k: list(v) for k, v in cfg.pose.items()})
+    pose0 = task.__dict__.setdefault(
+        "_head_sensor_pose0", {k: list(v) for k, v in cfg.pose.items()}
+    )
     q = np.asarray(pose0["quaternion"], dtype=float)
     if tilt_deg:
         if not getattr(MujocoSimulator, "_tabletop_box_patched", False):
-            raise ValueError("tilting the head camera needs one of the scene kits (their head-camera pose patch)")
-        q = t3d.quaternions.qmult(q, t3d.quaternions.axangle2quat([1.0, 0.0, 0.0], np.radians(-tilt_deg)))
+            raise ValueError(
+                "tilting the head camera needs one of the scene kits (their head-camera pose patch)"
+            )
+        q = t3d.quaternions.qmult(
+            q, t3d.quaternions.axangle2quat([1.0, 0.0, 0.0], np.radians(-tilt_deg))
+        )
     cfg.pose = dict(pose0, quaternion=[float(v) for v in q])
 
 
@@ -213,7 +283,8 @@ def read_lock(path: Path = BACKPACK_LOCK) -> dict[str, str]:
 def backpack_models_dir(bundle: str | Path, check_hashes: bool = True) -> Path:
     """Lay out a backpack model bundle (config.yaml + model_22000.onnx) as the loader's models dir; returns it.
 
-    The velocity model is the public one already in MODELS_DIR (the lock pins it to the same hash)."""
+    The velocity model is the public one already in MODELS_DIR (the lock pins it to the same hash).
+    """
     lock = read_lock()
     bundle = Path(bundle).expanduser().resolve()
     name = lock["V141_BACKPACK_MODEL_FILENAME"]
@@ -222,28 +293,44 @@ def backpack_models_dir(bundle: str | Path, check_hashes: bool = True) -> Path:
     cfg = bundle / "config.yaml"
     if not onnx.is_file():
         raise FileNotFoundError(f"backpack bundle is missing {onnx.name}: {bundle}")
-    if not cfg.is_file():                      # only the ONNX: the public v1.4.1 config (the observation layout is the
-        cfg = (MODELS_DIR / "motion_tracking_model" / "config.yaml").resolve()     # same; gains etc. come from the ONNX)
-        print(f"[HoloMotion v1.4] backpack bundle has no config.yaml: using the v1.4.1 config {cfg}")
+    if (
+        not cfg.is_file()
+    ):  # only the ONNX: the public v1.4.1 config (the observation layout is the
+        cfg = (
+            MODELS_DIR / "motion_tracking_model" / "config.yaml"
+        ).resolve()  # same; gains etc. come from the ONNX)
+        print(
+            f"[HoloMotion v1.4] backpack bundle has no config.yaml: using the v1.4.1 config {cfg}"
+        )
         lock = dict(lock, V141_BACKPACK_CONFIG_SHA256=_sha256(cfg))
     vel = MODELS_DIR / "velocity_tracking_model"
-    vel_onnx = next(iter(sorted((vel / "exported").glob("*.onnx"))), None) if (vel / "exported").is_dir() else None
+    vel_onnx = (
+        next(iter(sorted((vel / "exported").glob("*.onnx"))), None)
+        if (vel / "exported").is_dir()
+        else None
+    )
     if check_hashes:
-        checks = [(onnx, lock["V141_BACKPACK_MODEL_SHA256"]), (cfg, lock["V141_BACKPACK_CONFIG_SHA256"])]
+        checks = [
+            (onnx, lock["V141_BACKPACK_MODEL_SHA256"]),
+            (cfg, lock["V141_BACKPACK_CONFIG_SHA256"]),
+        ]
         if vel_onnx is not None:
             checks.append((vel_onnx, lock["V141_BACKPACK_VELOCITY_MODEL_SHA256"]))
         for f, want in checks:
             got = _sha256(f)
             if got != want:
                 raise ValueError(f"{f}: sha256 {got} does not match the lock ({want})")
-    out = REPO_ROOT / "data" / "holomotion" / "v14_models_bundle"       # not the default BACKPACK_MODELS_DIR
+    out = scene_cache_dir("holomotion", {"bundle": str(bundle)}) / "v14_models_bundle"
     exp = out / "motion_tracking_model" / "exported"
     exp.mkdir(parents=True, exist_ok=True)
     for stale in exp.glob("*.onnx"):
         if stale.name != onnx.name:
             stale.unlink()
-    links = {out / "velocity_tracking_model": vel.resolve(), out / "motion_tracking_model" / "config.yaml": cfg,
-             exp / onnx.name: onnx}
+    links = {
+        out / "velocity_tracking_model": vel.resolve(),
+        out / "motion_tracking_model" / "config.yaml": cfg,
+        exp / onnx.name: onnx,
+    }
     for link, target in links.items():
         if link.is_symlink() or link.exists():
             if link.is_symlink() and Path(os.readlink(link)) == target:

@@ -202,6 +202,21 @@ def _run_eval_worker(
         if progress_reporter is not None:
             progress_reporter({"event": event, **payload})
 
+    scene_meta = Path(data_dir) / "meta/scene_env.json"
+    if data_format == "lerobot" and scene_meta.is_file():
+        for key, value in json.loads(scene_meta.read_text()).get("env", {}).items():
+            os.environ.setdefault(key, str(value))
+        # Tasks follow the stock eager registration convention; refresh the
+        # selected real scene after its dataset settings have been applied.
+        scene_tasks = {
+            "simple/G1WholebodyBottleBinTeleop-v0": "bottle_bin",
+            "simple/G1WholebodyBowlSinkTeleop-v0": "bowl_sink",
+            "simple/G1WholebodyCoffeeCartTeleop-v0": "coffee_cart",
+        }
+        if env_id in scene_tasks:
+            module = importlib.import_module(f"simple.tasks.g1_wholebody_{scene_tasks[env_id]}_teleop")
+            importlib.reload(module)
+
     if sonic_config is None:
         sonic_config = _make_sonic_config()
 

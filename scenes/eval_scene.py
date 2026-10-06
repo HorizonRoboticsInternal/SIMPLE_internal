@@ -19,8 +19,7 @@ if "--data-dir" in rest:
             os.environ.setdefault(k, v)
         print(f"[eval_scene] applied {meta}: " + " ".join(f"{k}={v}" for k, v in json.load(open(meta)).get("env", {}).items()), flush=True)
 os.environ.setdefault("MUJOCO_GL", "egl"); os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-sys.path.insert(0, str(HERE / kit))
-__import__(f"{kit}_task")
+__import__(f"simple.tasks.g1_wholebody_{kit}_teleop")
 sys.argv = [sys.argv[0]] + rest
 from simple.cli.eval_decoupled_wbc import typer_main
 typer_main()

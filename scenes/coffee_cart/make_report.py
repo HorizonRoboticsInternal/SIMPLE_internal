@@ -217,7 +217,7 @@ scenes use, so a single asset can give different friction to different pieces.</
 {fig(PR / "third_person.png", "the task inside SIMPLE at reset, third-person")}
 <pre>MUJOCO_GL=egl ~/wrk/SIMPLE/.venv/bin/python probe_scene.py
 
-import sys; sys.path.insert(0, ".../sim/coffee_cart"); import coffee_cart_task
+import sys; sys.path.insert(0, ".../sim/coffee_cart"); import simple.tasks.g1_wholebody_coffee_cart_teleop
 env = gym.make("simple/G1WholebodyCoffeeCartTeleop-v0", sim_mode="mujoco", sonic_config=cfg, headless=True)</pre>
 <p class="sub">Knobs (env vars read by the task; every distance is in the pelvis frame of the start pose, x toward the table,
 the robot's right = &minus;y, floor at z = 0): <code>COFFEE_CART_ROBOT_TO_CART</code>, <code>COFFEE_CART_ROUTE_FORWARD</code>,

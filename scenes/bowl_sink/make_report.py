@@ -175,7 +175,7 @@ def success_videos():
 
 def _funnel(tag):
     import glob
-    from bowl_sink_gates import BowlSinkGates, GateCfg
+    from simple.tasks.g1_wholebody_bowl_sink_gates import BowlSinkGates, GateCfg
     fun = dict(at_bowl=0, grasped=0, at_basin=0, placed=0, settled=0); n = 0
     for f in sorted(glob.glob(str(HERE / f"replay/trace_ep*_{tag}.json"))):
         tr = json.load(open(f)); sm = next((r["summary"] for r in tr if "summary" in r), None)

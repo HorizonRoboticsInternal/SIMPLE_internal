@@ -19,7 +19,7 @@ THIRD = dict(lookat=[0.85, -0.35, 0.70], distance=4.6, azimuth=145, elevation=-1
 
 def make_env():
     import gymnasium as gym
-    import coffee_cart_task as T
+    import simple.tasks.g1_wholebody_coffee_cart_teleop as T
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     env = gym.make(T.ENV_ID, sim_mode="mujoco", render_hz=HZ, physics_dt=cfg["SIMULATE_DT"], headless=True,

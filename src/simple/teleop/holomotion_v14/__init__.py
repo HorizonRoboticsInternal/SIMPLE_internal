@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-VENDOR_DIR = Path(os.environ.get("HOLOMOTION_V14_VENDOR_DIR", REPO_ROOT / "third_party" / "holomotion_v14"))
+VENDOR_DIR = Path(os.environ.get("HOLOMOTION_V14_VENDOR_DIR", Path(__file__).resolve().parent))
 MODELS_DIR = Path(os.environ.get("HOLOMOTION_V14_MODELS_DIR", REPO_ROOT / "data" / "holomotion" / "v14_models"))   # public v1.4.1
 # the v1.4.1 BrainCo 3.2 kg backpack motion model (model_22000) + the same walking model; see its README.txt
 BACKPACK_MODELS_DIR = REPO_ROOT / "data" / "holomotion" / "v14_models_backpack_3p2"

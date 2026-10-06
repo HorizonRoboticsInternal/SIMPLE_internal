@@ -1,0 +1,151 @@
+{
+ "layout": {
+  "pelvis_to_edge": 0.505,
+  "toe_offset": 0.125,
+  "near_x": 0.505,
+  "far_x": 1.135,
+  "x_wall": 1.545,
+  "left_y": 2.04,
+  "right_y": -0.56,
+  "counter_cx": 0.82,
+  "counter_cy": 0.74,
+  "bowl_x": 0.565,
+  "bowl_y": 0.0,
+  "sink_cx": -0.535,
+  "sink_cy": -0.765,
+  "sink_x0": -1.575,
+  "sink_start_x": 0.505,
+  "sink_start": "front-edge",
+  "sink_front_y": -0.56,
+  "basin_cx": -0.495,
+  "basin_cy": -0.765,
+  "sink_along": 1.27,
+  "sink_ref": "far-edge",
+  "sink_from_end": 0.81,
+  "basin_far_x": -0.765,
+  "basin_near_x": -0.225,
+  "basin_radius": 0.03,
+  "plan_cx": -0.015,
+  "plan_cy": 0.535,
+  "plan_extent": 4.02,
+  "plan_w": 1400,
+  "plan_h": 1000
+ },
+ "pose": {
+  "pose": 3,
+  "pelvis_height": 0.74,
+  "hip_pitch": -0.3823843589148523,
+  "knee": 0.8143286590102424,
+  "ankle_pitch": -0.43194430009539014,
+  "head_pan_deg": 0.0,
+  "head_tilt_deg": 10.032
+ },
+ "ego_camera": {
+  "pos": [
+   0.0875,
+   -0.001,
+   1.2309
+  ],
+  "axis": [
+   0.5334,
+   -0.0189,
+   -0.8457
+  ],
+  "pitch_down_deg": 57.74,
+  "hfov_deg": 90.0,
+  "fovy_deg": 58.72,
+  "size": [
+   1280,
+   720
+  ]
+ },
+ "bodies": {
+  "pelvis": [
+   0.0,
+   0.0,
+   0.74
+  ],
+  "torso_link": [
+   -0.004,
+   0.0,
+   0.784
+  ],
+  "bowl": [
+   0.565,
+   0.0,
+   0.86
+  ],
+  "counter": [
+   0.82,
+   0.74,
+   0.0
+  ],
+  "sink_counter": [
+   -0.535,
+   -0.765,
+   0.0
+  ],
+  "left_wrist_yaw_link": [
+   0.1673,
+   0.1487,
+   0.9501
+  ],
+  "right_wrist_yaw_link": [
+   0.1673,
+   -0.1487,
+   0.9501
+  ],
+  "left_hand_index_1_link": [
+   0.2802,
+   0.1532,
+   1.0738
+  ],
+  "right_hand_index_1_link": [
+   0.2802,
+   -0.1532,
+   1.0738
+  ]
+ },
+ "bowl": {
+  "diameter": 0.15,
+  "depth": 0.08,
+  "mass": 0.12
+ },
+ "sink": {
+  "counter": [
+   2.08,
+   0.41,
+   0.86
+  ],
+  "basin": [
+   0.54,
+   0.33,
+   0.1
+  ],
+  "basin_centre": [
+   -0.49500233090488877,
+   -0.765,
+   0.76
+  ],
+  "top": 0.86,
+  "along": 1.27,
+  "ref": "far-edge",
+  "from_end": 0.81,
+  "corner_radius": 0.03,
+  "basin_far_x": -0.7650023309048888,
+  "basin_near_x": -0.22500233090488875
+ },
+ "counter": {
+  "size": [
+   0.63,
+   2.6,
+   0.86
+  ],
+  "back_unit": [
+   0.41,
+   2.6,
+   1.07
+  ]
+ },
+ "contacts": []
+}

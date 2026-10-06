@@ -244,7 +244,7 @@ class Runner:
             os.environ["BOTTLE_BIN_BOTTLE_XY"] = f"{bottle_xy[0]:.4f},{bottle_xy[1]:.4f}"
         import gymnasium as gym
         import mujoco
-        import bottle_bin_task as T
+        import simple.tasks.g1_wholebody_bottle_bin_teleop as T
         from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
         self.mujoco = mujoco
         self.T = T

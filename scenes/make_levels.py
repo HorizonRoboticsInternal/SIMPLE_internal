@@ -63,10 +63,9 @@ def describe(kit: str, level: int) -> str:
 
 def run_level(kit: str, level: int, episodes: int, out: Path, seed: int, render_hz: int) -> None:
     """Runs inside the per-level process: the kit's env vars are already set."""
-    sys.path.insert(0, str(HERE / kit))
     import importlib, numpy as np, gymnasium as gym
     from PIL import Image
-    mod = importlib.import_module(f"{kit}_task")
+    mod = importlib.import_module(f"simple.tasks.g1_wholebody_{kit}_teleop")
     from simple.cli.dr_decoupled_wbc import _make_sonic_config, _init_exporter, _save_episode_env_config
     from simple.agents.pico_decoupled_agent import PicoDecoupledAgent
 

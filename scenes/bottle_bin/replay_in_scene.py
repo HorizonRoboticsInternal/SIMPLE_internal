@@ -53,7 +53,7 @@ def zero_stale_leading_rows(rel, max_lead=10):
 
 def make_env():
     import gymnasium as gym
-    import bottle_bin_task as T
+    import simple.tasks.g1_wholebody_bottle_bin_teleop as T
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     env = gym.make(T.ENV_ID, sim_mode="mujoco", render_hz=HZ, physics_dt=cfg["SIMULATE_DT"], headless=True,

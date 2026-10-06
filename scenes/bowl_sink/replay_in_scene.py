@@ -94,7 +94,7 @@ FAST = os.environ.get("REPLAY_FAST", "0") == "1"          # --fast: virtual cloc
 
 def make_env():
     import gymnasium as gym
-    import bowl_sink_task as T
+    import simple.tasks.g1_wholebody_bowl_sink_teleop as T
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     env = gym.make(T.ENV_ID, sim_mode="mujoco", render_hz=HZ, physics_dt=cfg["SIMULATE_DT"], headless=True,
@@ -333,7 +333,7 @@ def replay_episode(session, ep, video_out):
         tp.is_active = True
         heading0 = yaw_of_wxyz(d.qpos[3:7]); xy0 = d.qpos[:2].copy()
         tgt0 = d.xpos[tgt_body].copy()
-        from bowl_sink_gates import BowlSinkGates, GateCfg, ContactProbe            # the four task gates, evaluated live
+        from simple.tasks.g1_wholebody_bowl_sink_gates import BowlSinkGates, GateCfg, ContactProbe            # the four task gates, evaluated live
         gates = BowlSinkGates(GateCfg(basin_len=T.BS.BASIN_L, basin_across=T.BS.BASIN_ACROSS, bowl_base_r=T.BS.BOWL_R_BOT, sink_h=T.BS.SINK_H))
         probe = ContactProbe(m, str(task.target.asset.label))
         trace = []
