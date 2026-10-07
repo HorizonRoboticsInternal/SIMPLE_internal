@@ -59,13 +59,13 @@ python scenes/eval_scene.py coffee_cart simple/G1WholebodyCoffeeCartTeleop-v0 ps
     --data-dir data/evals_scenes/G1WholebodyCoffeeCartTeleop-v0/dr-level-3 --port 21000 --headless --num-episodes 20
 ```
 
-## Head tilt: servo goal 2300 (2026-09-24)
+## Head tilt
 
-`build_scene.py` now defaults to `--tilt-ticks 214` (goal 2300 = home 2086 + 214) and `coffee_cart_task.py` to
-`COFFEE_CART_HEAD_TRIM_DEG=8.8` on its encoded 2200 baseline: the D455 axis is 66.5 deg below horizontal (was 57.7 at 2200).
-Caveat: a real first frame of `CartCoffeeCup_0919` (handle bar at the bottom of the frame, box top mid-frame) looks less
-pitched than 66.5 deg, so those recordings were probably not taken at 2300; for replays against them set
-`COFFEE_CART_HEAD_TRIM_DEG` / `--tilt-ticks` back to the goal they used.
+The CoffeeCart task now defaults to `COFFEE_CART_HEAD_TRIM_DEG=0.0`: evaluation uses
+its encoded pan0/tilt10 camera baseline without the extra 8.8-degree downward trim.
+Set `COFFEE_CART_HEAD_TRIM_DEG=8.8` explicitly to reproduce the previous task view.
+This does not change existing dataset images or the standalone `build_scene.py`
+default of `--tilt-ticks 214` (servo goal 2300).
 
 Isaac head camera: the kit's D455 pose is a MuJoCo-side patch, so the task sets `isaac_cameras_follow_mujoco = True` and SIMPLE's Isaac engine copies the MuJoCo camera's world pose every step (`_sync_cameras_from_mujoco`); without it the Isaac view is narrower and higher than the verified MuJoCo/real view.
 

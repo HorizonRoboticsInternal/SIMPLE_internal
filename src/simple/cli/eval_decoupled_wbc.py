@@ -345,7 +345,8 @@ def _run_eval_worker(
 
     policy_module = importlib.import_module(f"simple.baselines.{policy}")
     agent_clazz = getattr(policy_module, f"{snake_to_pascal(policy)}Agent")
-    agent = agent_clazz(task.robot, host, port, sonic_config=sonic_config)
+    agent_config = dict(sonic_config, initial_joint_positions=getattr(task, "initial_joint_positions", {}))
+    agent = agent_clazz(task.robot, host, port, sonic_config=agent_config)
     rollout_env = raw_env
     if rollout_save_dir:
         from simple.envs.lerobot import LerobotRecorder

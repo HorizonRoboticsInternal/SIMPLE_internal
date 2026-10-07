@@ -156,7 +156,16 @@ class SonicLocoManipEnv(BaseDualSim):
             self.viewer.cam.lookat = np.array([0, 0, 0.38])
             self.viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE # mjCAMERA_TRACKING
 
-        self.mujoco.step(render=False)
+        initial_joints = getattr(self.task, "initial_joint_positions", {})
+        if initial_joints:
+            for name, value in initial_joints.items():
+                joint = self.mjData.joint(name)
+                joint.qpos[:] = value
+                joint.qvel[:] = 0.0
+                self.mjData.actuator(name).ctrl[:] = 0.0
+            mujoco.mj_forward(self.mjModel, self.mjData)
+        else:
+            self.mujoco.step(render=False)
 
         if self.isaac is not None:
             self.isaac.reset()

@@ -418,7 +418,8 @@ def _define_task():
     from simple.core.object import SemanticAnnotated, SpatialAnnotated
     from simple.dr import CameraDRCfg, DistractorDRCfg, LanguageDRCfg, SpatialDRCfg, TabletopSceneDRCfg, TargetDRCfg
     from simple.dr.types import Box
-    from simple.sensors import StereoCameraCfg
+    from simple.robots.g1_sonic import LEFT_ARM_JOINTS, RIGHT_ARM_JOINTS, LEFT_HAND_JOINTS, RIGHT_HAND_JOINTS
+    from simple.sensors import CameraCfg
     from simple.tasks.g1_wholebody_xmove_pick_teleop import G1WholebodyXMovePickTaskTeleop
     from simple.tasks.registry import TaskRegistry
 
@@ -486,10 +487,19 @@ def _define_task():
         isaac_cameras_follow_mujoco = True          # the Isaac head camera copies the MuJoCo (patched, measured D455) camera pose every step
         description: str = ("G1 facing a 2.60 x 0.63 x 0.86 m kitchen counter with a green 15 cm bowl on it; a sink counter of the same "
                             "0.86 m height runs along the wall on its right, its basin's far edge 1.27 m behind the counter's front edge.")
+        # Shared reset/WBC target: dr-level-3 episode_000013, closest to the 28-joint median (L2).
+        initial_joint_positions = dict(zip(
+            LEFT_ARM_JOINTS + RIGHT_ARM_JOINTS + LEFT_HAND_JOINTS + RIGHT_HAND_JOINTS,
+            [0.02941799908876419, -0.0022279999684542418, 0.0006930023664608598, -0.5807880163192749, 0.00017599995771888644, 0.05248799920082092, -0.0010730000212788582] +
+            [0.030209999531507492, 0.0018649982521310449, -0.0002839987864717841, -0.5816640257835388, -0.00018800029647536576, 0.05216899886727333, 0.0007030004635453224] +
+            [-1.983159947024915e-12, 4.000016815552954e-06, 1.0000015890909708e-06, -1.1000024642271455e-05, -2.00001522898674e-06, -1.1000051017617807e-05, -1.9999990854557836e-06] +
+            [2.7575997041395794e-12, 2.000043878069846e-06, -6.089820136645637e-17, 5.1888730129030086e-14, 1.320236187041246e-08, 3.581162059604348e-13, 4.0738151740882245e-10],
+        ))
         metadata = dict(parent.metadata)
         sensor_cfgs = dict(
-            head_stereo=StereoCameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
-                                        focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=5, baseline=0.05,
+            # Keep the existing left-view observation key for policy/replay compatibility.
+            head_stereo_left=CameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
+                                        focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=5,
                                         pose=dict(position=list(CAM_LOCAL_POS), quaternion=cam_quat)))
         dr_cfgs = dict(
             language=LanguageDRCfg(instructions=[INSTRUCTION]),
@@ -502,7 +512,7 @@ def _define_task():
                 distractors_region=Box(low=[L["near_x"] + 0.1, L["right_y"] + 0.3], high=[L["far_x"] - 0.1, L["left_y"] - 0.3]),
                 target_stable_indices=[stable_idx], target_rotate_z=Box(low=0.0, high=0.0),
             ),
-            camera=CameraDRCfg(cam_id="head_stereo"),
+            camera=CameraDRCfg(cam_id="head_stereo_left"),
             scene=TabletopSceneDRCfg(
                 scene_mode="fixed",
                 table_size=Box(low=[BS.COUNTER_D, BS.COUNTER_W, BS.COUNTER_TOP_T], high=[BS.COUNTER_D, BS.COUNTER_W, BS.COUNTER_TOP_T]),

@@ -8,7 +8,7 @@ and the coffee cup are free objects. The cup starts on the cart's box top, not o
 
 Registered on import: task uid  g1_wholebody_coffee_cart_teleop
                       gym id    simple/G1WholebodyCoffeeCartTeleop-v0   (SonicLocoManipEnv, robot g1_sonic)
-Head camera: D455 as on the box task (640 x 360, 90 deg HFOV, servo goal 2300 = 18.8 deg down), obs key head_stereo_left.
+Head camera: D455 as on the box task (640 x 360, 90 deg HFOV, encoded pan0/tilt10 baseline, no extra tilt by default), obs key head_stereo_left.
 Env vars: COFFEE_CART_ROBOT_TO_CART, COFFEE_CART_ROUTE_FORWARD, COFFEE_CART_TABLE_FROM_LINE, COFFEE_CART_CUP_XY="x,y",
           COFFEE_CART_CUP_MASS, COFFEE_CART_CART_MASS, COFFEE_CART_TARGET, COFFEE_CART_INSTRUCTION.
 """
@@ -99,7 +99,7 @@ ROOM_DX = float(os.environ.get("COFFEE_CART_ROOM_DX", "1.0"))    # Isaac room pu
                                                                   # the cart's nose at the end of the push, and the side the robot turns to is open to ~4.4 m -
                                                                   # in scene2 a counter stood 1.65 m to the right at the stop, straight in the head camera.
                                                                   # inside the far wall (black head-camera frames); 0.7 keeps the third-person camera inside
-HEAD_TILT_TRIM_DEG = float(os.environ.get("COFFEE_CART_HEAD_TRIM_DEG", "8.8"))   # servo goal 2300: +8.8 deg (100 ticks) on the encoded 2200 baseline, axis 66.5 deg below horizontal (2026-09-24)
+HEAD_TILT_TRIM_DEG = float(os.environ.get("COFFEE_CART_HEAD_TRIM_DEG", "0.0"))   # Keep the encoded pan0/tilt10 baseline; extra tilt is opt-in.
 HEAD_HFOV_DEG, HEAD_W, HEAD_H = 90.0, 640, 360
 HAND_RGBA = [float(v) for v in BS.HAND_RGBA.split()]
 
@@ -489,7 +489,8 @@ def _define_task():
     from simple.core.object import SemanticAnnotated, SpatialAnnotated
     from simple.dr import CameraDRCfg, DistractorDRCfg, LanguageDRCfg, SpatialDRCfg, TabletopSceneDRCfg, TargetDRCfg
     from simple.dr.types import Box
-    from simple.sensors import StereoCameraCfg
+    from simple.robots.g1_sonic import LEFT_ARM_JOINTS, RIGHT_ARM_JOINTS, LEFT_HAND_JOINTS, RIGHT_HAND_JOINTS
+    from simple.sensors import CameraCfg
     from simple.tasks.g1_wholebody_xmove_pick_teleop import G1WholebodyXMovePickTaskTeleop
     from simple.tasks.registry import TaskRegistry
 
@@ -563,10 +564,19 @@ def _define_task():
         description: str = ("G1 standing behind a 0.71 x 0.47 m service cart whose box top carries a coffee cup; it pushes the cart "
                             f"{L['route_forward']:.2f} m forward and {L['table_from_line']:.2f} m to its right to a "
                             f"{BS.TABLE_W:.2f} x {BS.TABLE_D:.2f} x {BS.TABLE_H:.2f} m table, and puts the cup on it.")
+        # Shared reset/WBC target: dr-level-3 episode_000026, closest to the 28-joint median (L2).
+        initial_joint_positions = dict(zip(
+            LEFT_ARM_JOINTS + RIGHT_ARM_JOINTS + LEFT_HAND_JOINTS + RIGHT_HAND_JOINTS,
+            [0.029323000460863113, -0.0021470000501722097, 0.0004729993233922869, -0.5807129740715027, 0.0001879999617813155, 0.05247500166296959, -0.001088000019080937] +
+            [0.03023800067603588, 0.0019499982008710504, -0.0004219987604301423, -0.5816590189933777, -0.00019000029715243727, 0.052111998200416565, 0.0005360005307011306] +
+            [-1.0000002248489182e-06, 4.0000172703003045e-06, 1.0000018164646463e-06, -1.2000034075754229e-05, -2.0000252334284596e-06, -1.300007807003567e-05, -1.99999976757681e-06] +
+            [2.715607252956609e-12, 2.0000431959488196e-06, 7.405731480575006e-17, 5.765989763558896e-14, 1.3203610649270558e-08, 3.5921455697127125e-13, 4.073993919995189e-10],
+        ))
         metadata = dict(parent.metadata)
         sensor_cfgs = dict(
-            head_stereo=StereoCameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
-                                        focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=8, baseline=0.05,
+            # Keep the existing left-view observation key for policy/replay compatibility.
+            head_stereo_left=CameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
+                                        focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=8,
                                         pose=dict(position=list(CAM_LOCAL_POS), quaternion=cam_quat)))
         dr_cfgs = dict(
             language=LanguageDRCfg(instructions=[INSTRUCTION]),
@@ -580,7 +590,7 @@ def _define_task():
                                        high=[L["table_far_x"] - 0.1, L["table_left_y"] - 0.2]),
                 target_stable_indices=[stable_idx], target_rotate_z=Box(low=0.0, high=0.0),
             ),
-            camera=CameraDRCfg(cam_id="head_stereo"),
+            camera=CameraDRCfg(cam_id="head_stereo_left"),
             scene=TabletopSceneDRCfg(
                 scene_mode="fixed",
                 table_size=Box(low=[BS.TABLE_D, BS.TABLE_W, BS.TABLE_TOP_T], high=[BS.TABLE_D, BS.TABLE_W, BS.TABLE_TOP_T]),

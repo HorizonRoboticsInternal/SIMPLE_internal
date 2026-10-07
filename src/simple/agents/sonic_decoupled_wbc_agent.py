@@ -45,6 +45,13 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
         wbc_config = dwbc_config.load_wbc_yaml()
         assert wbc_config["SIMULATE_DT"] == self.sim_dt
 
+        initial_joints = sonic_config.get("initial_joint_positions", {})
+        if initial_joints:
+            self._dwbc_robot_model.set_initial_body_pose(
+                np.asarray(list(initial_joints.values())),
+                [self._dwbc_robot_model.dof_index(name) for name in initial_joints],
+            )
+
         self._wbc_policy = get_wbc_policy(
             "g1", self._dwbc_robot_model, wbc_config,
             init_time=dwbc_config.upper_body_joint_speed,
