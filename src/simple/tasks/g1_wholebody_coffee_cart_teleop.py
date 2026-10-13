@@ -21,6 +21,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from simple.assets.scene_cache import fixed_asset, scene_cache_dir
+from simple.tasks.scene_state import restore_furniture
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -90,16 +91,12 @@ CHK_REQUIRE_RELEASE = os.environ.get("COFFEE_CART_CHK_REQUIRE_RELEASE", "1") == 
 INSTRUCTION = os.environ.get("COFFEE_CART_INSTRUCTION",
                              "push the cart to the table, then pick up the coffee cup and place it on the table")
 
-# D455 lens pose of the scene (servo pan 0 / tilt 10 deg) as an offset of SIMPLE's stock eye_in_head mount, from
-# sim/tabletop_box/g1_tabletop_box_simple_task.py (the engine's mount is the same for every G1 robot class)
-CAM_LOCAL_POS = [0.01849, 0.03219, -0.00928]
-CAM_LOCAL_QUAT = [0.996029, -0.088426, -0.007383, -0.007305]
+# The g1comp robot owns the fixed pan-0 / tilt-10 D455 mount.
 ROOM_DX = float(os.environ.get("COFFEE_CART_ROOM_DX", "1.0"))    # Isaac room pushed this far ahead of its stock placement (the room's own counter sits at
                                                                   # the robot's start). hssd:scene31 (2026-09-24): the wall ahead then sits ~5.1 m out, 1.3 m past
                                                                   # the cart's nose at the end of the push, and the side the robot turns to is open to ~4.4 m -
                                                                   # in scene2 a counter stood 1.65 m to the right at the stop, straight in the head camera.
                                                                   # inside the far wall (black head-camera frames); 0.7 keeps the third-person camera inside
-HEAD_TILT_TRIM_DEG = float(os.environ.get("COFFEE_CART_HEAD_TRIM_DEG", "0.0"))   # Keep the encoded pan0/tilt10 baseline; extra tilt is opt-in.
 HEAD_HFOV_DEG, HEAD_W, HEAD_H = 90.0, 640, 360
 HAND_RGBA = [float(v) for v in BS.HAND_RGBA.split()]
 
@@ -356,40 +353,6 @@ def _patch_scene_objects():
     MujocoSimulator._coffee_cart_patched = True
 
 
-def _patch_head_camera_pose():
-    """Apply the configured eye_in_head pose as a local offset of SIMPLE's stock head mount (the engine only accepts
-    an identity quaternion there). Copied from the tabletop_box task."""
-    import transforms3d as t3d
-    from simple.engines.mujoco import MujocoSimulator
-    if getattr(MujocoSimulator, "_tabletop_box_patched", False):
-        return
-    orig_build = MujocoSimulator._build_camera
-
-    def build_camera(self, cname, camera):
-        q = np.asarray(camera.pose.quaternion, dtype=float)
-        p = np.asarray(camera.pose.position, dtype=float)
-        if camera.mount != "eye_in_head" or (np.allclose(q[1:], 0.0, atol=1e-6) and np.allclose(p, 0.0)):
-            return orig_build(self, cname, camera)
-        camera.pose.quaternion, camera.pose.position = [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
-        orig_add = self._add_mujoco_camera
-
-        def add_camera(parent, cam, **kw):
-            r_stock = t3d.quaternions.quat2mat(kw["quat"])
-            kw["pos"] = np.asarray(kw["pos"], dtype=float) + r_stock @ p
-            kw["quat"] = t3d.quaternions.qmult(kw["quat"], q)
-            return orig_add(parent, cam, **kw)
-
-        self._add_mujoco_camera = add_camera
-        try:
-            return orig_build(self, cname, camera)
-        finally:
-            del self._add_mujoco_camera
-            camera.pose.quaternion, camera.pose.position = q.tolist(), p.tolist()
-
-    MujocoSimulator._build_camera = build_camera
-    MujocoSimulator._tabletop_box_patched = True
-
-
 def _patch_renderer_framebuffer():
     import mujoco
     if getattr(mujoco.Renderer, "_tabletop_box_patched", False):
@@ -483,7 +446,6 @@ def legs_variant_files(dz: float) -> dict:
 
 
 def _define_task():
-    import transforms3d as t3d
     from simple.assets import AssetManager
     from simple.core.asset import Asset
     from simple.core.object import SemanticAnnotated, SpatialAnnotated
@@ -551,7 +513,6 @@ def _define_task():
             def __iter__(self):
                 yield self.load("coffee_cup")
 
-    cam_quat = t3d.quaternions.qmult(CAM_LOCAL_QUAT, t3d.quaternions.axangle2quat([1.0, 0.0, 0.0], np.radians(-HEAD_TILT_TRIM_DEG))).tolist()
     stable_idx = 0 if TARGET.startswith("coffee_cart:") else standing_stable_index(TARGET)
     parent = G1WholebodyXMovePickTaskTeleop
 
@@ -560,6 +521,12 @@ def _define_task():
         uid: str = TASK_UID
         label: str = "G1 Coffee Cart Teleop"
         isaac_cameras_follow_mujoco = True          # the Isaac head camera copies the MuJoCo (patched, measured D455) camera pose every step
+        def __init__(self, *args, **kwargs):
+            # Parent constructors mutate robot_cfg; isolate it from other tasks.
+            self.robot_cfg = deepcopy(self.robot_cfg)
+            kwargs["robot_uid"] = "g1comp_sonic"
+            super().__init__(*args, **kwargs)
+
         isaac_hidden_scene_groups = ("furniture",)  # the HSSD room's own furniture is hidden in Isaac: a 1 m high island of hssd:scene31 spans the cart route and a cabinet row sits where the desk stands (user: nothing between cart and desk, nothing blocking the cart at the end)
         description: str = ("G1 standing behind a 0.71 x 0.47 m service cart whose box top carries a coffee cup; it pushes the cart "
                             f"{L['route_forward']:.2f} m forward and {L['table_from_line']:.2f} m to its right to a "
@@ -577,7 +544,7 @@ def _define_task():
             # Keep the existing left-view observation key for policy/replay compatibility.
             head_stereo_left=CameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
                                         focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=8,
-                                        pose=dict(position=list(CAM_LOCAL_POS), quaternion=cam_quat)))
+                                        pose=dict(position=[0.0, 0.0, 0.0], quaternion=[1.0, 0.0, 0.0, 0.0])))
         dr_cfgs = dict(
             language=LanguageDRCfg(instructions=[INSTRUCTION]),
             target=TargetDRCfg(asset_id=TARGET),
@@ -613,12 +580,16 @@ def _define_task():
                 "cart": ("cart" + sfx, [L["cart_cx"], L["cart_cy"], 0.0], [1.0, 0.0, 0.0, 0.0]),
                 "table_legs": ("table_legs" + sfx, [L["table_cx"], L["table_cy"], 0.0], [1.0, 0.0, 0.0, 0.0]),
             }
+            state = (options or {}).get("state_dict") or {}
             for name, (asset_id, pos, quat) in extra.items():
+                # layout.cart can contain the replay's final pose; restore only static furniture.
+                if name == "table_legs":
+                    asset_id, pos, quat = restore_furniture(self._layout, options, name, asset_id, pos, quat)
                 _sync_extra(self._layout, am, name, asset_id, pos, quat)
             # the cup starts on the cart's box top, not on the table SIMPLE placed it against
             if "target" in self._layout.actors:
                 _p = self._layout.actors["target"].pose.position          # keep the x, y SIMPLE sampled in the (jittered) target region
-                _ok = TARGET_LO[0] - 1e-6 <= _p[0] <= TARGET_HI[0] + 1e-6 and TARGET_LO[1] - 1e-6 <= _p[1] <= TARGET_HI[1] + 1e-6
+                _ok = bool(state.get("dr_state_dict", {}).get("spatial")) or TARGET_LO[0] - 1e-6 <= _p[0] <= TARGET_HI[0] + 1e-6 and TARGET_LO[1] - 1e-6 <= _p[1] <= TARGET_HI[1] + 1e-6
                 _x, _y = (float(_p[0]), float(_p[1])) if _ok else (L["cup_x"], L["cup_y"])
                 if abs(_x - L["cup_x"]) < 1e-6 and abs(_y - L["cup_y"]) < 1e-6:
                     _x, _y = L["cup_x"], L["cup_y"]                     # no jitter: the EXACT nominal. The sampler returns float32, and its
@@ -626,7 +597,7 @@ def _define_task():
                 self._layout.actors["target"].pose.position = [_x, _y, self._box_top]
             self._instruction = INSTRUCTION
             sc = self.dr.get_randomizer("scene")._inner_state          # shift the (visual-only) Isaac room, idempotently: absolute = room middle + ROOM_DX
-            if sc is not None and hasattr(sc, "center_offset") and isinstance(getattr(sc, "conf", None), dict):
+            if not state and sc is not None and hasattr(sc, "center_offset") and isinstance(getattr(sc, "conf", None), dict):
                 mid = [(u + d) / 2.0 for u, d in zip(sc.conf["center_offset_limit_up"], sc.conf["center_offset_limit_down"])]
                 sc.center_offset = [mid[0] + ROOM_DX, mid[1], mid[2]]
             self._chk = dict(armed=False, cup_z0=None, cart_xy0=None, cart_pushed_ever=False, cup_lifted_ever=False,
@@ -656,8 +627,11 @@ def _define_task():
             tilt_deg = float(np.degrees(np.arccos(np.clip(zaxis[2], -1.0, 1.0))))
             lift = float(cup[2] - c["cup_z0"]); c["max_lift_m"] = max(c["max_lift_m"], lift)
             travel = float(np.linalg.norm(cart[:2] - c["cart_xy0"])); c["cart_travel_m"] = max(c["cart_travel_m"], travel)
-            in_footprint = bool(L["table_near_x"] - 0.02 <= cup[0] <= L["table_far_x"] + 0.02
-                                and L["table_right_y"] - 0.02 <= cup[1] <= L["table_left_y"] + 0.02)
+            table = self._layout.actors["table"]
+            tq = table.pose.quaternion
+            table_local = R.from_quat([tq[1], tq[2], tq[3], tq[0]]).inv().apply(
+                cup[:3] - np.asarray(table.pose.position))
+            in_footprint = bool(np.all(np.abs(table_local[:2]) <= np.asarray(table.size[:2]) / 2 + 0.02))
             upright = tilt_deg < CHK_UPRIGHT_DEG
             resting_on_table = bool(in_footprint and upright and abs(float(cup[2]) - getattr(self, "_table_h", BS.TABLE_H)) < CHK_TABLE_Z_TOL)
             in_hand = False
@@ -704,7 +678,6 @@ def register():
     import gymnasium as gym
     import simple.envs  # noqa: F401  stock registrations
     _patch_renderer_framebuffer()
-    _patch_head_camera_pose()
     _patch_scene_objects()
     task_cls = _define_task()
     return task_cls

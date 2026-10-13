@@ -226,3 +226,10 @@ register(
     entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
     kwargs={"task": "g1_wholebody_coffee_cart_teleop"},
 )
+
+# Retained for historical eval datasets; excluded from the five-task benchmark.
+register(
+    id="simple/G1WholebodyXMoveBendPickTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task": "g1_wholebody_xmove_bend_pick_teleop"},
+)

@@ -58,3 +58,5 @@ from .g1_wholebody_bottle_bin_teleop import G1WholebodyBottleBinTeleop
 from .g1_wholebody_bowl_sink_teleop import G1WholebodyBowlSinkTeleop
 
 from .g1_wholebody_coffee_cart_teleop import G1WholebodyCoffeeCartTeleop
+
+from .g1_wholebody_xmove_bend_pick_teleop import G1WholebodyXMoveBendPickTaskTeleop

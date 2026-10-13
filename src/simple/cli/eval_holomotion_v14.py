@@ -17,8 +17,7 @@ recorded with:
 
     robot     G1 + Dex3 + HBVCAM stereo head camera + 3.2 kg backpack (teleop_mjcf("stereo", 3.2)), camera tilt 10 deg
     scenes    the kit's level-3 evaluation set (default: data/evals_scenes/<env>/dr-level-3, the 30 checked bottle_bin
-              scenes), loaded exactly (environment_config) with the whole scene moved away from the robot so its feet
-              start --start-distance (the teleop's 0.35 m) from the table instead of the replay-fit 3 cm; or fresh
+              scenes), loaded from environment_config without layout or robot-start offsets; or fresh
               level-3 setups from --seed (--eval-set seeds); or recorded teleop episodes (--scenes-from)
     start     quick start: standing on the floor, no leash, a random start pose, walking policy on
     VLA image the rectified left eye, 1280 x 720 (what the teleop records as ego_view)
@@ -90,48 +89,26 @@ def _recorded_scenes(dataset: Path) -> list[dict]:
     return out
 
 
-TABLE_KEY = {"bottle_bin": "table_cx", "bowl_sink": "counter_cx", "coffee_cart": "table_cx"}   # the SIMPLE table's x in L
-# coffee_cart: standing in the v1.4 default pose the fingers reach the cart handle ~5 cm ahead of the nominal start, and
-# 6 of the 30 level-3 scenes start the robot up to 10 cm ahead (2026-09-30 check). As the teleop's lv3 coffee_cart
-# ranges (robot x -0.20..0), the robot starts 10 cm further back in those scenes; the rest of each scene is unchanged.
-ROBOT_BACK = {"coffee_cart": 0.10}
-
-
 def _eval_set_scenes(set_dir: Path, scene: str, setups: SceneSetups) -> list[dict]:
-    """A level-3 eval set's scenes (make_levels / build_kit_lv3 output: meta/episodes.jsonl environment_config), moved
-    along x so they sit where the teleop's start distance puts them: the robot keeps its level-3 start (near the
-    origin, as in the teleop data), the table, target, distractors and (Isaac) lights shift by the difference between
-    the kit layout as imported now and the table in the saved scene. The kit's own furniture (legs, cover board, bin)
-    follows from the imported layout."""
-    import copy
+    """Load fixed evaluation scenes without changing their saved coordinates."""
     robot_keys = ("g1_sonic", "g1_wholebody")
     out = []
     for line in open(set_dir / "meta" / "episodes.jsonl"):
         e = json.loads(line)
         cfg = json.loads(e["environment_config"]) if isinstance(e["environment_config"], str) else e["environment_config"]
         dr = cfg["dr_state_dict"]
-        dx = float(setups.nominal_L[TABLE_KEY[scene]]) - float(dr["scene"]["table"]["pose"]["position"][0])
-        cfg = copy.deepcopy(cfg)
-        dr = cfg["dr_state_dict"]
-        for k, v in (dr.get("spatial") or {}).items():
-            if k not in robot_keys and isinstance(v, dict) and "position" in v:
-                v["position"][0] = float(v["position"][0]) + dx
-        dr["scene"]["table"]["pose"]["position"][0] = float(dr["scene"]["table"]["pose"]["position"][0]) + dx
-        for v in (dr.get("lighting") or {}).values():
-            if isinstance(v, dict) and isinstance(v.get("pose"), dict) and "position" in v["pose"]:
-                v["pose"]["position"][0] = float(v["pose"]["position"][0]) + dx
         robot = next((dr["spatial"][k] for k in robot_keys if k in (dr.get("spatial") or {})), {"position": [0, 0, 0]})
-        if ROBOT_BACK.get(scene) and "position" in robot:
-            robot["position"][0] = float(robot["position"][0]) - ROBOT_BACK[scene]
+        q = robot.get("quaternion", [1, 0, 0, 0])
+        yaw = np.degrees(np.arctan2(2 * (q[0] * q[3] + q[1] * q[2]), 1 - 2 * (q[2] ** 2 + q[3] ** 2)))
         idx = int(e["episode_index"])
-        setup = dict(setups.nominal(), eval_set=str(set_dir), eval_scene=idx, moved_m=round(dx, 4),
-                     robot=dict(x=round(float(robot["position"][0]), 4), y=round(float(robot["position"][1]), 4), yaw_deg=0.0),
+        setup = dict(setups.nominal(), eval_set=str(set_dir), eval_scene=idx, moved_m=0.0,
+                     robot=dict(x=round(float(robot["position"][0]), 4), y=round(float(robot["position"][1]), 4), yaw_deg=float(yaw)),
                      target_xy=[round(float(v["position"][0]), 4) for k, v in dr["spatial"].items() if k not in robot_keys][:1] +
                      [round(float(v["position"][1]), 4) for k, v in dr["spatial"].items() if k not in robot_keys][:1],
                      table_dz=round(float(dr["scene"]["table"]["pose"]["position"][2]) + float(dr["scene"]["table"]["size"][2]) / 2
                                     - float(setups._nominal_table_height.middle()), 3),
                      distractors=len([k for k in dr["spatial"] if k not in robot_keys]) - 1)
-        out.append(dict(label=f"scene_{idx:02d}", index=idx, setup=setup, init_pose=None, environment_config=cfg, moved_m=dx))
+        out.append(dict(label=f"scene_{idx:02d}", index=idx, setup=setup, init_pose=None, environment_config=cfg, moved_m=0.0))
     return out
 
 
@@ -164,7 +141,7 @@ def main(
     seed: Annotated[int, typer.Option(help="seed base: episode i's start pose (and with --eval-set seeds its setup) uses seed + i")] = 10_000_000,
     setup_ranges: Annotated[str, typer.Option(help="lv3 (the level-3 eval ranges, the teleop default) or teleop")] = "lv3",
     scenes_from: Annotated[str, typer.Option(help="a teleop LeRobot dataset: evaluate on its episodes' exact scenes and start poses (overrides --eval-set)")] = "",
-    random_init_pose: Annotated[bool, typer.Option(help="a random start pose per episode (seeded by the episode's setup seed), as the teleop default")] = True,
+    random_init_pose: Annotated[bool, typer.Option(help="randomize the start pose for generated scenes; fixed eval sets require this disabled")] = False,
     init_pose_scale: Annotated[float, typer.Option()] = 1.0,
     start_distance: Annotated[float, typer.Option(help="robot start: feet to the table/counter/cart (m); -1 = the teleop default")] = -1.0,
     backpack_kg: Annotated[float, typer.Option()] = 3.2,
@@ -233,7 +210,13 @@ def main(
             os.environ.setdefault(k, v)
 
     # ---- scene, robot, cameras: the teleop's defaults
-    mod = load_scene(scene, None if start_distance < 0 else start_distance)
+    if set_dir is not None:
+        if start_distance >= 0 or random_init_pose:
+            raise typer.BadParameter("Fixed eval sets do not accept start-distance or random-init-pose overrides")
+        import importlib
+        mod = importlib.reload(importlib.import_module(SCENES[scene]))
+    else:
+        mod = load_scene(scene, None if start_distance < 0 else start_distance)
     sonic_config = _load_sonic_config()
     render_hz = 50
     dr_level = 3 if setup_ranges == "lv3" else 0
@@ -242,16 +225,17 @@ def main(
                    target=getattr(mod, "TARGET", None), dr_level=dr_level, success_criteria=success_criteria)
     sonic_env = env.unwrapped
     task, robot = sonic_env.task, sonic_env.task.robot
-    robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg)
-    if head_tilt_deg:
-        tilt_head_sensor(task, head_tilt_deg)
+    if set_dir is None:
+        robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg)
+        if head_tilt_deg:
+            tilt_head_sensor(task, head_tilt_deg)
     control_dt = 4 * robot.sim_dt
     if use_isaac and os.environ.get(f"{scene.upper()}_LIGHT_LEVEL"):
         # SIMPLE's DR manager puts lighting in "fixed" mode at every level > 0: give the randomizer the task's own config
         # (the scene's bright / dim ranges), as scripts/render_teleop_isaac.py does. Isaac-only; physics unchanged.
         from copy import deepcopy
         task.dr.randomizers["lighting"].cfg = deepcopy(task.dr_cfgs["lighting"])
-    view = None if use_isaac else (FisheyeView(sonic_env) if image_camera == "fisheye" else PinholeView(sonic_env))
+    view = None if use_isaac or set_dir is not None else (FisheyeView(sonic_env) if image_camera == "fisheye" else PinholeView(sonic_env))
     cache = {"step": None, "img": None}
     step_id = {"n": 0}
     isaac = {"cam": None, "third": None, "robot": None, "model": None, "hooked": False, "blank": 0}
@@ -259,6 +243,10 @@ def main(
     def _isaac_views_for_episode():
         """After a reset: the HBVCAM camera + third-person camera (once per Isaac stage) and the robot prims (per compiled
         model), and the engine's per-step Isaac call hooked so both follow MuJoCo before Isaac renders."""
+        if set_dir is not None:
+            for _ in range(max(1, isaac_warmup)):
+                sonic_env.isaac.step(sonic_env.mujoco)
+            return
         from simple.teleop.holomotion_v14.isaac_views import IsaacFreeCamera, MujocoRobot, PinholeCamera
         from simple.teleop.holomotion_v14.robot_variants import PINHOLE_CAMERA
         m = sonic_env.mujoco.mjModel
@@ -301,7 +289,9 @@ def main(
     def vla_image() -> np.ndarray:
         """The VLA image of the current (pre-step) state, rendered once per step."""
         if cache["step"] != step_id["n"]:
-            if use_isaac:
+            if set_dir is not None:
+                img = sonic_env._get_obs()["head_stereo_left"]
+            elif use_isaac:
                 from simple.teleop.holomotion_v14.robot_variants import PINHOLE_H, PINHOLE_W
                 img = isaac["cam"].rgb()
                 if img is None or img.shape[:2] != (PINHOLE_H, PINHOLE_W):
@@ -318,7 +308,7 @@ def main(
         return cache["img"]
 
     def third_person_frame() -> np.ndarray:
-        if use_isaac:
+        if use_isaac and set_dir is None:
             import cv2
             img = isaac["third"].rgb() if isaac["third"] is not None else None
             return cv2.resize(img, (640, 360), interpolation=cv2.INTER_AREA) if img is not None else np.zeros((360, 640, 3), np.uint8)
@@ -348,8 +338,7 @@ def main(
         for ep in episodes:
             ep["init_seed"] = ((seed + ep["index"]) * 7919 + 17) % 2 ** 32 if random_init_pose else None
         scene_tag = f"{set_dir.name}" if eval_set != "lv3" else "dr-level-3"
-        print(f"[eval] eval set {set_dir}: {len(episodes)} scenes; scene moved {episodes[0]['moved_m']:+.3f} m away from "
-              f"the robot, robot {ROBOT_BACK.get(scene, 0.0):.2f} m further back" if episodes else f"[eval] eval set {set_dir}: no scenes")
+        print(f"[eval] eval set {set_dir}: {len(episodes)} scenes; saved layout unchanged")
     else:
         setups = SceneSetups(scene, mod, task, ranges=setup_ranges)
         episodes = []
@@ -384,7 +373,8 @@ def main(
     try:
         for ep in episodes:
             label = ep["label"]
-            setups.apply(ep["setup"])
+            if not ep.get("environment_config"):
+                setups.apply(ep["setup"])
             if ep.get("environment_config"):                   # a recorded episode: its exact scene, as the replay loads it
                 cfg = ep["environment_config"]
                 observation, privileged_info = env.reset(options={"state_dict": json.loads(cfg) if isinstance(cfg, str) else cfg})

@@ -628,6 +628,15 @@ class MujocoSimulator(Simulator):
                 xyaxes=[0,1,0,-0.5,0,1], 
             )
         elif camera.mount == "eye_in_head":
+            robot = self.task.robot
+            if hasattr(robot, "head_camera_mujoco_position"):
+                body = next((b for b in self.mj_worldbody.find_all("body") if b.name == robot.head_cam_link), None)
+                if body is None:
+                    raise RuntimeError(f"Missing robot camera mount {robot.head_cam_link}")
+                self._add_mujoco_camera(body, camera, name=cname,
+                    pos=robot.head_camera_mujoco_position,
+                    quat=robot.head_camera_mujoco_quaternion)
+                return
             torso_body = None
             for body in self.mj_worldbody.find_all('body'):
                 if body.name == "torso_link":

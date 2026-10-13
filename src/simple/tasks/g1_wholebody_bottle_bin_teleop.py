@@ -19,6 +19,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from simple.assets.scene_cache import fixed_asset, scene_cache_dir
+from simple.tasks.scene_state import restore_furniture
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -62,11 +63,7 @@ INSTRUCTION = os.environ.get("BOTTLE_BIN_INSTRUCTION",
 # The 2026-09-17 default "move the blue chip bag from the shelf to the plate on the counter" belonged to a different
 # task and went into every recorded episode; set BOTTLE_BIN_INSTRUCTION to use another string.
 
-# D455 lens pose of the scene (servo pan 0 / tilt 10 deg) as an offset of SIMPLE's stock eye_in_head mount, from
-# sim/tabletop_box/g1_tabletop_box_simple_task.py (the engine's mount is the same for every G1 robot class)
-CAM_LOCAL_POS = [0.01849, 0.03219, -0.00928]
-CAM_LOCAL_QUAT = [0.996029, -0.088426, -0.007383, -0.007305]
-HEAD_TILT_TRIM_DEG = float(os.environ.get("BOTTLE_BIN_HEAD_TRIM_DEG", "0"))
+# The g1comp robot owns the fixed pan-0 / tilt-10 D455 mount.
 HEAD_HFOV_DEG, HEAD_W, HEAD_H = 90.0, 640, 360
 HAND_RGBA = [float(v) for v in BS.HAND_RGBA.split()]
 
@@ -256,40 +253,6 @@ def _patch_static_objects():
     MujocoSimulator._bottle_bin_patched = True
 
 
-def _patch_head_camera_pose():
-    """Apply the configured eye_in_head pose as a local offset of SIMPLE's stock head mount (the engine only accepts
-    an identity quaternion there). Copied from the tabletop_box task."""
-    import transforms3d as t3d
-    from simple.engines.mujoco import MujocoSimulator
-    if getattr(MujocoSimulator, "_tabletop_box_patched", False):
-        return
-    orig_build = MujocoSimulator._build_camera
-
-    def build_camera(self, cname, camera):
-        q = np.asarray(camera.pose.quaternion, dtype=float)
-        p = np.asarray(camera.pose.position, dtype=float)
-        if camera.mount != "eye_in_head" or (np.allclose(q[1:], 0.0, atol=1e-6) and np.allclose(p, 0.0)):
-            return orig_build(self, cname, camera)
-        camera.pose.quaternion, camera.pose.position = [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
-        orig_add = self._add_mujoco_camera
-
-        def add_camera(parent, cam, **kw):
-            r_stock = t3d.quaternions.quat2mat(kw["quat"])
-            kw["pos"] = np.asarray(kw["pos"], dtype=float) + r_stock @ p
-            kw["quat"] = t3d.quaternions.qmult(kw["quat"], q)
-            return orig_add(parent, cam, **kw)
-
-        self._add_mujoco_camera = add_camera
-        try:
-            return orig_build(self, cname, camera)
-        finally:
-            del self._add_mujoco_camera
-            camera.pose.quaternion, camera.pose.position = q.tolist(), p.tolist()
-
-    MujocoSimulator._build_camera = build_camera
-    MujocoSimulator._tabletop_box_patched = True
-
-
 def _patch_renderer_framebuffer():
     import mujoco
     if getattr(mujoco.Renderer, "_tabletop_box_patched", False):
@@ -379,7 +342,6 @@ def legs_variant_files(dz: float) -> dict:
 
 
 def _define_task():
-    import transforms3d as t3d
     from simple.assets import AssetManager
     from simple.core.asset import Asset
     from simple.core.object import SemanticAnnotated, SpatialAnnotated
@@ -441,12 +403,17 @@ def _define_task():
             def __iter__(self):
                 yield self.load("bottle_500ml")
 
-    cam_quat = t3d.quaternions.qmult(CAM_LOCAL_QUAT, t3d.quaternions.axangle2quat([1.0, 0.0, 0.0], np.radians(-HEAD_TILT_TRIM_DEG))).tolist()
     stable_idx = 0 if TARGET.startswith("bottle_bin:") else standing_stable_index(TARGET)
     parent = G1WholebodyXMovePickTaskTeleop
 
     @TaskRegistry.register(TASK_UID)
     class G1WholebodyBottleBinTeleop(parent):
+        def __init__(self, *args, **kwargs):
+            # Parent constructors mutate robot_cfg; isolate it from other tasks.
+            self.robot_cfg = deepcopy(self.robot_cfg)
+            kwargs["robot_uid"] = "g1comp_sonic"
+            super().__init__(*args, **kwargs)
+
         isaac_hidden_scene_groups = ("furniture",)
         uid: str = TASK_UID
         label: str = "G1 Bottle Bin Teleop"
@@ -466,7 +433,7 @@ def _define_task():
             # Keep the existing left-view observation key for policy/replay compatibility.
             head_stereo_left=CameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
                                         focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=5,
-                                        pose=dict(position=list(CAM_LOCAL_POS), quaternion=cam_quat)))
+                                        pose=dict(position=[0.0, 0.0, 0.0], quaternion=[1.0, 0.0, 0.0, 0.0])))
         dr_cfgs = dict(
             language=LanguageDRCfg(instructions=[INSTRUCTION]),
             target=TargetDRCfg(asset_id=TARGET),
@@ -537,6 +504,8 @@ def _define_task():
                 "trash_bin": ("trash_bin", [L["bin_x"], L["bin_y"], 0.0], [float(bq[3]), float(bq[0]), float(bq[1]), float(bq[2])]),
             }
             for name, (asset_id, pos, quat) in extra.items():
+                asset_id, pos, quat = restore_furniture(
+                    self._layout, options, name, asset_id, pos, quat, follows_height=name == "cover_board")
                 _sync_extra(self._layout, am, name, asset_id, pos, quat)
             self._instruction = INSTRUCTION
 
@@ -648,7 +617,6 @@ def register():
     import gymnasium as gym
     import simple.envs  # noqa: F401  stock registrations
     _patch_renderer_framebuffer()
-    _patch_head_camera_pose()
     _patch_static_objects()
     task_cls = _define_task()
     return task_cls

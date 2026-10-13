@@ -44,6 +44,16 @@ class LightingDR(Randomizer):
             light.light_color_temperature= v["light_color_temperature"]
             light.center_light_postion = v["center_light_postion"]
             light.center_light_orientation = v["center_light_orientation"]
+            # Older scene exports serialized NumPy quaternions as strings.
+            if isinstance(light.center_light_orientation, str):
+                orientation = np.fromstring(
+                    light.center_light_orientation.strip("[]"), sep=" "
+                )
+                if orientation.shape != (4,) or not np.isfinite(orientation).all():
+                    raise ValueError(
+                        f"Invalid light orientation: {light.center_light_orientation}"
+                    )
+                light.center_light_orientation = orientation.tolist()
             # self._inner_state[light.uid] = light
             inner_state.append(light)
         self._inner_state = inner_state

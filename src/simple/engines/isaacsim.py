@@ -1028,6 +1028,10 @@ class IsaacSimSimulator(Simulator):
             prim_path=f"{self.workspace_prim_path}/Robot",
         )
 
+        if hasattr(self.task.robot, "add_isaac_visuals"):
+            self.task.robot.add_isaac_visuals(
+                self.world.stage, f"{self.workspace_prim_path}/Robot/{robot_ns}")
+
         robo_actor = self.task.layout.actors["robot"]
         self.robot = IsaacRobot(
             prim_path=f"{self.workspace_prim_path}/Robot/{robot_ns}",
@@ -1067,7 +1071,7 @@ class IsaacSimSimulator(Simulator):
             elif cam_info.mount == "eye_on_base":
                 cam_prim_path = f"{self.workspace_prim_path}/Robot/{self.task.robot.robot_ns}"
             elif cam_info.mount == "eye_in_head":
-                head_prim_link = self.task.robot.head_cam_link
+                head_prim_link = getattr(self.task.robot, "isaac_head_cam_link", self.task.robot.head_cam_link)
                 cam_prim_path = f"{self.workspace_prim_path}/Robot/{self.task.robot.robot_ns}/{head_prim_link}"
             else:
                 raise ValueError(f"Unsupported camera mount: {cam_info.mount}")

@@ -72,7 +72,8 @@ class BowlSinkGates:
 
     # ------------------------------------------------------------------ one step
     def update(self, t: float, pelvis_xy, yaw: float, bowl_xyz, basin_xyz, hand_on_bowl: bool,
-               base_speed: float | None = None, bowl_tilt_deg: float | None = None, bowl_speed: float | None = None):
+               base_speed: float | None = None, bowl_tilt_deg: float | None = None, bowl_speed: float | None = None,
+               inside_basin: bool | None = None):
         """Feed one control step.  pelvis_xy / bowl_xyz / basin_xyz in the same world frame; yaw = heading (rad)."""
         c, P = self.cfg, self.P
         pelvis_xy = np.asarray(pelvis_xy, float)[:2]; bowl = np.asarray(bowl_xyz, float); basin = np.asarray(basin_xyz, float)
@@ -113,8 +114,9 @@ class BowlSinkGates:
             if since_grasp >= c.min_walk_basin and d_basin <= c.at_basin_radius and still and self._bearing_ok(pelvis_xy, yaw, basin[:2], c.at_basin_bearing):
                 P["at_basin"], P["t_at_basin"] = True, t
         # 4. placed: let go, inside the basin, below the rim
-        inside = (abs(bowl[0] - basin[0]) <= c.basin_len / 2 - c.bowl_base_r and abs(bowl[1] - basin[1]) <= c.basin_across / 2 - c.bowl_base_r
-                  and bowl[2] < c.sink_h)
+        inside = inside_basin if inside_basin is not None else (
+            abs(bowl[0] - basin[0]) <= c.basin_len / 2 - c.bowl_base_r
+            and abs(bowl[1] - basin[1]) <= c.basin_across / 2 - c.bowl_base_r and bowl[2] < c.sink_h)
         if P["at_basin"] and not P["placed"] and not hand_on_bowl and inside:
             P["placed"], P["t_placed"] = True, t
             P["success"] = True

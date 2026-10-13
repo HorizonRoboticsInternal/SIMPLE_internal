@@ -55,6 +55,7 @@ Thumbs.db
 /data/evals/
 /data/evals_scenes/
 /data/evals_scenes_benchmark/
+/data/evals_scenes_3real_samebg/
 /data/robots_g1_sonic.zip
 /data/scene-archives/
 /data/scenes/
@@ -78,6 +79,11 @@ Thumbs.db
 /data/real_scenes/**/*_[pm][0-9][0-9][0-9].obj
 /data/real_scenes/**/*_[pm][0-9][0-9][0-9].usda
 /data/generated/
+
+# Private donor bundle, published head meshes, and local publication staging.
+/data/samebg_sim_datasets_20261012/
+/data/robots/g1comp/head_meshes/
+/data/publish_staging/
 
 !.env.sample
 

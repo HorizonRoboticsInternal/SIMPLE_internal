@@ -19,6 +19,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from simple.assets.scene_cache import fixed_asset, scene_cache_dir
+from simple.tasks.scene_state import restore_furniture
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -58,11 +59,7 @@ BOWL_MASS = float(os.environ.get("BOWL_SINK_BOWL_MASS", _LAYOUT_JSON["bowl"]["ma
 INSTRUCTION = os.environ.get("BOWL_SINK_INSTRUCTION",
                              "pick up the green bowl from the counter, turn right, move towards the sink, and place the bowl in the sink")
 
-# D455 lens pose of the scene (servo pan 0 / tilt 10 deg) as an offset of SIMPLE's stock eye_in_head mount, from
-# sim/tabletop_box/g1_tabletop_box_simple_task.py (the engine's mount is the same for every G1 robot class)
-CAM_LOCAL_POS = [0.01849, 0.03219, -0.00928]
-CAM_LOCAL_QUAT = [0.996029, -0.088426, -0.007383, -0.007305]
-HEAD_TILT_TRIM_DEG = float(os.environ.get("BOWL_SINK_HEAD_TRIM_DEG", "0"))
+# The g1comp robot owns the fixed pan-0 / tilt-10 D455 mount.
 HEAD_HFOV_DEG, HEAD_W, HEAD_H = 90.0, 640, 360
 HAND_RGBA = [float(v) for v in BS.HAND_RGBA.split()]
 
@@ -280,40 +277,6 @@ def _patch_static_objects():
     MujocoSimulator._bowl_sink_patched = True
 
 
-def _patch_head_camera_pose():
-    """Apply the configured eye_in_head pose as a local offset of SIMPLE's stock head mount (the engine only accepts
-    an identity quaternion there). Copied from the tabletop_box task."""
-    import transforms3d as t3d
-    from simple.engines.mujoco import MujocoSimulator
-    if getattr(MujocoSimulator, "_tabletop_box_patched", False):
-        return
-    orig_build = MujocoSimulator._build_camera
-
-    def build_camera(self, cname, camera):
-        q = np.asarray(camera.pose.quaternion, dtype=float)
-        p = np.asarray(camera.pose.position, dtype=float)
-        if camera.mount != "eye_in_head" or (np.allclose(q[1:], 0.0, atol=1e-6) and np.allclose(p, 0.0)):
-            return orig_build(self, cname, camera)
-        camera.pose.quaternion, camera.pose.position = [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
-        orig_add = self._add_mujoco_camera
-
-        def add_camera(parent, cam, **kw):
-            r_stock = t3d.quaternions.quat2mat(kw["quat"])
-            kw["pos"] = np.asarray(kw["pos"], dtype=float) + r_stock @ p
-            kw["quat"] = t3d.quaternions.qmult(kw["quat"], q)
-            return orig_add(parent, cam, **kw)
-
-        self._add_mujoco_camera = add_camera
-        try:
-            return orig_build(self, cname, camera)
-        finally:
-            del self._add_mujoco_camera
-            camera.pose.quaternion, camera.pose.position = q.tolist(), p.tolist()
-
-    MujocoSimulator._build_camera = build_camera
-    MujocoSimulator._tabletop_box_patched = True
-
-
 def _patch_renderer_framebuffer():
     import mujoco
     if getattr(mujoco.Renderer, "_tabletop_box_patched", False):
@@ -412,7 +375,6 @@ def sink_variant_files(dz: float) -> dict:
 
 
 def _define_task():
-    import transforms3d as t3d
     from simple.assets import AssetManager
     from simple.core.asset import Asset
     from simple.core.object import SemanticAnnotated, SpatialAnnotated
@@ -475,12 +437,17 @@ def _define_task():
             def __iter__(self):
                 yield self.load("bowl_15cm")
 
-    cam_quat = t3d.quaternions.qmult(CAM_LOCAL_QUAT, t3d.quaternions.axangle2quat([1.0, 0.0, 0.0], np.radians(-HEAD_TILT_TRIM_DEG))).tolist()
     stable_idx = 0 if TARGET.startswith("bowl_sink:") else standing_stable_index(TARGET)
     parent = G1WholebodyXMovePickTaskTeleop
 
     @TaskRegistry.register(TASK_UID)
     class G1WholebodyBowlSinkTeleop(parent):
+        def __init__(self, *args, **kwargs):
+            # Parent constructors mutate robot_cfg; isolate it from other tasks.
+            self.robot_cfg = deepcopy(self.robot_cfg)
+            kwargs["robot_uid"] = "g1comp_sonic"
+            super().__init__(*args, **kwargs)
+
         isaac_hidden_scene_groups = ("furniture",)
         uid: str = TASK_UID
         label: str = "G1 Bowl Sink Teleop"
@@ -500,7 +467,7 @@ def _define_task():
             # Keep the existing left-view observation key for policy/replay compatibility.
             head_stereo_left=CameraCfg(uid="Realsense_D455", mount="eye_in_head", width=HEAD_W, height=HEAD_H,
                                         focal_length=1.93, fov=np.deg2rad(HEAD_HFOV_DEG), near=0.05, far=5,
-                                        pose=dict(position=list(CAM_LOCAL_POS), quaternion=cam_quat)))
+                                        pose=dict(position=[0.0, 0.0, 0.0], quaternion=[1.0, 0.0, 0.0, 0.0])))
         dr_cfgs = dict(
             language=LanguageDRCfg(instructions=[INSTRUCTION]),
             target=TargetDRCfg(asset_id=TARGET),
@@ -539,6 +506,8 @@ def _define_task():
                 "sink_counter": ("sink_counter" + sfx, [L["sink_cx"], L["sink_cy"], 0.0], [1.0, 0.0, 0.0, 0.0]),
             }
             for name, (asset_id, pos, quat) in extra.items():
+                asset_id, pos, quat = restore_furniture(
+                    self._layout, options, name, asset_id, pos, quat, follows_height=name == "cover_board")
                 _sync_extra(self._layout, am, name, asset_id, pos, quat)
             self._instruction = INSTRUCTION
 
@@ -565,11 +534,17 @@ def _define_task():
             self._gate_steps += 1
             t = self._gate_steps * self._gates.cfg.step_dt
             sink = np.asarray(info["sink_counter"], dtype=float)
-            basin = sink[:3] + np.asarray(getattr(self, "_basin_offset", self.BASIN_OFFSET))
+            basin = sink[:3] + R.from_quat(sink[[4, 5, 6, 3]]).apply(
+                getattr(self, "_basin_offset", self.BASIN_OFFSET))
             target = np.asarray(info["target"], dtype=float)
+            local = R.from_quat(sink[[4, 5, 6, 3]]).inv().apply(target[:3] - basin)
+            inside = bool(abs(local[0]) <= BS.BASIN_L / 2 - BS.BOWL_R_BOT
+                          and abs(local[1]) <= BS.BASIN_ACROSS / 2 - BS.BOWL_R_BOT
+                          and local[2] < BS.BASIN_DEPTH)
             tilt = float(np.degrees(np.arccos(np.clip(1 - 2 * (target[4] ** 2 + target[5] ** 2), -1, 1))))
             P = self._gates.update(t, d.qpos[:2], yaw_wxyz(d.qpos[3:7]), target[:3], basin, self._gate_probe.hand_on(d),
-                                   base_speed=float(np.hypot(*np.asarray(d.qvel[:2], dtype=float))), bowl_tilt_deg=tilt)
+                                   base_speed=float(np.hypot(*np.asarray(d.qvel[:2], dtype=float))), bowl_tilt_deg=tilt,
+                                   inside_basin=inside)
             info["task_progress"] = dict(P)
             return P
 
@@ -588,7 +563,6 @@ def register():
     import gymnasium as gym
     import simple.envs  # noqa: F401  stock registrations
     _patch_renderer_framebuffer()
-    _patch_head_camera_pose()
     _patch_static_objects()
     task_cls = _define_task()
     return task_cls

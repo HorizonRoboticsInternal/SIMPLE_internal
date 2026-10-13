@@ -147,6 +147,7 @@ class SpatialDR(Randomizer):
                 if self._inner_state is not None and str(obj.robot.uid) in self._inner_state:
                     state = self._inner_state[str(obj.robot.uid)]
                     robot_position = state["position"]
+                    obj.pose.quaternion = state["quaternion"]
                 
                 else:
                     if self.cfg.robot_region is not None:
@@ -167,7 +168,8 @@ class SpatialDR(Randomizer):
                     # print(f"Placed robot at {robot_position}")
                 obj.pose.position = robot_position
 
-                if self.cfg.robot_orientation_region is not None:
+                if (str(obj.robot.uid) not in self._inner_state
+                        and self.cfg.robot_orientation_region is not None):
                     if self.spatial_mode == "fixed":
                         robot_orientation = self.cfg.robot_orientation_region.middle()
                     else:
