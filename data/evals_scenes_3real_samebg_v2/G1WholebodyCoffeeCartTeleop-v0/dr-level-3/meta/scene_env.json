@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "source": "/horizon-bucket/robot_lab2/users/siqi01.chai/SIMPLE-data-bucket-eval-2/data/evals/evals_scenes_3real/G1WholebodyCoffeeCartTeleop-v0/dr-level-3",
+  "fixed_look_source": "/home/users/kerou.zhang-labs/workspace/SIMPLE/data/evals_scenes_3real_samebg_backup_20261014_122238/G1WholebodyCoffeeCartTeleop-v0/dr-level-3",
+  "episode_mapping": "identity: v2 episode i uses 3real episode i",
+  "distractors": 0,
+  "runtime_dr_override": null,
+  "robot_runtime": "g1comp-pan0-tilt10-v1",
+  "videos": "Unmodified 3real reference videos; NOT renders of the v2 environment.",
+  "joint_state": "Source parquet preserved; runtime reset/warmup semantics unchanged."
+}

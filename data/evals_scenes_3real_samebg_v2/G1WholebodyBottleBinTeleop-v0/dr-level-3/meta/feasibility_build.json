@@ -1,0 +1,947 @@
+{
+ "kit": "bottle_bin",
+ "src": "data/evals_scenes/G1WholebodyBottleBinTeleop-v0/dr-level-3",
+ "fits": "/home/Horizon/wrk/robot_orchard_deploy/holobrain_g1_deploy/sim/bottle_bin/replay/best_fits.json",
+ "dz_max": 0.02,
+ "scenes": [
+  {
+   "scene": 0,
+   "fit_ep": 79,
+   "fit_bottle_rel": [
+    0.255,
+    -0.003
+   ],
+   "back_m": 0.0028,
+   "side_m": -0.0328,
+   "robot_xy": [
+    -0.0028,
+    -0.0328
+   ],
+   "target_xy": [
+    0.2522,
+    -0.0358
+   ],
+   "target_rel": [
+    0.255,
+    -0.003
+   ],
+   "table_dz": -0.017,
+   "target_behind_edge": 0.0972,
+   "distractors_moved": [
+    {
+     "uid": "52",
+     "from": [
+      0.359,
+      -0.19
+     ],
+     "to": [
+      0.415,
+      0.03
+     ]
+    },
+    {
+     "uid": "54",
+     "from": [
+      0.311,
+      -0.268
+     ],
+     "to": [
+      0.495,
+      0.15
+     ]
+    },
+    {
+     "uid": "61",
+     "from": [
+      0.434,
+      -0.051
+     ],
+     "to": [
+      0.415,
+      -0.69
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 1,
+   "fit_ep": 99,
+   "fit_bottle_rel": [
+    0.36,
+    -0.058
+   ],
+   "back_m": 0.0386,
+   "side_m": 0.0052,
+   "robot_xy": [
+    -0.0386,
+    0.0052
+   ],
+   "target_xy": [
+    0.3214,
+    -0.0528
+   ],
+   "target_rel": [
+    0.36,
+    -0.058
+   ],
+   "table_dz": 0.0035,
+   "target_behind_edge": 0.1664,
+   "distractors_moved": []
+  },
+  {
+   "scene": 2,
+   "fit_ep": 101,
+   "fit_bottle_rel": [
+    0.36,
+    0.042
+   ],
+   "back_m": 0.0179,
+   "side_m": 0.019,
+   "robot_xy": [
+    -0.0179,
+    0.019
+   ],
+   "target_xy": [
+    0.3421,
+    0.061
+   ],
+   "target_rel": [
+    0.36,
+    0.042
+   ],
+   "table_dz": -0.0185,
+   "target_behind_edge": 0.1871,
+   "distractors_moved": []
+  },
+  {
+   "scene": 3,
+   "fit_ep": 87,
+   "fit_bottle_rel": [
+    0.2112,
+    -0.0513
+   ],
+   "back_m": 0.0112,
+   "side_m": -0.0293,
+   "robot_xy": [
+    -0.0112,
+    -0.0293
+   ],
+   "target_xy": [
+    0.2,
+    -0.0806
+   ],
+   "target_rel": [
+    0.2112,
+    -0.0513
+   ],
+   "table_dz": -0.0075,
+   "target_behind_edge": 0.045,
+   "distractors_moved": [
+    {
+     "uid": "17",
+     "from": [
+      0.298,
+      0.123
+     ],
+     "to": [
+      0.615,
+      -0.65
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 4,
+   "fit_ep": 70,
+   "fit_bottle_rel": [
+    0.319,
+    -0.0
+   ],
+   "back_m": 0.0359,
+   "side_m": -0.0052,
+   "robot_xy": [
+    -0.0359,
+    -0.0052
+   ],
+   "target_xy": [
+    0.2831,
+    -0.0052
+   ],
+   "target_rel": [
+    0.319,
+    0.0
+   ],
+   "table_dz": -0.005,
+   "target_behind_edge": 0.1281,
+   "distractors_moved": [
+    {
+     "uid": "65",
+     "from": [
+      0.277,
+      0.255
+     ],
+     "to": [
+      0.295,
+      -0.49
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 5,
+   "fit_ep": 53,
+   "fit_bottle_rel": [
+    0.248,
+    -0.0133
+   ],
+   "back_m": 0.0331,
+   "side_m": -0.0224,
+   "robot_xy": [
+    -0.0331,
+    -0.0224
+   ],
+   "target_xy": [
+    0.2149,
+    -0.0357
+   ],
+   "target_rel": [
+    0.248,
+    -0.0133
+   ],
+   "table_dz": -0.013,
+   "target_behind_edge": 0.0599,
+   "distractors_moved": [
+    {
+     "uid": "14",
+     "from": [
+      0.288,
+      -0.284
+     ],
+     "to": [
+      0.495,
+      -0.01
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 6,
+   "fit_ep": 58,
+   "fit_bottle_rel": [
+    0.202,
+    0.009
+   ],
+   "back_m": 0.002,
+   "side_m": -0.0121,
+   "robot_xy": [
+    -0.002,
+    -0.0121
+   ],
+   "target_xy": [
+    0.2,
+    -0.0031
+   ],
+   "target_rel": [
+    0.202,
+    0.009
+   ],
+   "table_dz": 0.005,
+   "target_behind_edge": 0.045,
+   "distractors_moved": [
+    {
+     "uid": "44",
+     "from": [
+      0.324,
+      0.161
+     ],
+     "to": [
+      0.575,
+      0.11
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 7,
+   "fit_ep": 77,
+   "fit_bottle_rel": [
+    0.291,
+    -0.032
+   ],
+   "back_m": 0.0152,
+   "side_m": -0.0086,
+   "robot_xy": [
+    -0.0152,
+    -0.0086
+   ],
+   "target_xy": [
+    0.2758,
+    -0.0406
+   ],
+   "target_rel": [
+    0.291,
+    -0.032
+   ],
+   "table_dz": 0.013,
+   "target_behind_edge": 0.1208,
+   "distractors_moved": []
+  },
+  {
+   "scene": 8,
+   "fit_ep": 93,
+   "fit_bottle_rel": [
+    0.226,
+    0.036
+   ],
+   "back_m": 0.0234,
+   "side_m": -0.0431,
+   "robot_xy": [
+    -0.0234,
+    -0.0431
+   ],
+   "target_xy": [
+    0.2026,
+    -0.0071
+   ],
+   "target_rel": [
+    0.226,
+    0.036
+   ],
+   "table_dz": 0.017,
+   "target_behind_edge": 0.0476,
+   "distractors_moved": []
+  },
+  {
+   "scene": 9,
+   "fit_ep": 20,
+   "fit_bottle_rel": [
+    0.288,
+    0.011
+   ],
+   "back_m": 0.0303,
+   "side_m": 0.0362,
+   "robot_xy": [
+    -0.0303,
+    0.0362
+   ],
+   "target_xy": [
+    0.2577,
+    0.0472
+   ],
+   "target_rel": [
+    0.288,
+    0.011
+   ],
+   "table_dz": 0.02,
+   "target_behind_edge": 0.1027,
+   "distractors_moved": [
+    {
+     "uid": "0",
+     "from": [
+      0.508,
+      -0.069
+     ],
+     "to": [
+      0.455,
+      -0.97
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 10,
+   "fit_ep": 86,
+   "fit_bottle_rel": [
+    0.223,
+    -0.016
+   ],
+   "back_m": 0.0069,
+   "side_m": 0.0397,
+   "robot_xy": [
+    -0.0069,
+    0.0397
+   ],
+   "target_xy": [
+    0.2161,
+    0.0237
+   ],
+   "target_rel": [
+    0.223,
+    -0.016
+   ],
+   "table_dz": -0.0035,
+   "target_behind_edge": 0.0611,
+   "distractors_moved": [
+    {
+     "uid": "34",
+     "from": [
+      0.347,
+      -0.242
+     ],
+     "to": [
+      0.535,
+      -0.97
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 11,
+   "fit_ep": 100,
+   "fit_bottle_rel": [
+    0.331,
+    0.032
+   ],
+   "back_m": 0.0221,
+   "side_m": -0.0362,
+   "robot_xy": [
+    -0.0221,
+    -0.0362
+   ],
+   "target_xy": [
+    0.3089,
+    -0.0042
+   ],
+   "target_rel": [
+    0.331,
+    0.032
+   ],
+   "table_dz": -0.002,
+   "target_behind_edge": 0.1539,
+   "distractors_moved": []
+  },
+  {
+   "scene": 12,
+   "fit_ep": 68,
+   "fit_bottle_rel": [
+    0.264,
+    0.0208
+   ],
+   "back_m": 0.011,
+   "side_m": -0.0155,
+   "robot_xy": [
+    -0.011,
+    -0.0155
+   ],
+   "target_xy": [
+    0.253,
+    0.0053
+   ],
+   "target_rel": [
+    0.264,
+    0.0208
+   ],
+   "table_dz": 0.002,
+   "target_behind_edge": 0.098,
+   "distractors_moved": []
+  },
+  {
+   "scene": 13,
+   "fit_ep": 44,
+   "fit_bottle_rel": [
+    0.233,
+    0.006
+   ],
+   "back_m": 0.0193,
+   "side_m": 0.0293,
+   "robot_xy": [
+    -0.0193,
+    0.0293
+   ],
+   "target_xy": [
+    0.2137,
+    0.0353
+   ],
+   "target_rel": [
+    0.233,
+    0.006
+   ],
+   "table_dz": -0.02,
+   "target_behind_edge": 0.0587,
+   "distractors_moved": [
+    {
+     "uid": "59",
+     "from": [
+      0.644,
+      -0.65
+     ],
+     "to": [
+      0.335,
+      -0.93
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 14,
+   "fit_ep": 40,
+   "fit_bottle_rel": [
+    0.199,
+    -0.014
+   ],
+   "back_m": 0.0,
+   "side_m": 0.0466,
+   "robot_xy": [
+    -0.0,
+    0.0466
+   ],
+   "target_xy": [
+    0.199,
+    0.0326
+   ],
+   "target_rel": [
+    0.199,
+    -0.014
+   ],
+   "table_dz": 0.0185,
+   "target_behind_edge": 0.044,
+   "distractors_moved": [
+    {
+     "uid": "16",
+     "from": [
+      0.433,
+      -1.009
+     ],
+     "to": [
+      0.535,
+      0.11
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 15,
+   "fit_ep": 3,
+   "fit_bottle_rel": [
+    0.283,
+    -0.01
+   ],
+   "back_m": 0.0276,
+   "side_m": -0.019,
+   "robot_xy": [
+    -0.0276,
+    -0.019
+   ],
+   "target_xy": [
+    0.2554,
+    -0.029
+   ],
+   "target_rel": [
+    0.283,
+    -0.01
+   ],
+   "table_dz": -0.0115,
+   "target_behind_edge": 0.1004,
+   "distractors_moved": []
+  },
+  {
+   "scene": 16,
+   "fit_ep": 48,
+   "fit_bottle_rel": [
+    0.27,
+    -0.002
+   ],
+   "back_m": 0.0014,
+   "side_m": -0.0466,
+   "robot_xy": [
+    -0.0014,
+    -0.0466
+   ],
+   "target_xy": [
+    0.2686,
+    -0.0486
+   ],
+   "target_rel": [
+    0.27,
+    -0.002
+   ],
+   "table_dz": 0.016,
+   "target_behind_edge": 0.1136,
+   "distractors_moved": []
+  },
+  {
+   "scene": 17,
+   "fit_ep": 52,
+   "fit_bottle_rel": [
+    0.241,
+    -0.014
+   ],
+   "back_m": 0.04,
+   "side_m": 0.0431,
+   "robot_xy": [
+    -0.04,
+    0.0431
+   ],
+   "target_xy": [
+    0.201,
+    0.0291
+   ],
+   "target_rel": [
+    0.241,
+    -0.014
+   ],
+   "table_dz": 0.0075,
+   "target_behind_edge": 0.046,
+   "distractors_moved": []
+  },
+  {
+   "scene": 18,
+   "fit_ep": 33,
+   "fit_bottle_rel": [
+    0.284,
+    0.028
+   ],
+   "back_m": 0.0083,
+   "side_m": -0.0259,
+   "robot_xy": [
+    -0.0083,
+    -0.0259
+   ],
+   "target_xy": [
+    0.2757,
+    0.0021
+   ],
+   "target_rel": [
+    0.284,
+    0.028
+   ],
+   "table_dz": -0.006,
+   "target_behind_edge": 0.1207,
+   "distractors_moved": []
+  },
+  {
+   "scene": 19,
+   "fit_ep": 72,
+   "fit_bottle_rel": [
+    0.212,
+    0.027
+   ],
+   "back_m": 0.0055,
+   "side_m": -0.0017,
+   "robot_xy": [
+    -0.0055,
+    -0.0017
+   ],
+   "target_xy": [
+    0.2065,
+    0.0253
+   ],
+   "target_rel": [
+    0.212,
+    0.027
+   ],
+   "table_dz": 0.009,
+   "target_behind_edge": 0.0515,
+   "distractors_moved": [
+    {
+     "uid": "34",
+     "from": [
+      0.34,
+      0.124
+     ],
+     "to": [
+      0.535,
+      -1.25
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 20,
+   "fit_ep": 65,
+   "fit_bottle_rel": [
+    0.213,
+    -0.003
+   ],
+   "back_m": 0.013,
+   "side_m": 0.0224,
+   "robot_xy": [
+    -0.013,
+    0.0224
+   ],
+   "target_xy": [
+    0.2,
+    0.0194
+   ],
+   "target_rel": [
+    0.213,
+    -0.003
+   ],
+   "table_dz": -0.009,
+   "target_behind_edge": 0.045,
+   "distractors_moved": [
+    {
+     "uid": "57",
+     "from": [
+      0.586,
+      -0.296
+     ],
+     "to": [
+      0.495,
+      -0.57
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 21,
+   "fit_ep": 89,
+   "fit_bottle_rel": [
+    0.27,
+    0.0061
+   ],
+   "back_m": 0.0262,
+   "side_m": 0.0259,
+   "robot_xy": [
+    -0.0262,
+    0.0259
+   ],
+   "target_xy": [
+    0.2438,
+    0.032
+   ],
+   "target_rel": [
+    0.27,
+    0.0061
+   ],
+   "table_dz": -0.0005,
+   "target_behind_edge": 0.0888,
+   "distractors_moved": []
+  },
+  {
+   "scene": 22,
+   "fit_ep": 38,
+   "fit_bottle_rel": [
+    0.299,
+    0.022
+   ],
+   "back_m": 0.0124,
+   "side_m": 0.0155,
+   "robot_xy": [
+    -0.0124,
+    0.0155
+   ],
+   "target_xy": [
+    0.2866,
+    0.0375
+   ],
+   "target_rel": [
+    0.299,
+    0.022
+   ],
+   "table_dz": -0.0105,
+   "target_behind_edge": 0.1316,
+   "distractors_moved": []
+  },
+  {
+   "scene": 23,
+   "fit_ep": 85,
+   "fit_bottle_rel": [
+    0.305,
+    -0.004
+   ],
+   "back_m": 0.0097,
+   "side_m": 0.0086,
+   "robot_xy": [
+    -0.0097,
+    0.0086
+   ],
+   "target_xy": [
+    0.2953,
+    0.0046
+   ],
+   "target_rel": [
+    0.305,
+    -0.004
+   ],
+   "table_dz": 0.0115,
+   "target_behind_edge": 0.1403,
+   "distractors_moved": []
+  },
+  {
+   "scene": 24,
+   "fit_ep": 78,
+   "fit_bottle_rel": [
+    0.2671,
+    -0.011
+   ],
+   "back_m": 0.0345,
+   "side_m": 0.0328,
+   "robot_xy": [
+    -0.0345,
+    0.0328
+   ],
+   "target_xy": [
+    0.2326,
+    0.0218
+   ],
+   "target_rel": [
+    0.2671,
+    -0.011
+   ],
+   "table_dz": 0.006,
+   "target_behind_edge": 0.0776,
+   "distractors_moved": []
+  },
+  {
+   "scene": 25,
+   "fit_ep": 37,
+   "fit_bottle_rel": [
+    0.2678,
+    0.018
+   ],
+   "back_m": 0.0041,
+   "side_m": -0.0397,
+   "robot_xy": [
+    -0.0041,
+    -0.0397
+   ],
+   "target_xy": [
+    0.2637,
+    -0.0217
+   ],
+   "target_rel": [
+    0.2678,
+    0.018
+   ],
+   "table_dz": -0.016,
+   "target_behind_edge": 0.1087,
+   "distractors_moved": []
+  },
+  {
+   "scene": 26,
+   "fit_ep": 69,
+   "fit_bottle_rel": [
+    0.2939,
+    -0.0187
+   ],
+   "back_m": 0.0,
+   "side_m": 0.0121,
+   "robot_xy": [
+    -0.0,
+    0.0121
+   ],
+   "target_xy": [
+    0.2939,
+    -0.0066
+   ],
+   "target_rel": [
+    0.2939,
+    -0.0187
+   ],
+   "table_dz": 0.0105,
+   "target_behind_edge": 0.1389,
+   "distractors_moved": [
+    {
+     "uid": "49",
+     "from": [
+      0.382,
+      -0.018
+     ],
+     "to": [
+      0.455,
+      -1.37
+     ]
+    },
+    {
+     "uid": "41",
+     "from": [
+      0.295,
+      -0.209
+     ],
+     "to": [
+      0.255,
+      -0.41
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 27,
+   "fit_ep": 49,
+   "fit_bottle_rel": [
+    0.2489,
+    0.009
+   ],
+   "back_m": 0.029,
+   "side_m": -0.05,
+   "robot_xy": [
+    -0.029,
+    -0.05
+   ],
+   "target_xy": [
+    0.2199,
+    -0.041
+   ],
+   "target_rel": [
+    0.2489,
+    0.009
+   ],
+   "table_dz": 0.0145,
+   "target_behind_edge": 0.0649,
+   "distractors_moved": []
+  },
+  {
+   "scene": 28,
+   "fit_ep": 90,
+   "fit_bottle_rel": [
+    0.2785,
+    -0.0368
+   ],
+   "back_m": 0.0207,
+   "side_m": 0.05,
+   "robot_xy": [
+    -0.0207,
+    0.05
+   ],
+   "target_xy": [
+    0.2578,
+    0.0132
+   ],
+   "target_rel": [
+    0.2785,
+    -0.0368
+   ],
+   "table_dz": -0.0145,
+   "target_behind_edge": 0.1028,
+   "distractors_moved": [
+    {
+     "uid": "35",
+     "from": [
+      0.379,
+      0.178
+     ],
+     "to": [
+      0.575,
+      0.43
+     ]
+    }
+   ]
+  },
+  {
+   "scene": 29,
+   "fit_ep": 94,
+   "fit_bottle_rel": [
+    0.192,
+    -0.003
+   ],
+   "back_m": 0.0,
+   "side_m": 0.0017,
+   "robot_xy": [
+    -0.0,
+    0.0017
+   ],
+   "target_xy": [
+    0.192,
+    -0.0013
+   ],
+   "target_rel": [
+    0.192,
+    -0.003
+   ],
+   "table_dz": 0.0005,
+   "target_behind_edge": 0.037,
+   "distractors_moved": []
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "task": "G1WholebodyBottleBinTeleop-v0",
+    "episodes": 30,
+    "unique_spatial_states": 30,
+    "geometry_matches_source": true,
+    "data_video_hashes_match_source": true,
+    "source_metadata_sha256": "279ca7c6a8f1cb4cbe1aba649ec6d9d9782fd770fe852744e7d97386847b5b3b"
+  },
+  {
+    "task": "G1WholebodyBowlSinkTeleop-v0",
+    "episodes": 30,
+    "unique_spatial_states": 30,
+    "geometry_matches_source": true,
+    "data_video_hashes_match_source": true,
+    "source_metadata_sha256": "46a0435cc78247d5fbc870f77a3ee47545d5baad13c461708d4fc7042a811179"
+  },
+  {
+    "task": "G1WholebodyCoffeeCartTeleop-v0",
+    "episodes": 30,
+    "unique_spatial_states": 30,
+    "geometry_matches_source": true,
+    "data_video_hashes_match_source": true,
+    "source_metadata_sha256": "626055d13a88a55defbf90e6ced01de28cd857d6c504f4e6e02ee8ec5b6b4b4a"
+  }
+]

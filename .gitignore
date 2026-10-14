@@ -140,6 +140,8 @@ MUJOCO_LOG.TXT
 /docs/TELEOP_CONTROL_LOOP_SPEC.html
 /docs/pico_sim_teleop_runbook.html
 
-# Local paired same-background evaluation data and backups
-/data/evals_scenes_3real_samebg_v2/
+# Track reference videos in the versioned v2 evaluation dataset.
+!/data/evals_scenes_3real_samebg_v2/**/videos/
+
+# Local same-background evaluation backups
 /data/evals_scenes_3real_samebg_backup_*/
