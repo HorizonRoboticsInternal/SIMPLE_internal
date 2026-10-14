@@ -30,32 +30,23 @@ license, and provenance. Add an explicit ignore rule for new large downloaded
 content, datasets, or generated caches; do not commit those by accident.
 Render/replay/probe/report outputs and old height-variant meshes remain ignored.
 
-## samebg evaluation publication
+## Same-background evaluation v2
 
-Git tracks the robot implementation and `robots/g1comp/README.md` provenance.
-The eval dataset `evals_scenes_3real_samebg/`, original donor bundle,
-`robots/g1comp/head_meshes/`, and `publish_staging/` remain ignored.
-Evaluation reads the published bucket copy through the existing launcher.
-Git ignore rules do not define bucket upload contents.
+The maintained dataset is `evals_scenes_3real_samebg_v2/`.
+Each task pairs its 30 episodes with `3real` by episode index. Robot and task
+geometry come from `3real`; room transforms, materials and lights use the
+original seed-1000 look. Distractors are removed. Use g1comp pan0/tilt10 and
+restore saved states without a runtime DR override.
 
-Publish only these paths under the existing siqi SIMPLE data root:
+Build with `scripts/build_samebg_v2_eval.py --source <3real-root>
+--look <original-samebg-root> --output <new-v2-root>` (one shell command).
+The output must not exist. The builder writes locally and never publishes.
+Parquet files and videos remain source references; the videos are not v2
+renders. Runtime joint restoration and warmup are unchanged.
 
-| Local source | Bucket path relative to the data root |
-|---|---|
-| `evals_scenes_3real_samebg/` | `evals/evals_scenes_3real_samebg/` |
-| `robots/g1comp/head_meshes/` | `robots/g1comp/head_meshes/` |
-| `robots/g1comp/README.md` | `robots/g1comp/README.md` |
-
-Keep the complete LeRobot `meta/`, `data/`, and `videos/` directories. Do not
-upload the donor `psi0/`, `_states/`, `code/`, URDFs, generated XML, logs, caches,
-or render outputs. Reuse existing standard assets and evaluation sets; inspect
-missing dependencies before adding any other files to the publication list.
-Use `rsync --inplace`, first with `--dry-run`, and verify checksums afterwards.
-Never sync this entire data directory or use `--delete` for this publication.
-Source code is published separately as a new versioned SIMPLE snapshot.
-
-The local `evals_scenes_3real_samebg/<task>/dr-level-3/` directories copy the
-donor `scene_sets/<task>/samebg-seed1000/` without changing file contents.
-`dr-level-3` is the directory convention only: these are still fixed seed-1000
-states, not newly sampled level-3 scenes. Publish the normalized local directory,
-not the original donor `scene_sets/` tree.
+RoboOrchard's `--eval-dataset 3real_samebg` selects
+`evals/evals_scenes_3real_samebg_v2/` under the existing siqi bucket data root.
+Publish only the v2 dataset with `rsync --inplace`, first dry-run, then verify
+checksums. Do not modify the old `evals/evals_scenes_3real_samebg/` directory.
+Robot assets remain in `robots/g1comp/head_meshes/`; source snapshots are
+published independently. Do not upload donor bundles, caches or local backups.

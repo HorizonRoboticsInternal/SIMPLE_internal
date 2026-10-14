@@ -582,9 +582,7 @@ def _define_task():
             }
             state = (options or {}).get("state_dict") or {}
             for name, (asset_id, pos, quat) in extra.items():
-                # layout.cart can contain the replay's final pose; restore only static furniture.
-                if name == "table_legs":
-                    asset_id, pos, quat = restore_furniture(self._layout, options, name, asset_id, pos, quat)
+                asset_id, pos, quat = restore_furniture(self._layout, options, name, asset_id, pos, quat)
                 _sync_extra(self._layout, am, name, asset_id, pos, quat)
             # the cup starts on the cart's box top, not on the table SIMPLE placed it against
             if "target" in self._layout.actors:
