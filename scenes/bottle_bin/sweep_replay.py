@@ -31,10 +31,26 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 ROOT = Path(__file__).resolve().parents[2]   # the SIMPLE checkout (scenes/<kit>/ lives inside it)
+DATA = Path(os.environ.get("SIMPLE_DATA_DIR") or ROOT / "data")   # SIMPLE data root (datasets, recordings, scene sets)
 OUT = HERE / "replay" / "sweep"
 HZ = 50
 STABILIZE_TICKS = 150            # replaces replay_in_scene.py's "stabilized and 2 s of wall clock"
+EXPORT_GATE = {"on": True}       # replay_isaac.py exports dataset frames only while this is on (settle + pre-pose stay out; 2026-09-27)
+PREPOSE_TICKS = int(os.environ.get("REPLAY_PREPOSE_TICKS", "100"))   # 2026-09-25: after stabilising, 2 s with the first recorded upper-body pose (early hand closures)
 SETTLE_S = float(os.environ.get("REPLAY_SETTLE_S", "1.5"))
+UPPER_NAMES = ([f"left_hand_{j}_joint" for j in ("thumb_0", "thumb_1", "thumb_2", "index_0", "index_1", "middle_0", "middle_1")]
+               + [f"right_hand_{j}_joint" for j in ("thumb_0", "thumb_1", "thumb_2", "index_0", "index_1", "middle_0", "middle_1")]
+               + [f"left_{j}_joint" for j in ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw")]
+               + [f"right_{j}_joint" for j in ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw")]
+               + ["waist_roll_joint", "waist_pitch_joint", "waist_yaw_joint"])          # psi0 rows: the torso rpy command drives the waist
+
+# 2026-09-29 (data check replay_phys): the psi0 ACTION orders the LEFT hand thumb_0..2, middle_0, middle_1, index_0, index_1 and the
+# right hand thumb, index, middle (SIMPLE's src/simple/baselines/psi0.py: from_psi0_upper_joints / STATE_SLICES); the replays used
+# UPPER_NAMES (index before middle on both hands) and drove the sim's left index with the middle command and vice versa.
+# observation.hand_joints of the psi0 sets is index-before-middle on both hands, so STATE keeps UPPER_NAMES.
+# REPLAY_PSI0_LEFT_HAND=legacy restores the old (swapped) mapping.
+PSI0_ACT_NAMES = (list(UPPER_NAMES) if os.environ.get("REPLAY_PSI0_LEFT_HAND", "psi0") == "legacy" else
+                  [f"left_hand_{j}_joint" for j in ("thumb_0", "thumb_1", "thumb_2", "middle_0", "middle_1", "index_0", "index_1")] + list(UPPER_NAMES[7:]))
 ARM_JOINTS = [f"{s}_{j}_joint" for s in ("left", "right") for j in
               ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw")]
 TRACE_EVERY = 5                  # decimation of the kept trace (10 Hz)
@@ -147,7 +163,9 @@ class Video:
         self.vs = self.c.add_stream("libx264", rate=25); self.vs.pix_fmt = "yuv420p"
         self.vs.options = {"crf": "26", "preset": "veryfast", "movflags": "+faststart"}
         self.vs.width, self.vs.height = 3 * 640, 480
-        real = ROOT / "data/real_recordings" / session / f"videos/chunk-000/observation.images.ego_view/episode_{ep:06d}.mp4"
+        real = DATA / "real_recordings" / session / f"videos/chunk-000/observation.images.ego_view/episode_{ep:06d}.mp4"
+        if not real.exists():
+            real = DATA / "real_recordings" / session / f"videos/chunk-000/egocentric/episode_{ep:06d}.mp4"     # psi0 layout
         self.rc = av.open(str(real)) if real.exists() else None
         self.real_iter = self.rc.decode(video=0) if self.rc else None
         self.rs = {"frame": None, "next": None, "next_t": -1.0}
@@ -206,17 +224,30 @@ class Episode:
     """One recorded episode, resampled onto 50 Hz controller ticks."""
 
     def __init__(self, session, ep):
-        S = ROOT / "data/real_recordings" / session
+        S = DATA / "real_recordings" / session
         info = json.load(open(S / "meta/info.json"))
         df = pd.read_parquet(S / f"data/chunk-000/episode_{ep:06d}.parquet")
-        self.act_names = info["features"]["action"]["names"]
-        self.ACT = np.stack(df["action"]).astype(float)
-        self.NAV = np.stack(df["teleop.navigate_command"]).astype(float)
-        self.NAV[:, 3] = zero_stale_leading_rows(self.NAV[:, 3])
-        self.H = np.stack(df["teleop.base_height_command"]).astype(float).ravel()
-        BP = np.stack(df["observation.base_pose"]).astype(float)
-        h = np.array([yaw_of_wxyz(q) for q in BP[:, 3:7]])
-        self.real_heading_rel = wrap(h - h[0])
+        if "observation.state" not in info["features"]:
+            # psi0-format LeRobot dataset (2026-09-25: data/real_recordings/psi0/ChipCanToTrash_0225_keep97, the 97 kept episodes of
+            # session 02-25-56 in the deployment format): 36-D action = [0:7 left hand, 7:14 right hand, 14:21 left arm, 21:28 right arm,
+            # 28:31 torso rpy, 31 height, 32:36 vx vy flag target_yaw]; no base pose, so the commanded relative yaw stands in for the heading
+            A = np.stack(df["action"]).astype(float)
+            self.act_names = list(PSI0_ACT_NAMES)
+            self.ACT = np.concatenate([A[:, 0:14], A[:, 14:28], A[:, 28:31]], axis=1)
+            self.NAV = A[:, 32:36].copy(); self.NAV[:, 3] = zero_stale_leading_rows(self.NAV[:, 3])
+            self.H = A[:, 31].copy()
+            self.real_heading_rel = self.NAV[:, 3].copy()
+            self.psi0 = True
+        else:
+            self.act_names = info["features"]["action"]["names"]
+            self.ACT = np.stack(df["action"]).astype(float)
+            self.NAV = np.stack(df["teleop.navigate_command"]).astype(float)
+            self.NAV[:, 3] = zero_stale_leading_rows(self.NAV[:, 3])
+            self.H = np.stack(df["teleop.base_height_command"]).astype(float).ravel()
+            BP = np.stack(df["observation.base_pose"]).astype(float)
+            h = np.array([yaw_of_wxyz(q) for q in BP[:, 3:7]])
+            self.real_heading_rel = wrap(h - h[0])
+            self.psi0 = False
         self.fps = float(info["fps"])
         self.n_rows = len(df)
         self.n_ticks = int(np.ceil(self.n_rows * HZ / self.fps))
@@ -245,6 +276,7 @@ class Runner:
         import gymnasium as gym
         import mujoco
         import simple.tasks.g1_wholebody_bottle_bin_teleop as T
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import replay_physics; replay_physics.pin_task(T)   # the validated robot / reset configuration
         from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
         self.mujoco = mujoco
         self.T = T
@@ -288,6 +320,8 @@ class Runner:
         pelvis = bid("pelvis")
         self.robot_root = int(self.m.body_rootid[pelvis])
         self.bin_geoms = {g for g in range(self.m.ngeom) if self.m.geom_bodyid[g] == self.bin_body} if self.bin_body >= 0 else set()
+        _tb = bid("table")                                              # 2026-09-28: legs on the TABLE count too (walk completeness)
+        self.table_geoms = {g for g in range(self.m.ngeom) if self.m.geom_bodyid[g] == _tb} if _tb >= 0 else set()
         self.bound = True
         if self.scene is None:
             self.scene = self._scene_checks()
@@ -317,8 +351,13 @@ class Runner:
     def _replay_get_action(self):
         epi, i = self.cur["epi"], self.cur["i"]
         if epi is None or i is None:
-            return {"target_upper_body_pose": self.default_up.copy(), "navigate_cmd": [0.0, 0.0, 0.0, 0.0],
-                    "base_height_command": 0.74, "wrist_pose": np.zeros(14), "toggle_policy_action": False,
+            # settle phase: hold the FIRST recorded upper-body pose (not the controller default) so the arm is already where the
+            # recording starts; 31 of the 35 episodes that never grasped close the hand before 3 s, while the arm was still
+            # ramping from the default pose (2026-09-25)
+            up = epi.act_at(0.0)[self.up_from_act].copy() if (epi is not None and getattr(self, "up_from_act", None) is not None) else self.default_up.copy()
+            h = float(epi.H[0]) if epi is not None else 0.74
+            return {"target_upper_body_pose": up, "navigate_cmd": [0.0, 0.0, 0.0, 0.0],
+                    "base_height_command": h, "wrist_pose": np.zeros(14), "toggle_policy_action": False,
                     "toggle_data_collection": False, "toggle_data_abort": False}
         t = i / HZ; r = epi.row_at(t)
         up_from_act = self.up_from_act
@@ -357,6 +396,31 @@ class Runner:
             hits.append({"body": nm, "dist": round(float(c.dist), 5)})
         return hits
 
+    def robot_bin_leg_contact(self):
+        """True while a leg / pelvis / torso geom touches the bin (the walk runs into it; hands and arms brushing the rim while
+        dropping the can do not count -- same rule as bowl_sink's counters, 2026-09-27)."""
+        import mujoco
+        for i in range(self.d.ncon):
+            c = self.d.contact[i]
+            g1, g2 = c.geom1, c.geom2
+            if g1 in self.bin_geoms or g2 in self.bin_geoms:
+                other = g2 if g1 in self.bin_geoms else g1
+                b = self.m.geom_bodyid[other]
+                if int(self.m.body_rootid[b]) == self.robot_root and any(k in (mujoco.mj_id2name(self.m, mujoco.mjtObj.mjOBJ_BODY, b) or "") for k in ("knee", "hip", "ankle", "pelvis", "torso", "waist", "foot")):
+                    return True
+        return False
+
+    def robot_leg_contact(self, geoms):
+        """True while a leg / pelvis / torso geom touches any of `geoms`."""
+        import mujoco
+        for i in range(self.d.ncon):
+            c = self.d.contact[i]; g1, g2 = c.geom1, c.geom2
+            if g1 in geoms or g2 in geoms:
+                b = self.m.geom_bodyid[g2 if g1 in geoms else g1]
+                if int(self.m.body_rootid[b]) == self.robot_root and any(k in (mujoco.mj_id2name(self.m, mujoco.mjtObj.mjOBJ_BODY, b) or "") for k in ("knee", "hip", "ankle", "pelvis", "torso", "waist", "foot", "toe")):
+                    return True
+        return False
+
     def robot_bin_contact(self):
         """True while any robot geom touches the bin."""
         for i in range(self.d.ncon):
@@ -389,7 +453,7 @@ class Runner:
             if sl > 0:
                 time.sleep(sl)
 
-    def run(self, epi: Episode, bottle_xy=None, bin_xy=None, keep_trace=True, video_path=None, session=None, bin_yaw=None):
+    def run(self, epi: Episode, bottle_xy=None, bin_xy=None, keep_trace=True, video_path=None, session=None, bin_yaw=None, grasp_assist=False, drop_assist=False):
         mj = self.mujoco
         T = self.T; env = self.env
         self.cur = {"epi": None, "i": None}
@@ -409,17 +473,28 @@ class Runner:
         self.agent._dropping = False
         self.agent.reset_policy()
         self.agent._wbc_policy.lower_body_policy.use_policy_action = True
-        self.tp.is_active = False
+        EXPORT_GATE["on"] = False
+        self.tp.is_active = True                          # 2026-09-25: teleop active during the settle so the hook can hold the FIRST recorded pose
+        self.cur["epi"] = epi; self.cur["i"] = None       # (i = None -> _replay_get_action returns row 0's upper body, zero nav)
         d = self.d
         self.pace_i, self.pace_t0 = 0, (None if self.clock is not None else time.monotonic())
         t_wall = time.monotonic()
-        for k in range(STABILIZE_TICKS):                 # let the robot settle on its feet before the recording starts
+        k_stab = None
+        for k in range(STABILIZE_TICKS + PREPOSE_TICKS):  # let the robot settle on its feet before the recording starts ...
             self.tick()
             action = self.agent.get_action(obs, instruction=self.task.instruction, privileged_info=sinfo)
             obs, *_, sinfo = env.step(action)
-            if self.robot.stabilized and k > 100:
+            if k == 100 and PREPOSE_TICKS > 0 and hasattr(self.robot, "_stabilized"):
+                self.robot._stabilized = True             # the base never gets below the velocity threshold while the policy stands: latch it so the
+            if self.robot.stabilized and k > 100 and k_stab is None:   # agent stops returning the stabilise (default-pose) action and follows the hook
+                k_stab = k                                # ... then keep stepping so the (now active) hook brings the arm to row 0's pose:
+            if k_stab is not None and k >= k_stab + PREPOSE_TICKS:   # the agent returns the stabilise action (default pose) until stabilized
                 break
         self.gate_t0 = (k + 1) / HZ                      # the task's gate clock started at reset; row 0 of the recording is here
+        if os.environ.get("REPLAY_PREPOSE_DEBUG") == "1":
+            _tgt = epi.act_at(0.0)[self.up_from_act]; _q = d.qpos[self.mj_arm] if hasattr(self, "mj_arm") else None
+            print(f"[prepose] settle ended at k={k} (stabilized at {k_stab}); tp.active={self.tp.is_active} palm={d.xpos[self.palm_body].round(3).tolist()} "
+                  f"row0 right-arm target={np.round(_tgt[21:28], 3).tolist()} actual right arm q={np.round(d.qpos[[self.m.jnt_qposadr[self.mujoco.mj_name2id(self.m, self.mujoco.mjtObj.mjOBJ_JOINT, n)] for n in ARM_JOINTS[7:]]], 3).tolist()}", flush=True)
         self.tp.is_active = True
         heading0 = yaw_of_wxyz(d.qpos[3:7]); xy0 = d.qpos[:2].copy()
         tgt0 = d.xpos[self.tgt_body].copy()
@@ -427,8 +502,62 @@ class Runner:
         vid = Video(video_path, self.m, d, mj, session, epi.ep, epi.fps) if video_path else None
         trace, z_hist, xyz_hist, tilt_hist = [], [], [], []
         contact_ticks, first_contact, feet_path, base_path = 0, None, [], []
+        self._leg_ticks = 0; self._table_leg_ticks = 0
         self.cur["epi"] = epi
         n = epi.n_ticks
+        # --- grasp assist (2026-09-27, as in coffee_cart / bowl_sink): job "grasp_assist": once the recorded hand has closed on the
+        # bottle and a finger touches it (or the fingers are within 10 cm of its middle), the bottle rides with the palm (upright)
+        # until the recorded release row; the result records "assist_captured".
+        _ic = epi.act_names.index("right_hand_index_0_joint") if "right_hand_index_0_joint" in epi.act_names else 10
+        _ri = epi.ACT[:, _ic]; _cl = np.where((_ri[1:] > 0.6) & (_ri[:-1] <= 0.6))[0]
+        GRAB_ROW = int(_cl[0]) + 1 if len(_cl) else len(_ri) - 1
+        _closed = np.where(_ri > 0.6)[0]; OPEN_ROW = int(_closed[-1]) + 1 if len(_closed) else len(_ri) - 1   # end of the LAST closed run
+        tgt_jid = int(self.m.body_jntadr[self.tgt_body]); tgt_qadr = int(self.m.jnt_qposadr[tgt_jid]); tgt_dof = int(self.m.jnt_dofadr[tgt_jid])
+        hand_geoms_ga = {g for g in range(self.m.ngeom) if "_hand_" in (mj.mj_id2name(self.m, mj.mjtObj.mjOBJ_BODY, self.m.geom_bodyid[g]) or "")}
+        tgt_geoms_ga = {g for g in range(self.m.ngeom) if self.m.geom_bodyid[g] == self.tgt_body}
+        ga = {"on": False, "done": False, "captured_row": None, "off": None, "yaw_rel": 0.0}
+        self._ga = ga; self._grab_row, self._open_row, self._grasp_assist = int(GRAB_ROW), int(OPEN_ROW), bool(grasp_assist); self._drop_assist = bool(drop_assist)
+        if grasp_assist:
+            print(f"[sweep] grasp assist on: recorded closure row {GRAB_ROW}, release row {OPEN_ROW}", flush=True)
+        bin_top = float(T.BS.BIN_H)
+        def assist(i):
+            if ga.get("drop", 0) > 0:                  # 2026-09-27 drop assist: straight down, upright, until inside the bin (the opening
+                ga["drop"] -= 1                        # fingers made the bottle tumble onto the rim in 57/88)
+                d.qpos[tgt_qadr:tgt_qadr + 2] = ga["drop_xy"]; yw = yaw_of_wxyz(d.qpos[tgt_qadr + 3:tgt_qadr + 7])
+                d.qpos[tgt_qadr + 3:tgt_qadr + 7] = [np.cos(yw / 2), 0.0, 0.0, np.sin(yw / 2)]
+                d.qvel[tgt_dof:tgt_dof + 2] = 0.0; d.qvel[tgt_dof + 3:tgt_dof + 6] = 0.0
+                if d.qpos[tgt_qadr + 2] < bin_top - 0.06: ga["drop"] = 0
+                return
+            if not grasp_assist or ga["done"]:
+                return
+            r = epi.row_at(i / HZ)
+            if not ga["on"]:
+                if r < GRAB_ROW or r > GRAB_ROW + int(2.5 * epi.fps):
+                    return
+                touched = any((c.geom1 in tgt_geoms_ga and c.geom2 in hand_geoms_ga) or (c.geom2 in tgt_geoms_ga and c.geom1 in hand_geoms_ga)
+                              for c in d.contact[:d.ncon])
+                mid = (d.xpos[self.tip_bodies["right_hand_index_1_link"]] + d.xpos[self.tip_bodies["right_hand_thumb_2_link"]]) / 2
+                if not (touched or np.linalg.norm(mid - (d.xpos[self.tgt_body] + np.array([0.0, 0.0, 0.06]))) < 0.10):
+                    return
+                pyaw = yaw_of_wxyz(d.xquat[self.palm_body]); cp, sp = np.cos(-pyaw), np.sin(-pyaw)
+                dv = d.qpos[tgt_qadr:tgt_qadr + 3] - d.xpos[self.palm_body]
+                ga["off"] = np.array([cp * dv[0] - sp * dv[1], sp * dv[0] + cp * dv[1], dv[2]])
+                ga["yaw_rel"] = yaw_of_wxyz(d.qpos[tgt_qadr + 3:tgt_qadr + 7]) - pyaw
+                ga["on"] = True; ga["captured_row"] = int(r)
+                print(f"[sweep] grasp assist: captured at row {r} (touched={touched}, offset {ga['off'].round(3).tolist()})", flush=True)
+            if r >= OPEN_ROW:
+                ga["on"] = False; ga["done"] = True; d.qvel[tgt_dof:tgt_dof + 6] = 0.0
+                if drop_assist: ga["drop"] = int(1.5 * HZ); ga["drop_xy"] = d.qpos[tgt_qadr:tgt_qadr + 2].copy()
+                print(f"[sweep] grasp assist: released at row {r}" + (" (straight drop)" if drop_assist else ""), flush=True)
+                return
+            pyaw = yaw_of_wxyz(d.xquat[self.palm_body]); cp, sp = np.cos(pyaw), np.sin(pyaw); o = ga["off"]
+            d.qpos[tgt_qadr:tgt_qadr + 3] = d.xpos[self.palm_body] + np.array([cp * o[0] - sp * o[1], sp * o[0] + cp * o[1], o[2]])
+            cy = pyaw + ga["yaw_rel"]; d.qpos[tgt_qadr + 3:tgt_qadr + 7] = [np.cos(cy / 2), 0.0, 0.0, np.sin(cy / 2)]
+            d.qvel[tgt_dof:tgt_dof + 6] = 0.0
+        EXPORT_GATE["on"] = True                          # the recorded rows start here: dataset frames from now on
+        QREC = os.environ.get("REPLAY_QPOS_OUT"); qrec = []    # 2026-09-28: exact state recording for offline videos
+        if QREC:
+            QREC = QREC.replace("{ep}", f"{epi.ep:03d}"); os.makedirs(os.path.dirname(QREC) or ".", exist_ok=True); mj.mj_saveModel(self.m, QREC[:-4] + ".mjb", None)
         for i in range(n):
             self.cur["i"] = i
             self.tick()
@@ -436,12 +565,18 @@ class Runner:
                 self.agent._wbc_policy.handle_keyboard_button("c")       # re-arm the relative yaw dial, like the A press
             action = self.agent.get_action(obs, instruction=self.task.instruction, privileged_info=sinfo)
             obs, _r, _te, _tr, sinfo = env.step(action)
+            assist(i)
             tz = d.xpos[self.tgt_body].copy()
             z_hist.append(float(tz[2])); xyz_hist.append(tz); tilt_hist.append(tilt_deg(d.xquat[self.tgt_body]))
+            if QREC and i % 2 == 0: qrec.append((d.qpos.copy(), i / HZ))
             if self.bin_geoms and self.robot_bin_contact():
                 contact_ticks += 1
                 if first_contact is None:
                     first_contact = i
+                if self.robot_bin_leg_contact():
+                    self._leg_ticks += 1
+            if getattr(self, "table_geoms", None) and self.robot_leg_contact(self.table_geoms):
+                self._table_leg_ticks += 1
             if i % TRACE_EVERY == 0:
                 base_path.append([round(i / HZ, 2)] + [round(float(v), 3) for v in (d.qpos[:2] - xy0)] + [round(float(wrap(yaw_of_wxyz(d.qpos[3:7]) - heading0)), 3)])
                 feet_path.append([round(i / HZ, 2)] + [round(float(v), 3) for f in self.feet.values() for v in d.xpos[f][:2]])
@@ -463,8 +598,10 @@ class Runner:
             self.tick()
             action = self.agent.get_action(obs, instruction=self.task.instruction, privileged_info=sinfo)
             obs, _r, _te, _tr, sinfo = env.step(action)
+            assist(n + j)
             tz = d.xpos[self.tgt_body].copy()
             z_hist.append(float(tz[2])); xyz_hist.append(tz); tilt_hist.append(tilt_deg(d.xquat[self.tgt_body]))
+            if QREC and j % 2 == 0: qrec.append((d.qpos.copy(), (n + j) / HZ))
             if vid is not None and j % 2 == 0:
                 vid.add(obs, f"{session} ep {epi.ep}  settle {j / HZ:4.1f}s after the last row | bottle "
                              f"{np.round(d.xpos[self.tgt_body], 2).tolist()} tilt {tilt_hist[-1]:.0f} deg", n / HZ)
@@ -473,12 +610,14 @@ class Runner:
                               "tilt": round(tilt_hist[-1], 1), "sim_xy": (d.qpos[:2] - xy0).round(4).tolist()})
         if vid is not None:
             vid.close()
+        if QREC and qrec:
+            np.savez_compressed(QREC, qpos=np.array([q for q, _ in qrec]), t=np.array([t for _, t in qrec]), ep=epi.ep, fps=25)
         wall = time.monotonic() - t_wall
         out = self._metrics(epi, np.array(z_hist), np.array(xyz_hist), np.array(tilt_hist), tgt0, bin_xyz, xy0,
                             heading0, trace, wall, bottle_xy, bin_xy, n)
         out["gates"] = sinfo.get("task_progress")                      # the task's own checkers (bottle_bin_task.py)
         out["gate_t0_offset_s"] = round(self.gate_t0, 2)               # subtract from the gates' t_* to get recording time
-        out["robot_bin_contact_ticks"] = int(contact_ticks)
+        out["robot_bin_contact_ticks"] = int(contact_ticks); out["robot_bin_leg_ticks"] = int(getattr(self, "_leg_ticks", 0)); out["robot_table_leg_ticks"] = int(getattr(self, "_table_leg_ticks", 0))
         out["robot_bin_contact_s"] = round(contact_ticks / HZ, 2)
         out["first_robot_bin_contact_t"] = None if first_contact is None else round(first_contact / HZ, 2)
         rel0 = out.get("release")
@@ -524,7 +663,9 @@ class Runner:
                "half_opening": [round(float(v), 4) for v in half],
                "base_end_xy": (d.qpos[:2] - xy0).round(4).tolist(),
                "base_end_heading_rel": round(float(wrap(yaw_of_wxyz(d.qpos[3:7]) - heading0)), 4),
-               "real_end_heading_rel": round(float(epi.real_heading_rel[-1]), 4)}
+               "real_end_heading_rel": round(float(epi.real_heading_rel[-1]), 4),
+               "assist_captured": self._ga["captured_row"], "grab_row": self._grab_row, "open_row": self._open_row, "grasp_assist": self._grasp_assist,
+               "drop_assist": bool(getattr(self, "_drop_assist", False))}
         if bin_xyz is not None:
             bx, by = bin_xyz[:2]
             out["end_minus_bin"] = [round(float(end[0] - bx), 4), round(float(end[1] - by), 4), round(float(end[2]), 4)]
@@ -534,7 +675,7 @@ class Runner:
                 out["release_inside_opening"] = bool(abs(rx - bx) <= half[0] and abs(ry - by) <= half[1])
         out["spawn_hits"] = self.spawn_hits
         out["spawn_ok"] = not self.spawn_hits             # False = the can was spawned inside the robot: not a valid placement
-        out["success"] = bool(out["grasp_ok"] and out.get("in_bin", False))
+        out["success"] = bool(out.get("in_bin", False) and (out["grasp_ok"] or self._ga["captured_row"] is not None))   # 2026-09-27: assisted rides lift little
         if trace:
             out["trace"] = trace
         return out
@@ -600,9 +741,10 @@ def main():
         vpath = None
         if a.video_dir:
             vd = Path(a.video_dir); vd.mkdir(parents=True, exist_ok=True)
-            vpath = vd / f"replay_{a.session}_ep{job['ep']:03d}_{a.tag}.mp4"
+            vpath = vd / f"replay_{a.session.replace('/', '_')}_ep{job['ep']:03d}_{a.tag}.mp4"
         res = R.run(epi, bottle_xy=bxy, bin_xy=binxy, keep_trace=not a.no_trace, video_path=vpath, session=a.session,
-                    bin_yaw=job.get("bin_yaw", a.bin_yaw))
+                    bin_yaw=job.get("bin_yaw", a.bin_yaw), grasp_assist=bool(job.get("grasp_assist", os.environ.get("REPLAY_GRASP_ASSIST") == "1")),
+                    drop_assist=bool(job.get("drop_assist", os.environ.get("REPLAY_DROP_ASSIST") == "1")))
         if vpath:
             res["video"] = vpath.name
         res["tag"] = a.tag; res["session"] = a.session; res["variant"] = job.get("variant")

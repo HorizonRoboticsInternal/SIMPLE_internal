@@ -145,3 +145,17 @@ MUJOCO_LOG.TXT
 
 # Local same-background evaluation backups
 /data/evals_scenes_3real_samebg_backup_*/
+
+# replay pipeline inputs / outputs (scenes/ACTION_REPLAY.md): real recordings, rendered replay datasets, run logs
+/data/real_recordings
+/data/real_recordings/
+/data/replay_datasets*
+/data/replay_logs
+/data/replay_logs/
+/data/.cache
+/data/assets
+/data/robots/g1
+/data/robots/g1_sonic
+/data/scenes
+/data/vMaterials_2
+/data/evals_scenes

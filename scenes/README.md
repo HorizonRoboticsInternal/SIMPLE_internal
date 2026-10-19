@@ -31,6 +31,14 @@ python scenes/make_levels.py bowl_sink --levels 0 1 2 3 --episodes 30 --out data
 
 See [level3/README.md](level3/README.md) for benchmark reachability and stability validation.
 
+## Replaying the real recordings (action replay → sim datasets)
+
+The real teleop recordings (psi0 LeRobot sets, bottle → bin / bowl → sink / coffee cart) are replayed through the decoupled-WBC
+agent in MuJoCo with a scene fitted per episode, the validated run's state is recorded, and Isaac renders that state frame by
+frame into `data/replay_datasets_phys/<kit>` (then `to_psi0.py` → psi0-format datasets). Tools: `scenes/<kit>/sweep_replay.py`
+/ `replay_in_scene.py`, `scenes/replay_isaac.py`, `scenes/fit_batch.py`, `scenes/phys_render.py`, `scenes/to_psi0.py`; shipped
+fits in `scenes/<kit>/replay/validated_episodes.json`. Step-by-step: [ACTION_REPLAY.md](ACTION_REPLAY.md).
+
 ## Source files versus generated resources
 
 This directory retains dataset-generation, replay, scene-building tools, and

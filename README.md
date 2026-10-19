@@ -433,4 +433,4 @@ See [scenes/README.md](scenes/README.md) for bottle-bin, bowl-sink, and coffee-c
 
 ## HoloMotion support
 
-See [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md) for HoloMotion VLA evaluation and [docs/holomotion_v14_teleop.md](docs/holomotion_v14_teleop.md) for collection and replay.
+See [scenes/ACTION_REPLAY.md](scenes/ACTION_REPLAY.md) for replaying the real G1 recordings into sim datasets (action replay + Isaac state replay). See [docs/holomotion_v14_eval.md](docs/holomotion_v14_eval.md) for HoloMotion VLA evaluation and [docs/holomotion_v14_teleop.md](docs/holomotion_v14_teleop.md) for collection and replay.

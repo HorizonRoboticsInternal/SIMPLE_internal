@@ -29,6 +29,10 @@ the bottle is straight ahead of the robot, in the head camera's view just beyond
 
 ## SIMPLE task + action replay (MuJoCo, sonic teleop stack)
 
+> The full pipeline (psi0-format recordings `data/real_recordings/psi0/ChipCanToTrash_0225_keep97`, per-episode fits, state
+> recording, Isaac state replay, `data/replay_datasets_phys/bottle_bin`) is documented in [../ACTION_REPLAY.md](../ACTION_REPLAY.md);
+> the commands below are the single-episode tools it builds on.
+
 `bottle_bin_task.py` registers the same layout (numbers read from `layout.json`) as task `g1_wholebody_bottle_bin_teleop`,
 gym id `simple/G1WholebodyBottleBinTeleop-v0` (SonicLocoManipEnv, robot g1_sonic): SIMPLE's table primitive 0.60 x 2.07 x
 0.03 at top 0.72, generated legs + cover board + bin as static objects (no free joint, coloured; engine patch in the file),

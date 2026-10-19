@@ -28,6 +28,7 @@ from PIL import ImageDraw
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 ROOT = Path(__file__).resolve().parents[2]   # the SIMPLE checkout (scenes/<kit>/ lives inside it)
+DATA = Path(os.environ.get("SIMPLE_DATA_DIR") or ROOT / "data")   # SIMPLE data root (datasets, recordings, scene sets)
 SESSION = "psi0/CartCoffeeCup_0919"
 OUT = HERE / "replay"
 HZ = 50
@@ -41,6 +42,14 @@ UPPER_NAMES = ([f"left_hand_{j}_joint" for j in ("thumb_0", "thumb_1", "thumb_2"
                + [f"left_{j}_joint" for j in ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw")]
                + [f"right_{j}_joint" for j in ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch", "wrist_yaw")]
                + ["waist_roll_joint", "waist_pitch_joint", "waist_yaw_joint"])
+
+# 2026-09-29 (data check replay_phys): the psi0 ACTION orders the LEFT hand thumb_0..2, middle_0, middle_1, index_0, index_1 and the
+# right hand thumb, index, middle (SIMPLE's src/simple/baselines/psi0.py: from_psi0_upper_joints / STATE_SLICES); the replays used
+# UPPER_NAMES (index before middle on both hands) and drove the sim's left index with the middle command and vice versa.
+# observation.hand_joints of the psi0 sets is index-before-middle on both hands, so STATE keeps UPPER_NAMES.
+# REPLAY_PSI0_LEFT_HAND=legacy restores the old (swapped) mapping.
+PSI0_ACT_NAMES = (list(UPPER_NAMES) if os.environ.get("REPLAY_PSI0_LEFT_HAND", "psi0") == "legacy" else
+                  [f"left_hand_{j}_joint" for j in ("thumb_0", "thumb_1", "thumb_2", "middle_0", "middle_1", "index_0", "index_1")] + list(UPPER_NAMES[7:]))
 # the 36-D psi0 action row: [0:7 L hand, 7:14 R hand, 14:21 L arm, 21:28 R arm, 28:31 rpy, 31 height, 32:36 vx vy flag target_yaw]
 SETTLE_S = float(os.environ.get("REPLAY_SETTLE_S", "2.0"))
 NAV_GAIN = float(os.environ.get("REPLAY_NAV_GAIN", "1.0"))
@@ -48,6 +57,9 @@ WALK_STRETCH = float(os.environ.get("REPLAY_WALK_STRETCH", "1.0"))
 POST_TURN_GAIN = float(os.environ.get("REPLAY_POST_TURN_GAIN", "1.0"))   # scales vx/vy only AFTER the commanded turn: the sim
                                                                         # gait barely engages at the recorded 0.13 m/s approach
 FAST = os.environ.get("REPLAY_FAST", "0") == "1"
+STABILIZE_TICKS = 150                                       # 2026-09-27: the stand-up settle is tick-based (was: "stabilized and 2 s", up to 20 s)
+PREPOSE_TICKS = int(os.environ.get("REPLAY_PREPOSE_TICKS", "100"))   # ... then 2 s holding the recording's FIRST upper-body pose (initial state = first frame)
+EXPORT_GATE = {"on": True}                                  # replay_isaac.py exports dataset frames only while this is on (settle + pre-pose stay out)
 SIM_CLOCK = {"t": 1000.0, "on": os.environ.get("REPLAY_SIM_CLOCK", "1") == "1"}
 
 
@@ -94,6 +106,7 @@ def make_env():
     """Env with gravity compensation ON: feed-forward g(q) on the arms so the commanded pose is the held pose."""
     import gymnasium as gym
     import simple.tasks.g1_wholebody_coffee_cart_teleop as T
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import replay_physics; replay_physics.pin_task(T)   # the validated robot / reset configuration
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     cfg["enable_gravity_compensation"] = True                      # user 2026-09-23: hold the pose we set, no sag
@@ -151,7 +164,7 @@ def probe(out_dir: Path):
 
 def load_episode(ep: int):
     """psi0 LeRobot episode -> (ACT 31-D upper-body targets, NAV, H, fps, n_rows, real_video)."""
-    S = ROOT / "data/real_recordings" / SESSION
+    S = DATA / "real_recordings" / SESSION
     info = json.load(open(S / "meta/info.json")); fps = float(info["fps"])
     df = pd.read_parquet(S / f"data/chunk-000/episode_{ep:06d}.parquet")
     A = np.stack(df["action"].values).astype(float)
@@ -165,13 +178,29 @@ def load_episode(ep: int):
     return ACT, STATE, NAV, H, fps, len(df), real_video
 
 
+def _pre_grasp(trace, grab_row, z_rest):
+    """2026-09-28 (user: "the cup is stuck to the hand"): the cup must sit on the box, untouched, until 1 s before the recorded
+    grasp. ok = finger contact <= 100 ticks (2 s of brushing), never lifted/sunk > 2 cm, never tilted > 20 deg."""
+    pre = [r for r in trace if r["row"] < grab_row - 30]
+    if not pre: return {"ok": True, "touch_ticks": 0, "max_dz": 0.0, "max_tilt": 0.0}
+    touch = sum(1 for r in pre if r.get("task_in_hand")); dz = max(abs(r["target_xyz"][2] - z_rest) for r in pre); tilt = max(r["target_tilt_deg"] for r in pre)
+    return {"ok": bool(touch <= 100 and dz <= 0.02 and tilt <= 20.0), "touch_ticks": int(touch), "max_dz": round(float(dz), 3), "max_tilt": round(float(tilt), 1)}
+
+
 def replay_episode(ep, video_out, fast=False, video=None):
     video = (not fast) if video is None else video     # --video: record frames even in --fast (no pacing -> deterministic)
     import mujoco
     from simple.agents.pico_decoupled_agent import PicoDecoupledAgent
 
     ACT, STATE, NAV, H, fps, n_rows, real_video = load_episode(ep)
-    act_names = st_names = list(UPPER_NAMES)
+    _ri = ACT[:, 10]; _closes = []; _closed = False                               # right_hand_index_0 command: hand-close events
+    for _k, _v in enumerate(_ri):
+        if not _closed and _v > 0.6: _closed = True; _closes.append(_k)
+        elif _closed and _v < 0.3: _closed = False
+    CUP_GRAB_ROW = _closes[-1] if len(_closes) >= 2 else (n_rows - 1)              # the first close is the cart handle, the last the cup
+    _op = np.where(_ri[CUP_GRAB_ROW:] < 0.3)[0]; CUP_OPEN_ROW = int(CUP_GRAB_ROW + _op[0]) if len(_op) else n_rows - 1   # the cup release
+    print(f"[replay] hand-close events at rows {_closes}: the cup grasp is row {CUP_GRAB_ROW}", flush=True)
+    act_names, st_names = list(PSI0_ACT_NAMES), list(UPPER_NAMES)
     nav_gain = float(os.environ.get("REPLAY_NAV_GAIN", "1.0"))            # read HERE: main() sets these after import
     walk_stretch = float(os.environ.get("REPLAY_WALK_STRETCH", "1.0"))
     post_turn_gain = float(os.environ.get("REPLAY_POST_TURN_GAIN", "1.0"))
@@ -192,7 +221,12 @@ def replay_episode(ep, video_out, fast=False, video=None):
 
     _dy = np.abs(np.diff(NAV[:, 3]))
     RELEASE_ROW = int(np.where(_dy > 1e-6)[0][-1]) + 1 if (_dy > 1e-6).any() else n_rows
-    print(f"[replay] ep {ep}: cart released at row {RELEASE_ROW} (t={RELEASE_ROW/fps:.1f}s, end of the commanded turn)", flush=True)
+    if os.environ.get("REPLAY_CART_RELEASE", "push_end") == "push_end":
+        # 2026-09-27: the real robot lets go of the cart when the push ends (3-5 s before the cup grasp) and then turns right and
+        # walks to the desk; releasing the attached cart only at the end of the turn swung it into the desk's place.
+        _mv = np.where(np.abs(NAV[:CUP_GRAB_ROW, 0]) > 0.05)[0]
+        if len(_mv): RELEASE_ROW = min(RELEASE_ROW, int(_mv[-1]) + 10)
+    print(f"[replay] ep {ep}: cart released at row {RELEASE_ROW} (t={RELEASE_ROW/fps:.1f}s, {os.environ.get('REPLAY_CART_RELEASE', 'push_end')})", flush=True)
     print(f"[replay] ep {ep}: {n_rows} rows at {fps:.1f} fps -> {n} ticks at {HZ} Hz ({total_t:.1f} s, {walking.sum()} walking rows; "
           f"nav gain {nav_gain}, walk stretch {walk_stretch}, post-turn gain {post_turn_gain})", flush=True)
 
@@ -230,6 +264,41 @@ def replay_episode(ep, video_out, fast=False, video=None):
         mj_arm = [m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, nm)] for nm in ARM_JOINTS]
         mj_key = {nm: m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, nm)] for nm in KEY_JOINTS}
         cup_at_reset = d.xpos[tgt_body].copy()
+        # --- per-episode Cartesian hand correction (2026-09-27): REPLAY_HAND_DELTA_R="dx,dy,dz" (m, base-yaw frame) is added to the
+        # right-arm targets through the arm Jacobian, ramped in before the cup grasp and out after the release, so the replayed hand
+        # meets the cup the way the recording's hand met the real cup (fit per episode by fit_next from this run's trace).
+        HAND_DELTA = np.array([float(v) for v in os.environ.get("REPLAY_HAND_DELTA_R", "0,0,0").split(",")], dtype=float)
+        HD_ON = bool(np.any(np.abs(HAND_DELTA) > 1e-4))
+        r_arm_names = ARM_JOINTS[7:]
+        r_arm_dofs = np.array([m.jnt_dofadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, nm)] for nm in r_arm_names])
+        r_arm_up = np.array([up_names.index(nm) for nm in r_arm_names])
+        _jacp = np.zeros((3, m.nv))
+        def hand_delta_w(r):
+            """0 -> 1 over the 1.5 s before the cup closure, 1 until 0.3 s after the release, -> 0 over the next second (rows at fps)."""
+            a0, a1 = CUP_GRAB_ROW - int(1.5 * fps), CUP_GRAB_ROW - int(0.3 * fps)
+            b0, b1 = CUP_OPEN_ROW + int(0.3 * fps), CUP_OPEN_ROW + int(1.3 * fps)
+            if r <= a0 or r >= b1: return 0.0
+            if r < a1: return (r - a0) / max(1, a1 - a0)
+            if r <= b0: return 1.0
+            return (b1 - r) / max(1, b1 - b0)
+        def hand_delta_dq(w):
+            """Joint delta of the 7 right-arm joints that moves the palm by w * HAND_DELTA (damped least squares at the current pose)."""
+            yaw = yaw_of_wxyz(d.qpos[3:7]); cy, sy = np.cos(yaw), np.sin(yaw)
+            dx = w * np.array([cy * HAND_DELTA[0] - sy * HAND_DELTA[1], sy * HAND_DELTA[0] + cy * HAND_DELTA[1], HAND_DELTA[2]])
+            mujoco.mj_jacBody(m, d, _jacp, None, palm_body); J = _jacp[:, r_arm_dofs]
+            dq = J.T @ np.linalg.solve(J @ J.T + 0.05 ** 2 * np.eye(3), dx)
+            return np.clip(dq, -0.7, 0.7)
+        # --- fingers from the recorded STATE (2026-09-27): the recording's hand COMMAND at a grasp is a fixed full-close pose
+        # (index_0 1.5 rad ...) while the real fingers stopped on the cup (index_0 ~0.05): replaying the command makes the stiff
+        # sim fingers squeeze/knock the cup. REPLAY_HAND_FROM_STATE=1 replays the recorded ACTUAL finger joints instead, plus
+        # REPLAY_HAND_STATE_MARGIN rad of extra closure towards the command (grip force).
+        HAND_FROM_STATE = os.environ.get("REPLAY_HAND_FROM_STATE", "0") == "1"
+        HAND_STATE_MARGIN = float(os.environ.get("REPLAY_HAND_STATE_MARGIN", "0.15"))
+        hand_up = np.array([j for j, nm in enumerate(up_names) if "_hand_" in nm], dtype=int)
+        if HAND_FROM_STATE:
+            print(f"[replay] fingers follow the recorded finger STATE (+{HAND_STATE_MARGIN:.2f} rad towards the command)", flush=True)
+        if HD_ON:
+            print(f"[replay] hand delta {HAND_DELTA.round(3).tolist()} m (base frame) over rows {CUP_GRAB_ROW - int(1.5 * fps)}..{CUP_OPEN_ROW + int(1.3 * fps)}", flush=True)
         # --- grip / arm compliance knobs (applied on the compiled model; the sonic MJCF has stiff position actuators) ---
         hand_kp = float(os.environ.get("REPLAY_HAND_KP_SCALE", "1.0")); arm_kp = float(os.environ.get("REPLAY_ARM_KP_SCALE", "1.0"))
         bar_fr = os.environ.get("REPLAY_BAR_FRICTION")
@@ -256,9 +325,28 @@ def replay_episode(ep, video_out, fast=False, video=None):
         hand_geoms_all = {g for g in range(m.ngeom) if "_hand_" in (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or "")}
         print(f"[replay] compliance: hand kp x{hand_kp} ({n_h} act), arm kp x{arm_kp} ({n_a} act), bar geoms {sorted(bar_geoms)} friction {bar_fr}; "
               f"wheels {sorted(wheel_geoms)} friction {wheel_fr_eff} priority {wheel_pri}", flush=True)
+        # --- contact model knobs (2026-09-28, PHYSICAL replay: no kinematic aids; standard MuJoCo settings for stable grasps) ---
+        if os.environ.get("REPLAY_CONE_ELLIPTIC") == "1": m.opt.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
+        if os.environ.get("REPLAY_IMPRATIO"): m.opt.impratio = float(os.environ["REPLAY_IMPRATIO"])
+        if os.environ.get("REPLAY_NOSLIP"): m.opt.noslip_iterations = int(os.environ["REPLAY_NOSLIP"])
+        _ffr, _cfr, _cdim = os.environ.get("REPLAY_FINGER_FRICTION"), os.environ.get("REPLAY_CUP_FRICTION"), os.environ.get("REPLAY_GRIP_CONDIM")
+        _n_f = _n_c = 0
+        for g in range(m.ngeom):
+            if not (m.geom_contype[g] or m.geom_conaffinity[g]): continue
+            _b = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or ""
+            if "_hand_" in _b:
+                if _ffr: m.geom_friction[g, 0] = float(_ffr)
+                if _cdim: m.geom_condim[g] = int(_cdim); m.geom_friction[g, 1] = max(float(m.geom_friction[g, 1]), 0.03)
+                _n_f += 1
+            elif _b == tgt_label:
+                if _cfr: m.geom_friction[g, 0] = float(_cfr)
+                if _cdim: m.geom_condim[g] = int(_cdim); m.geom_friction[g, 1] = max(float(m.geom_friction[g, 1]), 0.03)
+                _n_c += 1
+        print(f"[replay] contact model: cone {'elliptic' if m.opt.cone == mujoco.mjtCone.mjCONE_ELLIPTIC else 'pyramidal'} impratio {m.opt.impratio:g} "
+              f"noslip {m.opt.noslip_iterations} | finger friction {_ffr} ({_n_f} geoms) cup friction {_cfr} ({_n_c} geoms) condim {_cdim}", flush=True)
         attach = os.environ.get("REPLAY_CART_ATTACH", "none") == "base"
         cart_jadr = m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "cart_joint")]
-        cup_jadr = m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, f"{tgt_label}_joint")]
+        cup_jid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, f"{tgt_label}_joint"); cup_jadr = m.jnt_qposadr[cup_jid]
         if attach:
             # The WBC walk policy cannot push a cart: it jams against it (measured: 0.02 m of travel with the cart in
             # front, 2.30 m with it parked aside). Carry the cart rigidly with the base instead and take it out of the
@@ -286,14 +374,30 @@ def replay_episode(ep, video_out, fast=False, video=None):
 
             held = {"on": True}
 
+            cup_static = {"q": None}; cart_park = {"q": None}
             def carry():
-                if not held["on"]:
+                if not held["on"] and os.environ.get("REPLAY_CART_PARK", "0") == "1" and cart_park.get("q") is not None:
+                    # 2026-09-27 per-episode: the released cart stays parked (the free cart rolled up to 1.2 m away when the
+                    # hands nudged it after the release, out of reach of the recorded cup grasp; the real cart stayed put)
+                    d.qpos[cart_jadr:cart_jadr + 7] = cart_park["q"]
+                    d.qvel[m.jnt_dofadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "cart_joint")]:][:6] = 0.0
+                if not held["on"] and not cup_riding["on"]:
                     return
                 if cur["i"] is not None and row_at(cur["i"] / HZ) >= RELEASE_ROW:
-                    held["on"] = False                      # let go: the cart stays where it is, the robot walks in
-                    for g in range(m.ngeom):
-                        if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or "") == "cart":
-                            m.geom_contype[g] = 1; m.geom_conaffinity[g] = 1
+                    if held["on"]:
+                        cart_park["q"] = d.qpos[cart_jadr:cart_jadr + 7].copy()
+                        held["on"] = False                  # let go: the cart stays where it is, the robot walks in
+                        for g in range(m.ngeom):
+                            if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or "") == "cart":
+                                m.geom_contype[g] = 1; m.geom_conaffinity[g] = 1
+                        cup_static["q"] = d.qpos[cup_jadr:cup_jadr + 7].copy()
+                    if cup_riding["on"]:                    # 2026-09-27: the cup stays put on the parked cart until a hand reaches it
+                        touched = any((c.geom1 in cup_geoms and c.geom2 in hand_geoms) or (c.geom2 in cup_geoms and c.geom1 in hand_geoms)
+                                      for c in d.contact[:d.ncon])
+                        if touched and row_at(cur["i"] / HZ) >= CUP_GRAB_ROW - 15:
+                            cup_riding["on"] = False        # (the arm approaching used to knock it off the box in ~10 of 97 replays)
+                        elif cup_static["q"] is not None:
+                            d.qpos[cup_jadr:cup_jadr + 7] = cup_static["q"]; d.qvel[m.jnt_dofadr[cup_jid]:m.jnt_dofadr[cup_jid] + 6] = 0.0
                     return
                 yaw = yaw_of_wxyz(d.qpos[3:7]); bxy = d.qpos[:2]
                 c, sn = np.cos(yaw), np.sin(yaw)
@@ -307,15 +411,83 @@ def replay_episode(ep, video_out, fast=False, video=None):
                     touched = any((c.geom1 in cup_geoms and c.geom2 in hand_geoms)
                                   or (c.geom2 in cup_geoms and c.geom1 in hand_geoms)
                                   for c in d.contact[:d.ncon])
-                    if touched:                                             # a hand reached it: stop pinning it
-                        cup_riding["on"] = False
+                    if touched and cur["i"] is not None and row_at(cur["i"] / HZ) >= CUP_GRAB_ROW - 15:    # a hand reached it within 0.5 s of the
+                        cup_riding["on"] = False                            # recorded cup grasp: stop pinning it (brushes during the push no longer free it)
                     else:
                         dc = np.cos(cyaw - cyaw0), np.sin(cyaw - cyaw0)
                         d.qpos[cup_jadr:cup_jadr + 2] = [cx + dc[0] * cup_off[0] - dc[1] * cup_off[1],
                                                          cy + dc[1] * cup_off[0] + dc[0] * cup_off[1]]
                         d.qpos[cup_jadr + 2] = cz0 + cup_off[2]
+                        # 2026-09-25: the ride keeps the cup UPRIGHT and still until a hand touches it (with position-only pinning
+                        # the cup rolled over on the box during the push in ~40 of 96 replays; the real cup never did)
+                        d.qpos[cup_jadr + 3:cup_jadr + 7] = [np.cos((cyaw - cyaw0) / 2), 0.0, 0.0, np.sin((cyaw - cyaw0) / 2)]
+                        d.qvel[m.jnt_dofadr[cup_jid]:m.jnt_dofadr[cup_jid] + 6] = 0.0
         else:
             carry = lambda: None
+        # --- grasp assist (2026-09-27): the Dex3 pinch on the 9 cm cup is not reproducible in MuJoCo (12 of 97 grasps hold with the
+        # recorded finger commands, 4-5 of 15 with the recorded finger STATES): once the recorded hand has closed on the cup and a
+        # finger touches it, the cup rides with the palm (upright, fixed palm-frame offset) until the recorded release row.
+        # REPLAY_GRASP_ASSIST=1 enables it; the summary records "assist_captured".
+        GRASP_ASSIST = os.environ.get("REPLAY_GRASP_ASSIST", "0") == "1"
+        ga = {"on": False, "done": False, "captured_row": None, "off": None, "yaw_rel": 0.0}
+        cup_geoms_ga = {g for g in range(m.ngeom) if (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, m.geom_bodyid[g]) or "") == tgt_label}
+        cup_dof = m.jnt_dofadr[cup_jid]
+        def assist():
+            if not GRASP_ASSIST or ga["done"] or cur["i"] is None:
+                return
+            r = row_at(cur["i"] / HZ)
+            if ga.get("pinned") is not None:                           # per episode (REPLAY_CUP_PIN_PLACED=1): the cup stays where it was placed
+                d.qpos[cup_jadr:cup_jadr + 7] = ga["pinned"]; d.qvel[cup_dof:cup_dof + 6] = 0.0
+                return
+            if ga.get("settling", 0) > 0:                               # release: hold the cup upright on the surface below while the hand withdraws
+                ga["settling"] -= 1; pos = d.qpos[cup_jadr:cup_jadr + 3].copy()
+                mid = (d.xpos[tip_bodies["right_hand_index_1_link"]] + d.xpos[tip_bodies["right_hand_thumb_2_link"]]) / 2
+                if ga["settling"] == 0 and np.linalg.norm(mid - (pos + [0.0, 0.0, 0.07])) < 0.10:   # (no time limit: ep 24 tipped when a 1.5 s cap ran out)
+                    ga["settling"] = 1; ga["settle_extra"] = ga.get("settle_extra", 0) + 1   # the fingers are still around the cup: keep holding it
+                if L["table_near_x"] + 0.02 <= pos[0] <= L["table_far_x"] - 0.02 and L["table_right_y"] + 0.02 <= pos[1] <= L["table_left_y"] - 0.02:
+                    pos[2] = T.BS.TABLE_H + 0.001
+                d.qpos[cup_jadr:cup_jadr + 3] = pos; cy = yaw_of_wxyz(d.qpos[cup_jadr + 3:cup_jadr + 7])
+                d.qpos[cup_jadr + 3:cup_jadr + 7] = [np.cos(cy / 2), 0.0, 0.0, np.sin(cy / 2)]; d.qvel[cup_dof:cup_dof + 6] = 0.0
+                if ga["settling"] == 0: ga["done"] = True; ga["settled_xyz"] = pos.round(4).tolist(); print(f"[replay] grasp assist: cup settled at {pos.round(3).tolist()}", flush=True)
+                if os.environ.get("REPLAY_CUP_PIN_PLACED", "0") == "1" and abs(pos[2] - (T.BS.TABLE_H + 0.001)) < 1e-3 and ga.get("pinned") is None:
+                    ga["pinned"] = d.qpos[cup_jadr:cup_jadr + 7].copy()          # placed upright on the desk: keep it there (the withdrawing
+                    print(f"[replay] grasp assist: cup pinned where it was placed", flush=True)   # wrist knocked it over in 4 Isaac exports)
+                return
+            if not ga["on"]:
+                if r < CUP_GRAB_ROW - 15 or r > CUP_GRAB_ROW + int(2.5 * fps):
+                    return                                              # capture window: 0.5 s before to 2.5 s after the recorded closure
+                touched = any((c.geom1 in cup_geoms_ga and c.geom2 in hand_geoms_all) or (c.geom2 in cup_geoms_ga and c.geom1 in hand_geoms_all)
+                              for c in d.contact[:d.ncon])
+                mid = (d.xpos[tip_bodies["right_hand_index_1_link"]] + d.xpos[tip_bodies["right_hand_thumb_2_link"]]) / 2
+                cupc = d.xpos[tgt_body] + np.array([0.0, 0.0, 0.07])    # cup body origin is its base: compare with the mid-height
+                if not (touched or np.linalg.norm(mid - cupc) < 0.07):
+                    return
+                # 2026-09-27: snap the cup INTO the fingers (where the cup sits in the successful physical grasps: cup base =
+                # finger-mid + (0.028, 0.016, -0.108) in the base-yaw frame). Keeping the capture-time offset (up to 0.2 m ahead
+                # of the wrist) left the cup outside the hand, and the withdrawing hand then knocked it over on the table.
+                byaw = yaw_of_wxyz(d.qpos[3:7]); cb, sb = np.cos(byaw), np.sin(byaw); ref = np.array([0.028, 0.016, -0.108])
+                cup_des = mid + np.array([cb * ref[0] - sb * ref[1], sb * ref[0] + cb * ref[1], ref[2]])
+                jump = float(np.linalg.norm(cup_des - d.qpos[cup_jadr:cup_jadr + 3]))
+                pyaw = yaw_of_wxyz(d.xquat[palm_body]); cp, sp = np.cos(-pyaw), np.sin(-pyaw)
+                dv = cup_des - d.xpos[palm_body]
+                ga["off"] = np.array([cp * dv[0] - sp * dv[1], sp * dv[0] + cp * dv[1], dv[2]])   # palm-yaw frame offset
+                ga["yaw_rel"] = yaw_of_wxyz(d.qpos[cup_jadr + 3:cup_jadr + 7]) - pyaw
+                ga["on"] = True; ga["captured_row"] = int(r)
+                print(f"[replay] grasp assist: cup captured at row {r} (touched={touched}, snapped {jump * 100:.1f} cm into the fingers, offset {ga['off'].round(3).tolist()})", flush=True)
+            if r >= CUP_OPEN_ROW:
+                ga["on"] = False; ga["settling"] = 25; ga["settle_extra"] = 0; ga["release_xyz"] = d.qpos[cup_jadr:cup_jadr + 3].round(4).tolist()
+                d.qvel[cup_dof:cup_dof + 6] = 0.0
+                print(f"[replay] grasp assist: released at row {r}", flush=True)
+                return
+            pyaw = yaw_of_wxyz(d.xquat[palm_body]); cp, sp = np.cos(pyaw), np.sin(pyaw); o = ga["off"]
+            pos = d.xpos[palm_body] + np.array([cp * o[0] - sp * o[1], sp * o[0] + cp * o[1], o[2]])
+            if L["table_near_x"] - 0.05 <= pos[0] <= L["table_far_x"] + 0.05 and L["table_right_y"] - 0.05 <= pos[1] <= L["table_left_y"] + 0.05:
+                pos[2] = max(pos[2], T.BS.TABLE_H + 0.003)          # the ride cannot push the cup into the table top
+            d.qpos[cup_jadr:cup_jadr + 3] = pos
+            cy = pyaw + ga["yaw_rel"]; d.qpos[cup_jadr + 3:cup_jadr + 7] = [np.cos(cy / 2), 0.0, 0.0, np.sin(cy / 2)]
+            d.qvel[cup_dof:cup_dof + 6] = 0.0
+        _carry0 = carry
+        carry = lambda: (_carry0(), assist())
         if robot.elastic_band is not None:
             robot.elastic_band.enable = False
         agent._dropping = False; agent.reset_policy(); agent._wbc_policy.lower_body_policy.use_policy_action = True
@@ -334,11 +506,25 @@ def replay_episode(ep, video_out, fast=False, video=None):
                         "toggle_policy_action": False, "toggle_data_collection": False, "toggle_data_abort": False}
             t = i / HZ; r = row_at(t)
             q = act_at(t)[up_from_act].copy()
+            if HAND_FROM_STATE:
+                st = STATE[r][up_from_act][hand_up]; cmd = q[hand_up]
+                q[hand_up] = st + HAND_STATE_MARGIN * np.sign(cmd - st) * (np.abs(cmd - st) > 0.05)
             # The recorded waist (torso rpy) command fights the lower-body walk policy: driving it stalls the robot
             # (measured: 0.014 m of travel with it, 0.68 m with the waist held). Hold the waist while walking.
             if len(waist_idx) and (waist_mode == "freeze"
                                    or (waist_mode == "freeze_while_walking" and abs(float(NAV[r, 0])) > 0.1)):
                 q[waist_idx] = waist_home
+            if HD_ON:
+                w = hand_delta_w(r); cur["hand_w"] = w
+                if w > 0:
+                    dq_hd = hand_delta_dq(w); q_rec = q[r_arm_up].copy(); q[r_arm_up] += dq_hd
+                    if os.environ.get("REPLAY_HD_DEBUG") == "1" and r in (CUP_GRAB_ROW - int(0.3 * fps), CUP_GRAB_ROW) and not cur.get(f"dbg{r}"):
+                        cur[f"dbg{r}"] = True
+                        r_q = d.qpos[[m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, nm)] for nm in r_arm_names]]
+                        rng = [m.jnt_range[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, nm)].round(2).tolist() for nm in r_arm_names]
+                        print(f"[hd-debug] row {r} w={w:.2f} palm={d.xpos[palm_body].round(3).tolist()} cup={d.xpos[tgt_body].round(3).tolist()}\n"
+                              f"   rec target {q_rec.round(3).tolist()}\n   dq         {dq_hd.round(3).tolist()}\n   new target {q[r_arm_up].round(3).tolist()}\n"
+                              f"   actual q   {r_q.round(3).tolist()}\n   ranges     {rng}", flush=True)
             nav = NAV[r].copy()
             if post_turn_gain != 1.0 and r >= RELEASE_ROW:
                 nav[:2] *= post_turn_gain
@@ -380,17 +566,24 @@ def replay_episode(ep, video_out, fast=False, video=None):
                     dr.rectangle([x, 26, x + 240, 44], fill=(0, 0, 0)); dr.text((x + 4, 29), t, fill=(255, 255, 0))
                 for pkt in vs.encode(av.VideoFrame.from_ndarray(np.asarray(im), format="rgb24")): c.mux(pkt)
 
-        # stand up / stabilize before the recorded rows start
-        t0 = time.monotonic(); tick = 0
-        while not (robot.stabilized and (tick / HZ) > 2.0):
+        # stand up / stabilize before the recorded rows start, then hold the recording's FIRST upper-body pose (2026-09-27)
+        EXPORT_GATE["on"] = False                               # the settle and the first-pose hold are not part of the dataset
+        tp.is_active = True                                     # teleop active during the settle: the hook (cur["i"] = None) returns ACT[0]
+        t0 = time.monotonic(); tick = 0; k_stab = None
+        for tick in range(STABILIZE_TICKS + PREPOSE_TICKS):
             action = agent.get_action(obs, instruction=task.instruction, privileged_info=sinfo)
             obs, *_, sinfo = env.step(action)
             _tick_clock(); carry()
-            tick += 1
             if not fast:
-                sl = t0 + tick / HZ - time.monotonic(); (sl > 0) and time.sleep(sl)
-            if tick / HZ > 20: break
-        tp.is_active = True
+                sl = t0 + (tick + 1) / HZ - time.monotonic(); (sl > 0) and time.sleep(sl)
+            if tick == 100 and hasattr(robot, "_stabilized"):
+                robot._stabilized = True                        # latch: the base never gets below the velocity threshold while the policy stands
+            if robot.stabilized and tick > 100 and k_stab is None:
+                k_stab = tick
+            if k_stab is not None and tick >= k_stab + PREPOSE_TICKS:
+                break
+        print(f"[replay] settle: {tick + 1} ticks (stabilised at {k_stab}); first recorded pose held for {PREPOSE_TICKS} ticks", flush=True)
+        EXPORT_GATE["on"] = True
         # press the policy-action toggle BEFORE entering replay mode, not on the first replay tick: pressing it once
         # the recorded rows are already streaming leaves the robot unable to walk (measured: 0.02 m vs 0.68 m of travel).
         agent._wbc_policy.handle_keyboard_button("c")
@@ -398,6 +591,9 @@ def replay_episode(ep, video_out, fast=False, video=None):
         tgt0 = d.xpos[tgt_body].copy(); cart0 = d.xpos[cart_body].copy()
         trace = []
         t0 = time.monotonic(); tick = 0
+        QREC = os.environ.get("REPLAY_QPOS_OUT"); qrec = []          # 2026-09-28: exact state recording for offline videos (no renderer in this process)
+        if QREC:
+            os.makedirs(os.path.dirname(QREC) or ".", exist_ok=True); mujoco.mj_saveModel(m, QREC[:-4] + ".mjb", None)
         for i in range(n):
             cur["i"] = i
             action = agent.get_action(obs, instruction=task.instruction, privileged_info=sinfo)
@@ -425,6 +621,7 @@ def replay_episode(ep, video_out, fast=False, video=None):
                    "base_yaw": round(float(yaw_of_wxyz(d.qpos[3:7])), 4), "base_xy_abs": d.qpos[:2].round(4).tolist(),
                    "task_in_hand": bool((sinfo.get("progress") or {}).get("cup_in_hand", False)),
                    "task_success": bool((sinfo.get("progress") or {}).get("success", False)),
+                   "hand_w": round(float(cur.get("hand_w", 0.0)), 3), "sim_arm_q": d.qpos[mj_arm].round(4).tolist(),
                    "hand_bar_contacts": int(sum(1 for c in d.contact[:d.ncon]
                                                 if (c.geom1 in bar_geoms and c.geom2 in hand_geoms_all) or (c.geom2 in bar_geoms and c.geom1 in hand_geoms_all))),
                    "bar_z": round(float(np.mean([d.geom_xpos[g][2] for g in bar_geoms])), 4) if bar_geoms else None}
@@ -436,6 +633,7 @@ def replay_episode(ep, video_out, fast=False, video=None):
                             "key_cmd": {k: round(float(ACT[ri, v]), 4) for k, v in key_act.items()},
                             "key_real": {k: round(float(STATE[ri, v]), 4) for k, v in key_st.items()}})
             trace.append(rec)
+            if QREC and i % 2 == 0: qrec.append((d.qpos.copy(), t_i))
             if video and i % 2 == 0:
                 emit(f"ep {ep}  t={t_i:5.1f}s  vx {NAV[ri, 0]:+.2f} yaw cmd {NAV[ri, 3]:+.2f} | sim heading {sim_h:+.2f} | "
                      f"base {np.round(d.qpos[:2] - xy0, 2).tolist()} | cup lift {d.xpos[tgt_body][2] - tgt0[2]:+.2f} m", t_i)
@@ -446,6 +644,7 @@ def replay_episode(ep, video_out, fast=False, video=None):
             action = agent.get_action(obs, instruction=task.instruction, privileged_info=sinfo)
             obs, _r, _te, _tr, sinfo = env.step(action)
             _tick_clock(); carry()
+            if QREC and j % 2 == 0: qrec.append((d.qpos.copy(), n / HZ + j / HZ))
             if video and j % 2 == 0:
                 emit(f"ep {ep}  settle {j / HZ:4.1f}s | cup {np.round(d.xpos[tgt_body], 2).tolist()} tilt {tilt_deg(d.xquat[tgt_body]):.0f} deg", n / HZ)
             tick += 1
@@ -455,6 +654,9 @@ def replay_episode(ep, video_out, fast=False, video=None):
             for pkt in vs.encode(): c.mux(pkt)
             c.close(); rc.close()
 
+        if QREC and qrec:
+            np.savez_compressed(QREC, qpos=np.array([q for q, _ in qrec]), t=np.array([t for _, t in qrec]), ep=ep, fps=25)
+            print(f"[replay] state recording: {len(qrec)} frames -> {QREC}", flush=True)
         # ---- outcome ------------------------------------------------------------------
         lift = np.array([r["target_xyz"][2] - tgt0[2] for r in trace])
         tilt = np.array([r["target_tilt_deg"] for r in trace])
@@ -477,6 +679,9 @@ def replay_episode(ep, video_out, fast=False, video=None):
                    "on_table": on_table, "still_on_cart": still_on_cart,
                    "cup_at_reset": cup_at_reset.round(3).tolist(),
                    "cup_settle_shift_mm": round(float(np.linalg.norm(tgt0 - cup_at_reset) * 1000), 1),
+                   "hand_delta": HAND_DELTA.round(3).tolist(), "cup_close_row": int(CUP_GRAB_ROW), "cup_open_row": int(CUP_OPEN_ROW),
+                   "pre_grasp": _pre_grasp(trace, CUP_GRAB_ROW, float(cup_at_reset[2])),
+                   "assist_captured": ga["captured_row"], "assist_release_xyz": ga.get("release_xyz"), "assist_settled_xyz": ga.get("settled_xyz"),
                    "cup_start": tgt0.round(3).tolist(), "cup_end": [round(float(ex), 3), round(float(ey), 3), round(float(ez), 3)],
                    "cup_end_tilt_deg": round(end_tilt, 1),
                    "cup_end_minus_table_centre": [round(float(ex - L["table_cx"]), 3), round(float(ey - L["table_cy"]), 3),

@@ -24,6 +24,7 @@ from PIL import ImageDraw
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 ROOT = Path(__file__).resolve().parents[2]   # the SIMPLE checkout (scenes/<kit>/ lives inside it)
+DATA = Path(os.environ.get("SIMPLE_DATA_DIR") or ROOT / "data")   # SIMPLE data root (datasets, recordings, scene sets)
 OUT = HERE / "replay"
 HZ = 50
 ARM_JOINTS = [f"{s}_{j}_joint" for s in ("left", "right") for j in
@@ -54,6 +55,7 @@ def zero_stale_leading_rows(rel, max_lead=10):
 def make_env():
     import gymnasium as gym
     import simple.tasks.g1_wholebody_bottle_bin_teleop as T
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import replay_physics; replay_physics.pin_task(T)   # the validated robot / reset configuration
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
     cfg = SimLoopConfig().load_wbc_yaml(); cfg["ENV_NAME"] = "simple"
     env = gym.make(T.ENV_ID, sim_mode="mujoco", render_hz=HZ, physics_dt=cfg["SIMULATE_DT"], headless=True,
@@ -118,7 +120,7 @@ def replay_episode(session, ep, video_out):
     import av, mujoco
     from simple.agents.pico_decoupled_agent import PicoDecoupledAgent
 
-    S = ROOT / "data/real_recordings" / session
+    S = DATA / "real_recordings" / session
     info = json.load(open(S / "meta/info.json"))
     df = pd.read_parquet(S / f"data/chunk-000/episode_{ep:06d}.parquet")
     act_names = info["features"]["action"]["names"]; st_names = info["features"]["observation.state"]["names"]

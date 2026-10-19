@@ -1,0 +1,122 @@
+{
+ "ep022": {
+  "ep": 22,
+  "variant": null,
+  "ok": true,
+  "in_bin": true,
+  "grasp_ok": true,
+  "gap": 0.0,
+  "gap_free": 0.09,
+  "pre_moved": 0.0,
+  "leg": 0,
+  "table_leg": 0,
+  "twin_grasp": true,
+  "job": {
+   "bottle_xy_cmd": [
+    0.2137,
+    -0.0082
+   ],
+   "bin_xy_cmd": [
+    -0.2395,
+    -1.5545
+   ],
+   "bin_yaw_deg": -100.1
+  }
+ },
+ "ep067": {
+  "ep": 67,
+  "variant": null,
+  "ok": true,
+  "in_bin": true,
+  "grasp_ok": true,
+  "gap": 0.0,
+  "gap_free": 0.107,
+  "pre_moved": 0.0,
+  "leg": 0,
+  "table_leg": 0,
+  "twin_grasp": true,
+  "job": {
+   "bottle_xy_cmd": [
+    0.2836,
+    -0.0157
+   ],
+   "bin_xy_cmd": [
+    -0.2528,
+    -1.5111
+   ],
+   "bin_yaw_deg": -87.2
+  }
+ },
+ "ep090": {
+  "ep": 90,
+  "variant": null,
+  "ok": true,
+  "in_bin": true,
+  "grasp_ok": true,
+  "gap": 0.04,
+  "gap_free": 0.109,
+  "pre_moved": 0.0,
+  "leg": 4,
+  "table_leg": 0,
+  "twin_grasp": true,
+  "job": {
+   "bottle_xy_cmd": [
+    0.2816,
+    -0.0237
+   ],
+   "bin_xy_cmd": [
+    -0.2838,
+    -1.6017
+   ],
+   "bin_yaw_deg": -84.4
+  }
+ },
+ "ep094": {
+  "ep": 94,
+  "variant": null,
+  "ok": true,
+  "in_bin": true,
+  "grasp_ok": true,
+  "gap": 0.0,
+  "gap_free": 0.134,
+  "pre_moved": 0.0,
+  "leg": 0,
+  "table_leg": 0,
+  "twin_grasp": true,
+  "job": {
+   "bottle_xy_cmd": [
+    0.198,
+    0.0169
+   ],
+   "bin_xy_cmd": [
+    -0.2489,
+    -1.5921
+   ],
+   "bin_yaw_deg": -88.0
+  }
+ },
+ "ep098": {
+  "ep": 98,
+  "variant": null,
+  "ok": true,
+  "in_bin": true,
+  "grasp_ok": true,
+  "gap": 0.0,
+  "gap_free": 0.044,
+  "pre_moved": 0.0,
+  "leg": 0,
+  "table_leg": 0,
+  "twin_grasp": true,
+  "job": {
+   "bottle_xy_cmd": [
+    0.2689,
+    0.0012
+   ],
+   "bin_xy_cmd": [
+    -0.7303,
+    -1.1522
+   ],
+   "bin_yaw_deg": -105.5
+  }
+ }
+}
