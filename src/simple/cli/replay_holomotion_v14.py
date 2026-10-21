@@ -46,7 +46,7 @@ def _episodes(dataset: Path, episode: int, all_: bool) -> list[Path]:
     return [rdir / f"episode_{episode:06d}.npz"]
 
 
-def _build_env(info: dict, setup: dict, headless: bool = True):
+def _build_env(info: dict, setup: dict, headless: bool = True, check_legacy: bool = True):
     """Rebuild the recorded scene through SIMPLE; returns (env, sonic_env, scene module)."""
     import gymnasium as gym
     from simple.cli.teleop_holomotion_v14 import _load_sonic_config, load_scene
@@ -66,14 +66,26 @@ def _build_env(info: dict, setup: dict, headless: bool = True):
     from simple.teleop.holomotion_v14.robot_variants import REPO_ROOT, backpack_mjcf, teleop_mjcf, tilt_head_sensor
     tilt = float(info.get("head_tilt_deg", 0.0))
     if "robot" in info:                                   # rebuild the recorded robot model (written deterministically)
-        robot.mjcf_path = teleop_mjcf(info["robot"], info.get("backpack_kg", 0.0), tilt_deg=tilt)
-    if tilt:
-        tilt_head_sensor(sonic_env.task, tilt)
+        robot.mjcf_path = teleop_mjcf(info["robot"], info.get("backpack_kg", 0.0), tilt_deg=tilt,
+                                      black_hands=bool(info.get("black_hands", False)))   # recorded since 2026-10-18
     elif info.get("backpack_kg", 0) > 0:                  # episodes recorded before --robot existed
         robot.mjcf_path = backpack_mjcf(info["backpack_kg"])
+    # (until 2026-10-18 the elif above hung off `if tilt:`, so a tilt-0 episode got the plain backpack robot and only
+    # the robot_mjcf override below put the recorded file back)
+    if tilt:
+        tilt_head_sensor(sonic_env.task, tilt)
     if info.get("robot_mjcf") and robot.mjcf_path != info["robot_mjcf"] and (REPO_ROOT / "data" / info["robot_mjcf"]).exists():
         robot.mjcf_path = info["robot_mjcf"]
     _reset_to(env, sonic_env, mod, info, setup)
+    # 2026-10-16: the stereo robot changed (rot0 bracket, both rectified eyes). Episodes recorded before carry the old
+    # model's hash: rebuild them with the legacy stereo robot (rot15 base, left pinhole only) when the hash disagrees.
+    if check_legacy and info.get("robot") == "stereo" and info.get("model_sha256") and not info.get("black_hands"):
+        from simple.teleop.holomotion_v14 import exact_log as XL
+        if XL.model_sha256(sonic_env.mujoco.mjModel) != info["model_sha256"]:
+            robot.mjcf_path = teleop_mjcf("stereo", info.get("backpack_kg", 0.0), tilt_deg=tilt, legacy=True)
+            _reset_to(env, sonic_env, mod, info, setup)
+            print(f"[replay] rebuilt with the legacy stereo robot (rot15 bracket): model hash "
+                  f"{'matches' if XL.model_sha256(sonic_env.mujoco.mjModel) == info['model_sha256'] else 'STILL DIFFERS'}", flush=True)
     return env, sonic_env, mod
 
 

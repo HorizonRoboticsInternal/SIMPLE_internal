@@ -221,3 +221,5 @@ Result, 5 level-3 scenes per task (report: http://10.40.11.11:8899/holomotion_v1
 
 **Not the same as `eval_decoupled_wbc`:** one worker per process, MuJoCo only (no Isaac rendering), no policy-specific
 agents. The VLA protocol above replaces the per-baseline agents.
+
+2026-10-18: `--image-size` defaults to 640x360 per eye (both rectified eyes), the size the teleop now records. Pass `--image-size ""` for the full 1280x720 render.

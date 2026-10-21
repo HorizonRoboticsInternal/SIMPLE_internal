@@ -76,17 +76,34 @@ def build_env(info: dict, hide_groups: tuple[str, ...] = ()):
     robot = se.task.robot
     tilt = float(info.get("head_tilt_deg", 0.0))
     if "robot" in info:
-        robot.mjcf_path = teleop_mjcf(info["robot"], info.get("backpack_kg", 0.0), tilt_deg=tilt)
-    if tilt:
-        tilt_head_sensor(se.task, tilt)
-    elif info.get("backpack_kg", 0) > 0:
+        robot.mjcf_path = teleop_mjcf(info["robot"], info.get("backpack_kg", 0.0), tilt_deg=tilt, black_hands=bool(info.get("black_hands", False)))
+    elif info.get("backpack_kg", 0) > 0:                  # episodes recorded before --robot existed
         robot.mjcf_path = backpack_mjcf(info["backpack_kg"])
+    if tilt:                                              # (2026-10-18: the elif used to hang off this if)
+        tilt_head_sensor(se.task, tilt)
     if info.get("robot_mjcf") and robot.mjcf_path != info["robot_mjcf"] and (REPO_ROOT / "data" / info["robot_mjcf"]).exists():
         robot.mjcf_path = info["robot_mjcf"]
     return env, se, mod
 
 
-def reset_episode(env, se, mod, info: dict, setup: dict, seed: int | None = None, room: dict | None = None) -> None:
+def load_look(path: Path, light_scale: float = 1.0) -> dict:
+    """--look-from: the material and lighting DR state of the first episode of a scene set / dataset (e.g.
+    data/evals_scenes/<env>/samebg-seed1000/meta/episodes.jsonl, the same-background look), light intensities x light_scale
+    (the HBVCAM view takes in more room than the head camera the lights were calibrated on: ~2.1 keeps the brightness targets)."""
+    import copy
+    e = json.loads(path.read_text().splitlines()[0]); cfg = json.loads(e["environment_config"]) if isinstance(e["environment_config"], str) else e["environment_config"]
+    st = copy.deepcopy(cfg["dr_state_dict"])
+    # only the BACKGROUND: table + ground materials and the lights; the per-object shader params stay the recording's own (the
+    # same-background scene had no distractors, the teleop scenes have three: the lists would not match)
+    look = {"material": {k: st["material"][k] for k in ("table_material", "ground_material") if k in st["material"]}, "lighting": st["lighting"]}
+    for v in look["lighting"].values():
+        if "light_intensity" in v: v["light_intensity"] = float(v["light_intensity"]) * light_scale
+        for k, x in list(v.items()):                                # the scene set serialised numpy arrays as strings ("[0.99 0. 0. 0.05]")
+            if isinstance(x, str) and x.strip().startswith("["): v[k] = [float(t) for t in x.strip("[] ").split()]
+    return look
+
+
+def reset_episode(env, se, mod, info: dict, setup: dict, seed: int | None = None, room: dict | None = None, look: dict | None = None) -> None:
     """The recorded episode's scene (its setup, then SIMPLE's saved DR state). With a seed the materials and lights are not
     taken from the recording: they are re-sampled with that seed (the lighting config follows <SCENE>_LIGHT_LEVEL). With a
     room (uid, center_offset, center_orientation) the HSSD room is that one instead of the recorded one (Isaac-only)."""
@@ -97,6 +114,10 @@ def reset_episode(env, se, mod, info: dict, setup: dict, seed: int | None = None
     state = json.loads(info["environment_config"])
     if room:
         state["dr_state_dict"]["scene"].update(room)
+    if look:                                                        # one fixed look for every episode (materials + lights from a file)
+        state["dr_state_dict"].setdefault("material", {}).update(look["material"]); state["dr_state_dict"]["lighting"] = look["lighting"]
+        env.reset(options={"state_dict": state})
+        return
     if seed is None:
         env.reset(options={"state_dict": state})
         return
@@ -204,6 +225,11 @@ def main() -> None:
     ap.add_argument("--room", default="recorded", choices=("recorded", "replay"),
                     help="replay: the room and room pose of the kit's Isaac replay datasets (REPLAY_ROOMS)")
     ap.add_argument("--fresh-look", action="store_true", help="re-sample materials and lights with seed 1000 + episode")
+    ap.add_argument("--seed", type=int, default=None, help="re-sample materials and lights with THIS seed for every episode (one look for the whole set, e.g. 1000 = the same-background sets)")
+    ap.add_argument("--eyes", default="left", help="comma-separated: left and/or right rectified eye; the right eye is written as episode_XXXXXX_right.mp4")
+    ap.add_argument("--out-size", default="", help="WxH: area-downscale every rendered frame before encoding (the rot0 recorder stores the 1280x720 eyes at 640x360)")
+    ap.add_argument("--look-from", type=Path, default=None, help="episodes.jsonl whose first episode's material + lighting DR state is used for EVERY episode (the same-background look)")
+    ap.add_argument("--look-light-scale", type=float, default=2.1, help="multiply the --look-from light intensities (HBVCAM view vs the head camera they were calibrated on)")
     ap.add_argument("--light", default="", choices=("", "bright", "dim"), help="<SCENE>_LIGHT_LEVEL for this process")
     ap.add_argument("--light-gain", type=float, default=None, help="<SCENE>_LIGHT_GAIN (default: FLOOR_ONLY_LIGHT_GAIN with "
                     "--hide walls, REPLAY_ROOM_LIGHT_GAIN with --room replay, else the scene's own)")
@@ -213,7 +239,7 @@ def main() -> None:
     import imageio_ffmpeg
     import mujoco
     from simple.teleop.holomotion_v14 import exact_log as XL
-    from simple.teleop.holomotion_v14.robot_variants import PINHOLE_CAMERA
+    from simple.teleop.holomotion_v14.robot_variants import PINHOLE_CAMERAS
 
     info_ds = json.loads((a.dataset / "meta/info.json").read_text())
     fps = float(info_ds["fps"])
@@ -246,8 +272,9 @@ def main() -> None:
             first = info
         elif info.get("scene") != first.get("scene") or info.get("backpack_kg") != first.get("backpack_kg"):
             sys.exit(f"episode {ep}: different scene/robot from the first episode; render them separately")
-        seed = 1000 + ep if a.fresh_look else None
-        reset_episode(env, se, mod, info, setup, seed, room)
+        seed = a.seed if a.seed is not None else (1000 + ep if a.fresh_look else None)
+        look_fixed = load_look(a.look_from, a.look_light_scale) if a.look_from else None
+        reset_episode(env, se, mod, info, setup, seed, room, look_fixed)
         floor = floor_only_room(se.task.dr.state_dict()["scene"]["uid"]) if "walls" in hide else None
         m, d = se.mujoco.mjModel, se.mujoco.mjData
         same_model = XL.model_sha256(m) == info["model_sha256"]
@@ -255,18 +282,23 @@ def main() -> None:
             print(f"[isaac-render] episode {ep}: SKIPPED, the rebuilt model's state size differs from the log", flush=True)
             continue
         drs = se.task.dr.state_dict()
-        look = {"seed": seed, "light_level": a.light or None, "light_gain": os.environ.get(f"{info['scene'].upper()}_LIGHT_GAIN"), "room": (drs.get("scene") or {}).get("uid"), "floor_only": floor,
+        look = {"seed": seed, "look_from": str(a.look_from) if a.look_from else None, "look_light_scale": a.look_light_scale if a.look_from else None, "light_level": a.light or None, "light_gain": os.environ.get(f"{info['scene'].upper()}_LIGHT_GAIN"), "room": (drs.get("scene") or {}).get("uid"), "floor_only": floor,
                 "table_material": ((drs.get("material") or {}).get("table_material") or {}).get("name"),
                 "ground_material": ((drs.get("material") or {}).get("ground_material") or {}).get("name"),
                 "lights": len(drs.get("lighting") or {}),
                 "light_intensity": [round(float(v.get("light_intensity", 0))) for v in (drs.get("lighting") or {}).values()][:6]}
-        if cam is None or not cam.cam.prim.IsValid():
-            cam = PinholeCamera()
-        cam.clip_like(m)
+        eyes = [x for x in a.eyes.split(",") if x]
+        if cam is None or not all(c.cam.prim.IsValid() for c in cam.values()):
+            cam = {eye: PinholeCamera(eye) for eye in eyes}
+        for c in cam.values():
+            c.clip_like(m)
+        c0 = cam[eyes[0]]
         body = MujocoRobot(se)                    # rebuilt per episode: the compiled model (geom ids) follows the layout
         n = len(log["frame_calls"])
         out = a.out / f"episode_{ep:06d}.mp4"
-        enc = encoder(out, cam.W, cam.H, fps, a.crf)
+        outs = {eye: (out if eye == "left" or len(eyes) == 1 else a.out / f"episode_{ep:06d}_{eye}.mp4") for eye in eyes}
+        osz = tuple(int(v) for v in a.out_size.lower().split("x")) if a.out_size else None
+        encs = {eye: encoder(outs[eye], osz[0] if osz else cam[eye].W, osz[1] if osz else cam[eye].H, fps, a.crf) for eye in eyes}
         blank = 0
         for t in range(n):
             if t == 0:
@@ -274,19 +306,25 @@ def main() -> None:
             else:
                 XL.set_state(m, d, log["physics"][t - 1], XL.PHYSICS)
             mujoco.mj_forward(m, d)
-            cam.follow(m, d, PINHOLE_CAMERA)
+            for eye in eyes:
+                cam[eye].follow(m, d, PINHOLE_CAMERAS[eye])
             body.update(d)
             for _ in range(a.warmup if t == 0 else 1):
                 se.isaac.step(se.mujoco)
-            img = cam.rgb()
-            if img is None or img.shape[:2] != (cam.H, cam.W):
-                img = np.zeros((cam.H, cam.W, 3), np.uint8)
-                blank += 1
-            enc.stdin.write(img.tobytes())
-        enc.stdin.close()
-        enc.wait()
+            for eye in eyes:
+                img = cam[eye].rgb()
+                if img is None or img.shape[:2] != (cam[eye].H, cam[eye].W):
+                    img = np.zeros((cam[eye].H, cam[eye].W, 3), np.uint8)
+                    blank += 1
+                if osz:
+                    import cv2
+                    img = cv2.resize(img, osz, interpolation=cv2.INTER_AREA)
+                encs[eye].stdin.write(np.ascontiguousarray(img).tobytes())
+        for e_ in encs.values():
+            e_.stdin.close(); e_.wait()
         line = {"episode": ep, "frames": n, "blank_frames": blank, "model_identical": bool(same_model),
-                "seconds": round(time.time() - t0, 1), "video": str(out), "robot": f"mujoco ({len(body.geoms)} geoms)", **look}
+                "seconds": round(time.time() - t0, 1), "video": str(out), "videos": {eye: str(v) for eye, v in outs.items()}, "robot": f"mujoco ({len(body.geoms)} geoms)",
+                "robot_mjcf": info.get("robot_mjcf"), "black_hands": info.get("black_hands"), "out_size": a.out_size or None, **look}
         if a.compare:
             vkey = next(k for k, v in info_ds["features"].items() if v.get("dtype") == "video")
             orig = a.dataset / info_ds["video_path"].format(episode_chunk=ep // chunks, video_key=vkey, episode_index=ep)

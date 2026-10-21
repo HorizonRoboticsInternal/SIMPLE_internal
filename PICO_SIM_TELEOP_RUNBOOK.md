@@ -1,3 +1,5 @@
+> **Superseded (2026-10-18).** The current runbook is `docs/pico_sim_teleop_runbook.html` (http://10.40.11.11:8899/pico_sim_teleop_runbook.html), built by `docs/_scan/teleop_runbook/build.py`. This file describes the 2026-09-30 setup (one ego_view, rot15 camera + 10 deg tilt) and is kept for reference.
+
 # PICO sim teleop — runbook
 
 HoloMotion v1.4 controller, G1 + Dex3 (optionally with the 3.2 kg backpack), in the three real-to-sim scenes:

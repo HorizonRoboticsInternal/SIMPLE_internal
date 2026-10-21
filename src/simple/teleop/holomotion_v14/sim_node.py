@@ -180,6 +180,20 @@ def build_sim_policy_node(*, quiet: bool = False, params: dict | None = None):
             return np.asarray(last.data if last is not None else self.velocity_kds_real, dtype=np.float32)
 
     node = SimPolicyNode()
+    # raw policy I/O for the recorder (2026-10-16): the exact observation vector handed to the ONNX session and its raw
+    # output, per policy step; None when the policy did not run this tick (the node itself is not modified)
+    node.last_policy_io = None
+    node.obs_layouts = {}                       # {mode: {terms:[(name,start,end)], dof_names_onnx, dim}} once a builder has run
+    rt = node.runtime
+    _orig_run = rt._run_current_policy
+
+    def _run_and_keep(policy_obs_np):
+        out = _orig_run(policy_obs_np)
+        node.last_policy_io = dict(obs=np.asarray(policy_obs_np, dtype=np.float32).reshape(-1).copy(),
+                                   out=np.asarray(out[0], dtype=np.float32).reshape(-1).copy(),
+                                   mode=str(rt.state.current_policy_mode))
+        return out
+    rt._run_current_policy = _run_and_keep
     node._sim_lowstate = SimLowState()
     node.setup()
     node._setup_completed = True

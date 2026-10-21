@@ -76,6 +76,7 @@ from simple.cli.teleop_decoupled_wbc import RecordingState, _save_episode_env_co
 from simple.envs.sonic_loco_manip import SonicLocoManipEnv
 from simple.robots.g1_sonic import G1Sonic
 from simple.teleop.holomotion_v14 import DEFAULT_REFERENCE_URI
+from simple.teleop.holomotion_v14 import node_state as NS
 from simple.teleop.holomotion_v14.exact_log import ExactLog
 from simple.teleop.holomotion_v14.scene_setup import SceneSetups
 
@@ -87,6 +88,8 @@ SCENES = {name: f"simple.tasks.g1_wholebody_{name}_teleop" for name in ("bottle_
 START_KNOB = {"bottle_bin": "BOTTLE_BIN_ROBOT_TO_EDGE", "bowl_sink": "BOWL_SINK_ROBOT_TO_EDGE",
               "coffee_cart": "COFFEE_CART_ROBOT_TO_CART"}
 START_DEFAULT = {"bottle_bin": 0.35}           # m; bowl_sink (0.38) and coffee_cart (0.20) keep their own
+
+
 def scene_root() -> Path:
     """Return the packaged scene implementation directory."""
     return Path(__file__).resolve().parents[1] / "tasks"
@@ -104,6 +107,9 @@ def load_scene(name: str, start_distance: float | None = None):
         os.environ[START_KNOB[name]] = f"{dist:.4f}"
     if START_KNOB[name] in os.environ:
         print(f"[HoloMotion v1.4] {name}: robot start {START_KNOB[name]}={os.environ[START_KNOB[name]]} m")
+    # the HoloMotion teleop robot is SIMPLE's stock G1Sonic with the teleop MJCF (HBVCAM head, backpack); the packaged tasks
+    # otherwise select the g1comp (D455 head) robot of the evaluations (2026-10-21)
+    os.environ.setdefault(SCENE_ENV_PREFIX[name] + "ROBOT", "g1")
     module = importlib.import_module(SCENES[name])
     return importlib.reload(module)
 
@@ -141,16 +147,24 @@ def _check_dataset_dir(save_dir: str) -> None:
     root = Path(save_dir)
     if not root.is_dir():
         return
-    # a run that ended before its first save leaves the exporter's skeleton (meta/info.json + modality.json, empty
-    # folders): no tasks.jsonl yet, so the next start takes it for a corrupted dataset and stops (2026-09-30). With
-    # no episode in it there is nothing to keep: start the dataset afresh.
+    # a run that ended before its first save leaves the exporter's skeleton: meta/ files written at startup (info.json,
+    # modality.json, realformat.json, holomotion_raw.json, ...) and empty folders, no tasks.jsonl yet. The next start
+    # takes it for a corrupted dataset and stops (2026-09-30; again 2026-10-18, when the startup meta files had grown
+    # past the list this check used to accept). The rule now: nothing outside meta/ and no episode file in it -> no
+    # episode was ever saved, nothing to keep: start the dataset afresh.
     files = [f for f in root.rglob("*") if f.is_file()]
-    if files and not (root / "meta" / "tasks.jsonl").exists() and \
-            {f.relative_to(root).as_posix() for f in files} <= {"meta/info.json", "meta/modality.json"}:
-        import shutil
-        shutil.rmtree(root)
-        print(f"[Record] {root}: an earlier run ended before saving an episode; its empty dataset skeleton was removed")
-        return
+    rel = [f.relative_to(root) for f in files]
+    episode_meta = {"tasks.jsonl", "episodes.jsonl", "episodes_stats.jsonl", "stats.json"}
+    if not (root / "meta" / "tasks.jsonl").exists():
+        if all(r.parts[0] == "meta" and len(r.parts) == 2 and r.name not in episode_meta for r in rel):
+            import shutil
+            shutil.rmtree(root)
+            print(f"[Record] {root}: an earlier run ended before saving an episode; its empty dataset skeleton "
+                  f"({', '.join(sorted(r.name for r in rel)) or 'empty folders'}) was removed")
+            return
+        listing = "\n  ".join(str(r) for r in rel[:10])
+        raise typer.BadParameter(f"{root} has no meta/tasks.jsonl but holds other files, so LeRobot cannot resume it and "
+                                 f"the recorder will not delete it. Move it away or use another --save-dir:\n  {listing}")
     stray = [f for f in list(root.rglob("*.mp4")) + list(root.rglob("*.parquet"))
              if f.relative_to(root).parts[0] not in ("videos", "data")]
     if stray:
@@ -159,7 +173,144 @@ def _check_dataset_dir(save_dir: str) -> None:
                                  f"out of {root} first:\n  {listing}")
 
 
-def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, ego_view_shape, realformat: bool = True):
+RAW_MAX_FRAMES = 16                # reference frames kept per 50 Hz tick, the NEWEST ones (the publisher runs at <= 70 Hz: 1-2 per tick; the first tick
+                                   # after a start can carry a backlog; the node's queue only needs the last 11 frames)
+LAYOUT_FILE = Path(__file__).resolve().parents[1] / "teleop" / "holomotion_v14" / "holomotion_obs_layout.json"   # baked term layouts (probe run)
+QUAT = ["w", "x", "y", "z"]; XYZ3 = ["x", "y", "z"]
+LATEST_OBS_LAYOUT = "dof_pos[0:29] dof_vel[29:58] root_pos[58:61] root_rot_wxyz[61:65], joints in the robot's complete_dof_order"
+
+
+def _real_dof_names() -> list[str]:
+    from simple.teleop.holomotion_v14.sim_node import robot_yaml
+    return list(robot_yaml()["complete_dof_order"])
+
+
+def _obs_layout() -> dict:
+    """The per-term layout of each model's observation vector: {mode: {terms: [[name, start, end]], dof_names_onnx, dim}}.
+    Baked by a probe recording (HOLOMOTION_DUMP_OBS_LAYOUT=<path> while recording with motion tracking on); the live builder
+    layout is checked against it at run time."""
+    import json
+    return json.load(open(LAYOUT_FILE)) if LAYOUT_FILE.exists() else {}
+
+
+def _raw_features(policy_obs_dim: int) -> dict:
+    """The HoloMotion v1.4 interface, recorded per 50 Hz control tick with HoloMotion's own names (2026-10-16):
+    MotionReference (what the operator / a VLA provides), LowState and VRState (what the robot provides), the observation
+    terms the policy consumed, and the node's outputs (/humanoid/action, /humanoid/kps, /humanoid/kds)."""
+    from simple.agents.holomotion_v14_agent import RAW_PICO_NAMES, VRSTATE_FIELDS
+    real = _real_dof_names(); layout = _obs_layout()
+    f = {
+        # ---- MotionReference (holomotion_interfaces/msg/MotionReference): the newest frame fed this tick
+        "holomotion.MotionReference.dof_pos": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.MotionReference.dof_vel": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.MotionReference.root_pos": {"dtype": "float32", "shape": (3,), "names": XYZ3},
+        "holomotion.MotionReference.root_rot_wxyz": {"dtype": "float32", "shape": (4,), "names": QUAT},
+        "holomotion.MotionReference.frame_index": {"dtype": "int64", "shape": (1,), "names": None},
+        "holomotion.MotionReference.header.stamp": {"dtype": "float64", "shape": (1,), "names": ["sec"]},
+        "holomotion.MotionReference.frames_this_tick": {"dtype": "int64", "shape": (1,), "names": None},
+        "holomotion.MotionReference.frames": {"dtype": "float32", "shape": (RAW_MAX_FRAMES * 65,), "names": None},
+        "holomotion.MotionReference.frames_meta": {"dtype": "float64", "shape": (RAW_MAX_FRAMES * 2,),
+                                                   "names": [f"f{i}_{k}" for i in range(RAW_MAX_FRAMES) for k in ("frame_index", "stamp_sec")]},
+        # ---- LowState (unitree_hg/msg/LowState) as fed to the node
+        "holomotion.LowState.motor_state.q": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.LowState.motor_state.dq": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.LowState.imu_state.quaternion": {"dtype": "float32", "shape": (4,), "names": QUAT},
+        "holomotion.LowState.imu_state.gyroscope": {"dtype": "float32", "shape": (3,), "names": XYZ3},
+        # ---- VRState (robo_orchard_pico_msg_ros2/msg/VRState) as fed to the node
+        "holomotion.VRState.left_controller": {"dtype": "float32", "shape": (len(VRSTATE_FIELDS),), "names": list(VRSTATE_FIELDS)},
+        "holomotion.VRState.right_controller": {"dtype": "float32", "shape": (len(VRSTATE_FIELDS),), "names": list(VRSTATE_FIELDS)},
+        "holomotion.pico": {"dtype": "float32", "shape": (len(RAW_PICO_NAMES),), "names": list(RAW_PICO_NAMES)},
+        # ---- the policy's exact I/O
+        "holomotion.policy_obs": {"dtype": "float32", "shape": (policy_obs_dim,), "names": None},
+        "holomotion.policy_obs_dim": {"dtype": "int64", "shape": (1,), "names": None},
+        "holomotion.policy_ran": {"dtype": "int64", "shape": (1,), "names": ["0=no policy step this tick,1=velocity,2=motion"]},
+        "holomotion.actions_onnx": {"dtype": "float32", "shape": (29,), "names": layout.get("motion", {}).get("dof_names_onnx")},
+        # ---- the node's outputs (topics /humanoid/action, /humanoid/kps, /humanoid/kds; robot joint order)
+        "holomotion.action": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.kps": {"dtype": "float32", "shape": (29,), "names": real},
+        "holomotion.kds": {"dtype": "float32", "shape": (29,), "names": real},
+        # ---- the node's clock at the start of the tick (time.time() as the node reads it): the replayer runs the node on it
+        "holomotion.tick_time": {"dtype": "float64", "shape": (1,), "names": ["sec"]},
+        # ---- the node's 11-frame reference window after this step, under the v1.3 hand-off's name (2026-10-19):
+        # 11 x 65, block 0 = current, blocks 1..10 = future (v1.3 had 11 x 79: its blocks carried 14 hand values too)
+        "reference_actions": {"dtype": "float32", "shape": (11 * 65,), "names": None},
+        "reference_actions_frame_index": {"dtype": "int64", "shape": (11,), "names": ["current"] + [f"future_{k}" for k in range(1, 11)]},
+    }
+    for mode, prefix in (("motion", "holomotion.obs."), ("velocity", "holomotion.obs_velocity.")):
+        for name, st, en in layout.get(mode, {}).get("terms", []):
+            f[prefix + name] = {"dtype": "float32", "shape": (en - st,), "names": None}
+    return f
+
+
+RAW_SPEC = {
+    "holomotion.MotionReference.*": "the newest reference frame received before this control tick, in the message's own fields (dof_pos, dof_vel in the robot's complete_dof_order; root_pos; root_rot_wxyz; frame_index; header.stamp in s). This is what the PICO operator provides and what a VLA must provide.",
+    "holomotion.MotionReference.frames": f"every frame received since the previous tick (frames_this_tick of them; the newest {RAW_MAX_FRAMES} stored, arrival order, zero padded), each 65 = {LATEST_OBS_LAYOUT}; frames_meta = (frame_index, stamp_sec) per stored frame, -1 where unused",
+    "holomotion.LowState.*": "what feed_lowstate received: motor_state q / dq for the 29 body joints (complete_dof_order), imu_state quaternion (w x y z) and gyroscope (body angular velocity)",
+    "holomotion.VRState.*": "the controller sample the node received this tick, as the VRState message fields of each controller (status, a/b/x/y buttons, axis_x, axis_y, trigger, grip, axis_click, menu_button); NaN when none was fed",
+    "holomotion.pico": "the raw PICO sample before the button map (sticks, grips, triggers, button bits, hand active flags, left menu)",
+    "holomotion.obs.<term>": "the motion-tracking policy's observation terms, HoloMotion's names and order (obs.obs_groups.unified.atomic_obs_list, actor terms), the exact slices of the ONNX input; zeros on ticks the motion model did not run",
+    "holomotion.obs_velocity.<term>": "the same for the velocity (walking) policy",
+    "holomotion.policy_obs": "the exact observation vector handed to the ONNX session this tick (zero padded to the larger model); policy_obs_dim = its valid length; policy_ran = which model",
+    "holomotion.actions_onnx": "the raw ONNX output (29, the model's joint_names order from its metadata), before scaling / EMA",
+    "holomotion.action / kps / kds": "the joint targets and gains the node publishes on /humanoid/action, /humanoid/kps, /humanoid/kds (robot joint order)",
+    "holomotion.tick_time": "the node's clock (time.time()) at the start of the tick, before its inputs were fed; the reference data-age and controller-timeout checks replay on it",
+    "reference_actions": "the node's 11-frame reference window after this step's frames were fed, 11 x 65 (the v1.3 hand-off's name; v1.3 blocks were 79 = 65 + 14 hand values): block 0 = the current frame (10 arrivals behind the newest), blocks 1..10 = future 1..10 (block 10 = the newest); each block = 65 (dof_pos dof_vel root_pos root_rot_wxyz); zeros until 11 frames have arrived. Fed whole every 20 ms it reproduces the model input exactly; reference_actions_frame_index = the frame numbers of the 11 blocks",
+    "replay/episode_XXXXXX.npz: holomotion_start.*": "the node's internal state at the start of frame 0 (node_state.snapshot: reference queue, runtime state, velocity obs history, KV cache, yaw alignment, stick filter); node_state.restore puts a fresh node there, so the recording replays bit-exactly from frame 0 (episodes.jsonl holomotion_start: summary, cold_start)",
+}
+
+
+def _pinhole_image_spec(shape) -> dict:
+    """meta/holomotion_raw.json "images": what each recorded eye is, with its intrinsics at the recorded size."""
+    from simple.teleop.holomotion_v14.robot_variants import PINHOLE_H, PINHOLE_W, rectified
+    h, w = int(shape[0]), int(shape[1])
+    sx, sy = w / PINHOLE_W, h / PINHOLE_H
+    out = {}
+    for eye, key, rp in (("left", "observation.images.ego_view_left", "R1/P1"), ("right", "observation.images.ego_view_right", "R2/P2")):
+        P = rectified(eye)[1]
+        out[key] = dict(
+            what=f"rectified {eye} eye of the HBVCAM stereo camera ({rp}), rendered at {PINHOLE_W}x{PINHOLE_H} and "
+                 + (f"area-downscaled to {w}x{h}" if (w, h) != (PINHOLE_W, PINHOLE_H) else "saved as rendered"),
+            width=w, height=h,
+            # pixel-centre convention: x' = (x + 0.5) * s - 0.5
+            fx=round(float(P[0, 0]) * sx, 4), fy=round(float(P[1, 1]) * sy, 4),
+            cx=round((float(P[0, 2]) + 0.5) * sx - 0.5, 4), cy=round((float(P[1, 2]) + 0.5) * sy - 0.5, 4))
+        if eye == "right":
+            out[key]["baseline_mm"] = round(-float(P[0, 3]) / float(P[0, 0]), 3)     # the calibration is in mm
+    return out
+
+
+_LEROBOT_INDEX_KEYS = {"timestamp", "frame_index", "episode_index", "index", "task_index"}
+
+
+def _check_resume_columns(save_dir, features: dict) -> None:
+    """Recording into an existing dataset resumes it with ITS column list, so a frame of another format fails LeRobot's
+    validate_frame on the first recorded tick (e.g. the September level-3_pinhole sets: one ego_view, no holomotion.*
+    columns). Stop at startup instead, before anything is written (2026-10-18)."""
+    import json
+    info = Path(save_dir) / "meta" / "info.json"
+    if not info.exists():
+        return
+    old = json.loads(info.read_text()).get("features", {})
+    have = set(old) - _LEROBOT_INDEX_KEYS
+    want = set(features) - _LEROBOT_INDEX_KEYS
+    resized = sorted(k for k in have & want if [int(v) for v in old[k]["shape"]] != [int(v) for v in features[k]["shape"]])
+    if have == want and not resized:
+        return
+    new, gone = sorted(want - have), sorted(have - want)
+    why = []
+    if new or gone:
+        why.append(f"{len(new)} columns this recorder writes are not in it{' (e.g. ' + ', '.join(new[:3]) + ')' if new else ''}, "
+                   f"{len(gone)} of its columns are no longer written{' (e.g. ' + ', '.join(gone[:3]) + ')' if gone else ''}")
+    if resized:
+        why.append("other shapes: " + ", ".join(f"{k} {list(old[k]['shape'])} -> {list(features[k]['shape'])}" for k in resized[:3]))
+    print(f"\n[Record] {save_dir} already holds a dataset in another format: {'; '.join(why)}.\n[Record] Episodes of two "
+          f"formats cannot share a dataset folder. Record into a new one, e.g. --save-dir data/teleop_holomotion_v14_rot0. "
+          f"Nothing was written.", file=sys.stderr, flush=True)
+    os._exit(2)                                     # before the loop: no recording, no exporter; threads would block exit
+
+
+def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, ego_view_shape, realformat: bool = True,
+                   right_eye: bool = False, policy_obs_dim: int = 0):
     """The decoupled-WBC LeRobot schema (as the psi0 datasets) plus the v1.4 controller's own signals, plus (realformat)
     the real G1 recorder's extra fields (teleop/holomotion_v14/realformat.py)."""
     import json
@@ -169,7 +320,8 @@ def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, e
 
     features = get_dataset_features(robot_model)
     set_ego_view_feature_shape(features, ego_view_shape)
-    validate_existing_ego_view_feature_shape(save_dir, ego_view_shape)
+    if not right_eye:
+        validate_existing_ego_view_feature_shape(save_dir, ego_view_shape)
     features["observation.state"]["names"] = joint_names
     if obj_names:
         names = [f"{n}.{s}" for n in obj_names for s in ("pos_x", "pos_y", "pos_z", "quat_w", "quat_x", "quat_y", "quat_z")]
@@ -178,14 +330,98 @@ def _init_exporter(save_dir, task_prompt, robot_model, obj_names, joint_names, e
     features["policy.mode"] = {"dtype": "int64", "shape": (1,), "names": ["0=velocity,1=motion"]}
     features["policy.raw_action"] = {"dtype": "float32", "shape": (29,), "names": None}
     features["policy.target_real"] = {"dtype": "float32", "shape": (29,), "names": None}
+    modality = get_modality_config(robot_model)
+    if right_eye:                                              # both rectified eyes (2026-10-16): ego_view_left + ego_view_right replace ego_view
+        left = features.pop("observation.images.ego_view")
+        features["observation.images.ego_view_left"] = dict(left)
+        features["observation.images.ego_view_right"] = dict(left)
+        modality["video"] = {"ego_view_left": {"original_key": "observation.images.ego_view_left"},
+                             "ego_view_right": {"original_key": "observation.images.ego_view_right"}}
+    if policy_obs_dim:
+        features.update(_raw_features(policy_obs_dim))
     if realformat:
         RF.add_features(features)
-    exporter = Gr00tDataExporter.create(save_root=save_dir, fps=50, features=features,
-                                        modality_config=get_modality_config(robot_model), task=task_prompt)
+    _check_resume_columns(save_dir, features)
+    exporter = Gr00tDataExporter.create(save_root=save_dir, fps=50, features=features, modality_config=modality, task=task_prompt)
     spec = Path(save_dir) / "meta" / "realformat.json"
     if realformat and not spec.exists():
         spec.write_text(json.dumps({**RF.REALFORMAT, "added_features": list(RF.FEATURES)}, indent=2))
+    raw_spec = Path(save_dir) / "meta" / "holomotion_raw.json"
+    if policy_obs_dim and not raw_spec.exists():
+        images = (_pinhole_image_spec(ego_view_shape) if right_eye else {"observation.images.ego_view": "the recorded camera"})
+        raw_spec.write_text(json.dumps({"interface": {"MotionReference": "holomotion_interfaces/msg/MotionReference, the reference stream (PICO publisher or a VLA) -> holomotion.MotionReference.*",
+                                                      "LowState": "unitree_hg/msg/LowState (/lowstate) -> holomotion.LowState.*", "VRState": "robo_orchard_pico_msg_ros2/msg/VRState (/pico_bridge/vr_state) -> holomotion.VRState.*",
+                                                      "outputs": "/humanoid/action, /humanoid/kps, /humanoid/kds -> holomotion.action, holomotion.kps, holomotion.kds"},
+                                        "columns": RAW_SPEC, "max_frames_per_tick": RAW_MAX_FRAMES, "policy_obs_dim_max": policy_obs_dim, "latest_obs_layout": LATEST_OBS_LAYOUT,
+                                        "obs_layout": _obs_layout(), "real_dof_order": _real_dof_names(), "images": images}, indent=2))
     return exporter
+
+
+_LAYOUT_CHECKED: set = set()
+
+
+def _raw_columns(action, policy_obs_dim: int) -> dict:
+    """The holomotion.* columns of a frame from the agent's action extras (ActionCmd: its parameters dict)."""
+    action = getattr(action, "parameters", action)
+    frames = action.get("raw_ref_frames") or []
+    ref = np.zeros((RAW_MAX_FRAMES, 65), dtype=np.float32); meta = np.full((RAW_MAX_FRAMES, 2), -1.0, dtype=np.float64)
+    for i, (obs65, fi, ts) in enumerate(frames[-RAW_MAX_FRAMES:]):          # the newest RAW_MAX_FRAMES, arrival order
+        ref[i] = obs65; meta[i] = (fi, ts / 1e9)
+    newest = frames[-1] if frames else None
+    obs = action.get("raw_policy_obs"); out_ = action.get("raw_policy_out"); mode = action.get("raw_policy_mode")
+    pobs = np.zeros(policy_obs_dim, dtype=np.float32)
+    if obs is not None:
+        pobs[:min(len(obs), policy_obs_dim)] = obs[:policy_obs_dim]
+    low = np.asarray(action["raw_lowstate"], dtype=np.float32); vr = action["raw_vrstate"]
+    cols = {
+        "holomotion.MotionReference.dof_pos": newest[0][0:29] if newest else np.zeros(29, np.float32),
+        "holomotion.MotionReference.dof_vel": newest[0][29:58] if newest else np.zeros(29, np.float32),
+        "holomotion.MotionReference.root_pos": newest[0][58:61] if newest else np.zeros(3, np.float32),
+        "holomotion.MotionReference.root_rot_wxyz": newest[0][61:65] if newest else np.zeros(4, np.float32),
+        "holomotion.MotionReference.frame_index": np.array([newest[1] if newest else -1], dtype=np.int64),
+        "holomotion.MotionReference.header.stamp": np.array([newest[2] / 1e9 if newest else -1.0], dtype=np.float64),
+        "holomotion.MotionReference.frames_this_tick": np.array([len(frames)], dtype=np.int64),
+        "holomotion.MotionReference.frames": ref.reshape(-1), "holomotion.MotionReference.frames_meta": meta.reshape(-1),
+        "holomotion.LowState.motor_state.q": low[0:29], "holomotion.LowState.motor_state.dq": low[29:58],
+        "holomotion.LowState.imu_state.quaternion": low[58:62], "holomotion.LowState.imu_state.gyroscope": low[62:65],
+        "holomotion.VRState.left_controller": np.asarray(vr["left_controller"], dtype=np.float32),
+        "holomotion.VRState.right_controller": np.asarray(vr["right_controller"], dtype=np.float32),
+        "holomotion.pico": np.asarray(action["raw_pico"], dtype=np.float32),
+        "holomotion.policy_obs": pobs, "holomotion.policy_obs_dim": np.array([0 if obs is None else len(obs)], dtype=np.int64),
+        "holomotion.policy_ran": np.array([0 if obs is None else (2 if mode == "motion" else 1)], dtype=np.int64),
+        "holomotion.actions_onnx": np.zeros(29, dtype=np.float32) if out_ is None else np.asarray(out_, dtype=np.float32)[:29],
+        "holomotion.action": np.zeros(29, dtype=np.float32) if action.get("raw_action_real") is None else np.asarray(action["raw_action_real"], dtype=np.float32),
+        "holomotion.kps": np.asarray(action["raw_kps"], dtype=np.float32), "holomotion.kds": np.asarray(action["raw_kds"], dtype=np.float32),
+        "holomotion.tick_time": np.array([float(action.get("raw_tick_time", np.nan))], dtype=np.float64),
+        "reference_actions": np.asarray(action.get("raw_ref_window", np.zeros((11, 65), np.float32)), dtype=np.float32).reshape(-1),
+        "reference_actions_frame_index": np.asarray(action.get("raw_ref_window_index", np.full(11, -1)), dtype=np.int64).reshape(-1),
+    }
+    layout = _obs_layout(); live = action.get("raw_obs_layouts") or {}
+    for m_, lay in live.items():                                    # the live builder layout must equal the baked one
+        if m_ in layout and m_ not in _LAYOUT_CHECKED:
+            if [list(t) for t in lay["terms"]] != [list(t) for t in layout[m_]["terms"]]:
+                raise RuntimeError(f"HoloMotion {m_} observation layout differs from {LAYOUT_FILE}: re-bake it (HOLOMOTION_DUMP_OBS_LAYOUT)")
+            _LAYOUT_CHECKED.add(m_)
+    for m_, prefix in (("motion", "holomotion.obs."), ("velocity", "holomotion.obs_velocity.")):
+        ran = obs is not None and ((mode == "motion") == (m_ == "motion"))
+        for name, st, en in layout.get(m_, {}).get("terms", []):
+            cols[prefix + name] = np.asarray(obs[st:en], dtype=np.float32).copy() if ran else np.zeros(en - st, dtype=np.float32)
+    return cols
+
+
+def _dump_obs_layouts(agent, save_dir) -> None:
+    """Write the observation-term layouts the builders reported into meta/holomotion_raw.json; with
+    HOLOMOTION_DUMP_OBS_LAYOUT=<path> also bake them for the recorder (needs an episode with motion tracking on)."""
+    import json
+    lay = getattr(agent.node, "obs_layouts", {})
+    if not lay:
+        return
+    spec = Path(save_dir) / "meta" / "holomotion_raw.json"
+    if spec.exists():
+        d = json.loads(spec.read_text()); d["obs_layout_live"] = lay; spec.write_text(json.dumps(d, indent=2))
+    dump = os.environ.get("HOLOMOTION_DUMP_OBS_LAYOUT")
+    if dump:
+        Path(dump).write_text(json.dumps(lay, indent=1)); print(f"[Record] observation layouts ({', '.join(lay)}) -> {dump}")
 
 
 def _env_config_json(task) -> str:
@@ -194,7 +430,7 @@ def _env_config_json(task) -> str:
     return json.dumps(task.state_dict(), cls=NumpyArrayEncoder)
 
 
-def _build_frame(robot_model, obj_names, observation, privileged_info, action, phys=None):
+def _build_frame(robot_model, obj_names, observation, privileged_info, action, phys=None, policy_obs_dim: int = 0):
     proprio = privileged_info["proprio"]
     from simple.teleop.holomotion.protocol import DEX3_NATURAL_TO_MJCF
     inv = np.argsort(DEX3_NATURAL_TO_MJCF)                     # MJCF -> natural (thumb, middle, index)
@@ -220,6 +456,11 @@ def _build_frame(robot_model, obj_names, observation, privileged_info, action, p
         "policy.raw_action": np.asarray(action["raw_action"], dtype=np.float32),
         "policy.target_real": np.asarray(action["target_real"], dtype=np.float32),
     }
+    if "head_stereo_right_rect" in observation:               # both rectified eyes recorded (2026-10-16): ego_view_left / ego_view_right
+        frame["observation.images.ego_view_left"] = frame.pop("observation.images.ego_view")
+        frame["observation.images.ego_view_right"] = observation["head_stereo_right_rect"]
+    if policy_obs_dim:
+        frame.update(_raw_columns(action, policy_obs_dim))
     if phys:                                                   # the real recorder's extra fields (realformat)
         frame.update(phys)
     if obj_names:                                              # fixed slots; an absent distractor is NaN
@@ -365,11 +606,13 @@ def main(
     motion_model: Annotated[str, typer.Option(help="motion-tracking policy: backpack (v1.4.1 BrainCo 3.2 kg backpack, model_22000) or public (v1.4.1, model_16200)")] = "backpack",
     robot_kind: Annotated[str, typer.Option("--robot", help="stereo: the G1 with the HBVCAM stereo head camera (third_party/hbvcam_stereo); stock: SIMPLE's G1")] = "stereo",
     stream_camera: Annotated[str, typer.Option(help="headset picture: pinhole (the stereo camera's rectified left eye, 1280x720, 104.7 x 72.2 deg), fisheye (both eyes' raw fisheye images side by side, 2560x720, like the real camera) or head (the scene's D455 head camera)")] = "pinhole",
-    head_tilt_deg: Annotated[float, typer.Option(help="pitch the head cameras (the HBVCAM stereo camera the headset shows and SIMPLE's head camera) this many degrees further down (+) or up (-); 0 = the calibrated mount")] = 10.0,
+    head_tilt_deg: Annotated[float, typer.Option(help="pitch the head cameras (the HBVCAM stereo camera the headset shows and SIMPLE's head camera) this many degrees further down (+) or up (-) than the robot file; 0 = the rot0 bracket (49.3 deg, the stereo URDF since 2026-10-16; the September recordings were the rot15 URDF + 10 = 44.3 deg)")] = 0.0,
     motion_model_bundle: Annotated[str, typer.Option(help="another backpack model bundle dir (model_22000.onnx [+ config.yaml]); overrides --motion-model")] = "",
     quick_start: Annotated[bool, typer.Option(help="every scene: standing, no leash, walking policy on, recording starts by itself (--no-quick-start: hang on the leash, stand up by hand)")] = True,
-    record_camera: Annotated[str, typer.Option(help="image saved as ego_view: auto (the headset's camera: pinhole with --stream-camera pinhole, fisheye with fisheye, head with head), head (SIMPLE's head camera, 640x360), pinhole (1280x720) or fisheye (both eyes, 2560x720)")] = "auto",
+    record_camera: Annotated[str, typer.Option(help="image saved as ego_view: auto (the headset's camera: pinhole with --stream-camera pinhole, fisheye with fisheye, head with head), head (SIMPLE's head camera, 640x360), pinhole (both rectified eyes, --record-size each) or fisheye (both eyes side by side, --record-size each)")] = "auto",
     fisheye_face_px: Annotated[int, typer.Option(help="--stream-camera fisheye: size of the 90-degree face renders (960 ~ the lens's own sharpness; lower = cheaper, softer)")] = 960,
+    black_hands: Annotated[bool, typer.Option(help="draw the Dex3 hands (palm + fingers) black, as the scene kits do (visual only; --no-black-hands: the robot file's light grey)")] = True,
+    record_size: Annotated[str, typer.Option(help="recorded image size per eye, WxH, for pinhole and fisheye recordings: rendered at the full 1280x720 and downscaled with area averaging (the headset stream stays full size); 1280x720 = no downscale")] = "640x360",
     record_on_motion: Annotated[bool, typer.Option(help="start each recording (the first and every later one) when you press the motion-tracking button (Y), not at the start of the scene")] = False,
     auto_motion: Annotated[bool, typer.Option(help="quick start also switches to motion tracking (presses Y) instead of leaving it to the operator")] = False,
     stream_view: Annotated[str, typer.Option(help="headset view: single (one picture), mono (left camera in both halves) or stereo")] = "single",
@@ -417,7 +660,7 @@ def main(
     task, robot = sonic_env.task, sonic_env.task.robot
     assert isinstance(robot, G1Sonic)
     from simple.teleop.holomotion_v14.robot_variants import teleop_mjcf, tilt_head_sensor
-    robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg)
+    robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg, black_hands=black_hands)
     if head_tilt_deg:
         if not scene:
             raise typer.BadParameter("--head-tilt-deg works with --scene (the scene kits' head-camera pose patch)")
@@ -448,15 +691,31 @@ def main(
         hb_view = rec_view if stream_camera == record_camera and rec_view is not None else make_view(stream_camera)
     next_stream_t = 0.0
 
+    try:
+        rec_w, rec_h = (int(v) for v in record_size.lower().split("x"))
+    except ValueError:
+        raise typer.BadParameter(f"--record-size is WxH, e.g. 640x360 (got {record_size!r})")
+    import cv2
+
+    def small(img):
+        """A rendered eye at the recorded size (2026-10-18: 640x360 by default, area-averaged from the full render)."""
+        if img is None or (img.shape[1], img.shape[0]) == (rec_w, rec_h):
+            return img
+        return cv2.resize(img, (rec_w, rec_h), interpolation=cv2.INTER_AREA)
+
     def recorded_view():
-        """The recorded camera's image of the current (pre-step) state: (image to save, (left, right) for the stream)."""
+        """The recorded camera's images of the current (pre-step) state: (left image to save, (left, right) at full size
+        for the stream, right eye to save or None)."""
         if rec_view is None:
-            return None, None
+            return None, None, None
         if record_camera == "fisheye":                          # both eyes fresh every step: a consistent pair
             left, right = rec_view.render()
-            return np.hstack([left, right]), (left, right)
+            return np.hstack([small(left), small(right)]), (left, right), None
+        if record_camera == "pinhole":                          # both rectified eyes of the same state (2026-10-16)
+            left, right = rec_view.render_pair()
+            return small(left), (left, right), small(right)
         img = rec_view.render()
-        return img, (img, None)
+        return img, (img, None), None
     control_decimal = int(round(1 / sonic_config["SIMULATE_DT"] / render_hz))
     assert control_decimal == 4, "the v1.4 policy runs at 50 Hz (4x decimation at 200 Hz physics)"
     control_dt = control_decimal * robot.sim_dt
@@ -527,8 +786,11 @@ def main(
         # a dataset holds one image size: recordings of the stereo camera get their own folder
         run_save_dir = f"{os.path.abspath(save_dir)}/{env_id}/level-{dr_level}" + ("" if record_camera == "head" else f"_{record_camera}")
         _check_dataset_dir(run_save_dir)
-        ego_shape = {"fisheye": (720, 2560, 3), "pinhole": (720, 1280, 3)}.get(record_camera, observation["head_stereo_left"].shape)
-        exporter = _init_exporter(run_save_dir, task.instruction, robot_model, obj_names, robot.joint_names, ego_shape, realformat)
+        ego_shape = {"fisheye": (rec_h, 2 * rec_w, 3), "pinhole": (rec_h, rec_w, 3)}.get(record_camera, observation["head_stereo_left"].shape)
+        policy_obs_dim = max(int(sess.get_inputs()[0].shape[-1]) for sess in (agent.node.motion_policy_session, agent.node.velocity_policy_session))
+        exporter = _init_exporter(run_save_dir, task.instruction, robot_model, obj_names, robot.joint_names, ego_shape, realformat,
+                                  right_eye=(record_camera == "pinhole"), policy_obs_dim=policy_obs_dim)
+        print(f"[Record] raw HoloMotion inputs on (policy obs {policy_obs_dim}); " + ("both rectified eyes recorded" if record_camera == "pinhole" else "one image stream"))
         if realformat:
             from simple.teleop.holomotion_v14 import realformat as RF
             rf_sampler = RF.LiveSampler(sonic_env)
@@ -541,7 +803,7 @@ def main(
             knobs = {k: v for k, v in os.environ.items() if k.startswith(prefix) or k.startswith("SIMPLE_")}
             run_meta = dict(scene=scene, scene_root=str(scene_root()), env_id=env_id, dr_level=dr_level, env_knobs=knobs,
                             setup_ranges=setup_ranges if setups is not None else None,
-                            backpack_kg=backpack_kg, robot=robot_kind, head_tilt_deg=head_tilt_deg,
+                            backpack_kg=backpack_kg, robot=robot_kind, head_tilt_deg=head_tilt_deg, black_hands=bool(black_hands),
                             stream_camera=stream_camera, record_camera=record_camera,
                             robot_mjcf=robot.mjcf_path, physics_dt=sonic_config["SIMULATE_DT"], render_hz=render_hz,
                             policy_models_dir=os.environ.get("HOLOMOTION_UNITREE_POLICY_MODELS_DIR", ""),
@@ -549,6 +811,7 @@ def main(
 
     rec_state = RecordingState.WAITING_FOR_LANDING
     episode_init_pose = None
+    start_state, start_summary = None, None             # the controller's state at the start of the recording's frame 0
     episodes_saved, sim_cnt, pbar = 0, 0, None
     t_start = time.monotonic()
     t_log = t_start
@@ -577,9 +840,11 @@ def main(
     try:
         while not max_seconds or time.monotonic() - t_start < max_seconds:
             step_start = time.monotonic()
-            ego_img, rec_pair = recorded_view()
+            ego_img, rec_pair, rec_right = recorded_view()
             action = agent.get_action(observation, instruction=task.instruction, privileged_info=privileged_info)
             frame_obs = observation if ego_img is None else {**observation, "head_stereo_left": ego_img}
+            if record_camera == "pinhole" and rec_right is not None:
+                frame_obs = {**frame_obs, "head_stereo_right_rect": rec_right}
             frame_inputs = {"observation": frame_obs, "action": action, "privileged_info": privileged_info}
             if rf_sampler is not None:                                   # every step: the first recorded frame is decided after it
                 frame_inputs["phys"] = rf_sampler.sample(action)          # the pre-step state, as observation.state
@@ -623,6 +888,17 @@ def main(
                 elif (ev["save"] or auto_record) and rec_state == RecordingState.WAITING_FOR_LANDING:
                     rec_state = RecordingState.RECORDING
                     episode_init_pose = init_pose
+                    # the controller's state at the start of this tick = what frame 0 starts from: cold when motion
+                    # tracking engaged on this very tick (--record-on-motion), warm otherwise; kept with the exact log
+                    # so the node can be restored and the recording replayed from frame 0 (node_state.py)
+                    start_state = getattr(agent, "tick_state", None)
+                    if start_state is not None and getattr(agent, "tick_agent_state", None) is not None:
+                        import json as _json                    # the agent's own state too (rerecord_holomotion_v14)
+                        start_state = dict(start_state, agent_json=np.array(_json.dumps(agent.tick_agent_state)))
+                    start_summary = None
+                    if start_state is not None:
+                        a0 = getattr(frame_inputs["action"], "parameters", frame_inputs["action"])
+                        start_summary = NS.summary(start_state, ran_motion_on_frame0=a0.get("raw_policy_mode") == "motion")
                     if xlog is not None:
                         xlog.start()
                     pbar = tqdm(desc=f"Recording episode {episodes_saved + 1}", unit="frame", leave=False)
@@ -630,10 +906,16 @@ def main(
                            else " (auto, from the random start pose)" if random_init_pose else " (auto, quick start)")
                     print(f"[Record] recording{why} "
                           "(left menu + A to save, left menu + B to abandon)")
+                    if start_summary is not None:
+                        print("[Record] HoloMotion " + ("COLD start: motion tracking engaged on frame 0"
+                                                       if start_summary["cold_start"] else
+                                                       f"WARM start: frame 0 in {start_summary['policy_mode']} mode, "
+                                                       f"motion step {start_summary['motion_step_idx']}")
+                              + "; controller state snapshot kept for the replay")
                 elif ev["save"] and rec_state == RecordingState.RECORDING:
                     rec_state = RecordingState.EPISODE_DONE
                 if rec_state == RecordingState.RECORDING:
-                    exporter.add_frame(_build_frame(robot_model, obj_names, **frame_inputs))
+                    exporter.add_frame(_build_frame(robot_model, obj_names, **frame_inputs, policy_obs_dim=policy_obs_dim))
                     if rf_sampler is not None:
                         rf_sampler.frame_recorded()
                     if xlog is not None:
@@ -651,12 +933,16 @@ def main(
                         extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg), setup,
                                                               xlog.model_sha if xlog is not None else "")
                     exporter.save_episode()
+                    _dump_obs_layouts(agent, run_save_dir)
                     _save_episode_env_config(exporter, task, ep_idx)
                     if xlog is not None:
                         log_path = Path(run_save_dir) / "replay" / f"episode_{ep_idx:06d}.npz"
                         xlog.save(log_path, setup, dict(run_meta, episode_index=int(ep_idx), init_pose=episode_init_pose,
-                                                        environment_config=_env_config_json(task)), save_model=save_model)
+                                                        environment_config=_env_config_json(task), holomotion_start=start_summary),
+                                  save_model=save_model, extra=NS.pack(start_state))
                         extra["exact_log"] = str(log_path.relative_to(run_save_dir))
+                    if start_summary is not None:
+                        extra["holomotion_start"] = start_summary
                     _save_episode_meta(exporter, ep_idx, extra)
                     episodes_saved += 1
                     agent.episodes_saved = episodes_saved
@@ -721,8 +1007,11 @@ def main(
                 if xlog is not None and xlog.recording:
                     log_path = Path(run_save_dir) / "replay" / f"episode_{ep_idx:06d}.npz"
                     xlog.save(log_path, setup, dict(run_meta, episode_index=int(ep_idx), init_pose=episode_init_pose,
-                                                    environment_config=_env_config_json(task)), save_model=save_model)
+                                                    environment_config=_env_config_json(task), holomotion_start=start_summary),
+                              save_model=save_model, extra=NS.pack(start_state))
                     extra["exact_log"] = str(log_path.relative_to(run_save_dir))
+                if start_summary is not None:
+                    extra["holomotion_start"] = start_summary
                 _save_episode_meta(exporter, ep_idx, extra)
                 print("[Record] in-progress episode saved on exit")
             except Exception as exc:  # noqa: BLE001
@@ -733,7 +1022,19 @@ def main(
 
 
 def cli():
-    typer.run(main)
+    # an exception before the control loop (which has its own try / os._exit) used to end in a segfault at interpreter
+    # exit (renderer / ORT threads torn down out of order), hiding the real error under it (2026-10-18): print it, exit
+    # cleanly with status 1
+    try:
+        typer.run(main)
+    except SystemExit as e:                         # click's usage / BadParameter errors and --help end here too
+        sys.stderr.flush(); sys.stdout.flush()
+        os._exit(e.code if isinstance(e.code, int) else (0 if e.code is None else 1))
+    except BaseException:
+        import traceback
+        traceback.print_exc()
+        sys.stderr.flush(); sys.stdout.flush()
+        os._exit(1)
 
 
 if __name__ == "__main__":

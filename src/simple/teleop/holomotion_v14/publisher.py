@@ -93,6 +93,7 @@ def main() -> None:
     ap.add_argument("--press", action="append", default=[], help="synthetic: T:BUTTON[+BUTTON]  (L3 X A R3 B Y left_menu)")
     ap.add_argument("--stick", action="append", default=[], help="synthetic: T0:T1:axis=value  (left_x left_y right_x ... grips, triggers)")
     ap.add_argument("--root-z", type=float, default=0.78, help="synthetic: reference pelvis height")
+    ap.add_argument("--motion", type=float, default=0.0, help="synthetic: from this time (s) on, move the reference (slow sine on the shoulders/elbows, a slow root drift) so the frames differ")
     ap.add_argument("--duration", type=float, default=0.0, help="stop after this many seconds (0 = run until Ctrl-C)")
     a = ap.parse_args()
 
@@ -108,9 +109,16 @@ def main() -> None:
         script = Script(a.press, a.stick)
         obs = _standing_obs65(a.root_z)
         try:
+            base = obs.copy()
             while not a.duration or time.monotonic() - t_start < a.duration:
                 t = time.monotonic() - t_start
                 pub.send_pico(script.sample(t))
+                if a.motion and t >= a.motion:                       # a moving reference: arms swing, root drifts (velocities consistent)
+                    tt = t - a.motion; w = 2 * np.pi * 0.4
+                    obs = base.copy()
+                    for j, amp in ((15, 0.35), (22, -0.35), (18, 0.25), (25, 0.25)):     # shoulder pitch L/R, elbow L/R (complete_dof_order)
+                        obs[j] = base[j] + amp * np.sin(w * tt); obs[29 + j] = amp * w * np.cos(w * tt)
+                    obs[58] = base[58] + 0.05 * tt; obs[59] = base[59] + 0.02 * np.sin(0.5 * tt)
                 pub.send_obs65(obs, frame, timestamp_ns=time.time_ns(), pico_dt=period, pico_fps=a.hz)
                 frame += 1
                 time.sleep(max(0.0, t_start + frame * period - time.monotonic()))

@@ -46,19 +46,27 @@ def _hf():
 
 
 class PinholeView:
-    """The stereo camera's rectified left eye (PINHOLE_CAMERA), 1280 x 720."""
+    """The stereo camera's rectified eyes (hbvcam_{left,right}_pinhole), 1280 x 720 each. render() = the left eye (the
+    headset / VLA image); render_pair() = (left, right) of the same state, for the recording (2026-10-16)."""
 
-    def __init__(self, sonic_env) -> None:
-        self.env, self._model, self._renderer = sonic_env, None, None
+    def __init__(self, sonic_env, eye: str = "left") -> None:
+        from simple.teleop.holomotion_v14.robot_variants import PINHOLE_CAMERAS
+        self.env, self._model, self._renderer, self.eye, self._cams = sonic_env, None, None, eye, PINHOLE_CAMERAS
 
-    def render(self) -> np.ndarray:
-        m, d = self.env.mujoco.mjModel, self.env.mujoco.mjData
+    def _ensure(self):
+        m = self.env.mujoco.mjModel
         if self._model is not m:                               # a new scene (every reset compiles a new model)
             if self._renderer is not None:
                 self._renderer.close()
             self._renderer, self._model = _renderer(m, PINHOLE_H, PINHOLE_W), m
-        self._renderer.update_scene(d, camera=PINHOLE_CAMERA)
+
+    def render(self, eye: str | None = None) -> np.ndarray:
+        self._ensure()
+        self._renderer.update_scene(self.env.mujoco.mjData, camera=self._cams[eye or self.eye])
         return self._renderer.render()
+
+    def render_pair(self) -> tuple[np.ndarray, np.ndarray]:
+        return self.render("left").copy(), self.render("right").copy()
 
 
 class FisheyeView:

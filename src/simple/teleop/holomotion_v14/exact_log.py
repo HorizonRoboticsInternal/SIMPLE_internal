@@ -149,8 +149,10 @@ class ExactLog:
     def discard(self) -> None:
         self._clear()
 
-    def save(self, path: Path, setup: dict[str, Any], meta: dict[str, Any], save_model: bool = True) -> Path:
-        """Write episode_XXXXXX.npz (and the compiled model, .mjb) next to the dataset."""
+    def save(self, path: Path, setup: dict[str, Any], meta: dict[str, Any], save_model: bool = True,
+             extra: dict[str, np.ndarray] | None = None) -> Path:
+        """Write episode_XXXXXX.npz (and the compiled model, .mjb) next to the dataset. ``extra``: more named arrays to
+        store with it (the controller's start-of-frame-0 state, node_state.pack)."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         m = self.eng.mjModel
@@ -166,6 +168,8 @@ class ExactLog:
             setup_json=np.array(json.dumps(setup, sort_keys=True)), info_json=np.array(json.dumps(info, sort_keys=True)),
             **{f"action_{k}": np.asarray(v) for k, v in self.act.items()},
         )
+        for k, v in (extra or {}).items():
+            arrays[k] = np.asarray(v)
         np.savez_compressed(path, **arrays)
         if save_model:
             mujoco.mj_saveModel(m, str(path.with_suffix(".mjb")), None)

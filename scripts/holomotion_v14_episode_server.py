@@ -76,8 +76,8 @@ def main() -> None:
             sid = str(hist.get("session_id", ""))
             if hist.get("reset") or sid not in cursors:
                 cursors[sid] = replies[sid] = 0
-                img = next(iter(req["image"].values()))
-                print(f"[episode server] session {sid}: image {getattr(img, 'shape', None)}, state keys {sorted(req['state'])}", flush=True)
+                shapes = {k: getattr(v, "shape", None) for k, v in req["image"].items()}
+                print(f"[episode server] session {sid}: images {shapes}, state keys {sorted(req['state'])}", flush=True)
             if a.delay > 0:
                 import time
                 time.sleep(a.delay)

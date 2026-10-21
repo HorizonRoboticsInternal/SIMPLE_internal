@@ -7,17 +7,19 @@ import numpy as np
 
 
 class PinholeCamera:
-    """An Isaac camera matching the MuJoCo hbvcam_left_pinhole camera."""
+    """An Isaac camera matching the MuJoCo hbvcam_<eye>_pinhole camera (the HBVCAM's rectified left or right eye; 2026-10-21:
+    both eyes, as the teleop records observation.images.ego_view_left / _right)."""
 
-    def __init__(self) -> None:
+    def __init__(self, eye: str = "left") -> None:
         from omni.isaac.sensor import Camera
         from pxr import UsdGeom
-        from simple.teleop.holomotion_v14.robot_variants import PINHOLE_H, PINHOLE_W, rectified_left
+        from simple.teleop.holomotion_v14.robot_variants import PINHOLE_H, PINHOLE_W, rectified
 
-        _, P1 = rectified_left()
+        _, P1 = rectified(eye)
         W, H = PINHOLE_W, PINHOLE_H
         fx, fy, cx, cy = float(P1[0, 0]), float(P1[1, 1]), float(P1[0, 2]), float(P1[1, 2])
-        self.cam = Camera(prim_path="/World/hbvcam_left_pinhole", name="hbvcam_left_pinhole", resolution=(W, H))
+        self.eye = eye
+        self.cam = Camera(prim_path=f"/World/hbvcam_{eye}_pinhole", name=f"hbvcam_{eye}_pinhole", resolution=(W, H))
         self.cam.initialize()
         f = 10.0                                                          # SIMPLE's engine convention (__update_cameras)
         ha, va = f * W / fx, f * H / fy

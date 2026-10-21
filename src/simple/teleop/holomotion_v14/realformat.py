@@ -19,9 +19,7 @@ observation.state is recorded from):
                                              xyz), gyroscope (body angular velocity), accelerometer (with gravity)
   states.dex3.{left,right}.joint_velocity / joint_effort   real hand order (thumb_0-2, index_0-1, middle_0-1)
   reference_qpos                             [root_pos, root_quat wxyz, 29 dof_pos] of the frame's current reference
-  reference_actions                          11 blocks x 79: block k = the current reference of frame t + k (the last
-                                             frame repeated at the end), [29 dof_pos, 29 dof_vel, root_pos, root_quat,
-                                             14 hand = 0]
+  (reference_actions, 11 x 65, is the policy's own window, recorded by the controller recorder since 2026-10-19)
   holomotion_obs.*                           the three reference terms, as the real recorder computes them
 
 The physical values are sampled on a copy of the MuJoCo state (mj_forward + mj_rnePostConstraint on the copy), so the
@@ -59,18 +57,19 @@ FEATURES: dict[str, tuple[int, list[str] | None]] = {   # name -> (dim, names)
        for q in ("joint_velocity", "joint_effort")},
     "reference_qpos": (36, ["root_pos_x", "root_pos_y", "root_pos_z", "root_quat_w", "root_quat_x", "root_quat_y",
                             "root_quat_z"] + J),
-    "reference_actions": (869, None),
     "holomotion_obs.ref_future_root_ori_robot_frame_6d": (60, None),
     "holomotion_obs.ref_future_yaw_delta_sin_cos": (20, None),
     "holomotion_obs.ref_robot_yaw_error_sin_cos": (2, ["sin", "cos"]),
 }
-REFERENCE_FEATURES = ("reference_qpos", "reference_actions", "holomotion_obs.ref_future_root_ori_robot_frame_6d",
+REFERENCE_FEATURES = ("reference_qpos", "holomotion_obs.ref_future_root_ori_robot_frame_6d",
                       "holomotion_obs.ref_future_yaw_delta_sin_cos", "holomotion_obs.ref_robot_yaw_error_sin_cos")
 REALFORMAT = {
     "format_version": "1.1", "robot_name": "unitree_g1", "urdf_version": "29dof", "imu_frame": "pelvis_imu_link",
     "joint_names": JOINTS, "hand_joint_names": HAND, "n_fut_frames": N_FUT,
     "actions_layout": "[0:29] dof_pos, [29:58] dof_vel, [58:61] root_pos, [61:65] root_quat(wxyz), [65:79] hand_dofs(=0)",
-    "reference_queue_slot": "block 0 = the frame's current reference; block k = the current reference of frame t + k",
+    "reference_queue_slot": "reference_actions = the policy's 11-frame window (block 0 = current, block k = future k), "
+                            "recorded per step by the controller recorder (meta/holomotion_raw.json); reference_qpos and "
+                            "holomotion_obs.* are derived from teleop.latest_obs (frame t + k look-ahead)",
     "sample_rate_hz": 50,
     "holomotion_obs": {
         "ref_future_yaw_delta_sin_cos": "sin/cos(yaw(block k) - yaw(block 0)), k = 1..10",
@@ -143,7 +142,6 @@ def reference_columns(latest: np.ndarray, q_robot_wxyz: np.ndarray) -> dict[str,
     rel = std(qmul((q_cur * np.array([1.0, -1, -1, -1]))[:, None, :], q_fut))
     return {
         "reference_qpos": np.concatenate([latest[:, 58:61], latest[:, 61:65], latest[:, 0:29]], 1),
-        "reference_actions": blocks.reshape(n, -1),
         "holomotion_obs.ref_future_root_ori_robot_frame_6d": rot6d_colmajor(rel).reshape(n, -1),
         "holomotion_obs.ref_future_yaw_delta_sin_cos": np.stack([np.sin(yd), np.cos(yd)], -1).reshape(n, -1),
         "holomotion_obs.ref_robot_yaw_error_sin_cos": np.stack([np.sin(ye), np.cos(ye)], -1),

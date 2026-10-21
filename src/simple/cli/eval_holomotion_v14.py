@@ -148,10 +148,11 @@ def main(
     motion_model: Annotated[str, typer.Option(help="backpack (model_22000) or public (model_16200)")] = "backpack",
     motion_model_bundle: Annotated[str, typer.Option(help="another backpack model bundle dir; overrides --motion-model")] = "",
     robot_kind: Annotated[str, typer.Option("--robot", help="stereo (G1 + HBVCAM head camera) or stock")] = "stereo",
-    head_tilt_deg: Annotated[float, typer.Option(help="head cameras this many degrees further down, as the teleop default")] = 10.0,
+    head_tilt_deg: Annotated[float, typer.Option(help="head cameras this many degrees further down than the robot file (0 since 2026-10-16: the stereo URDF carries the rot0 mount, 49.3 deg; the September recordings used the rot15 URDF + 10)")] = 0.0,
     image_camera: Annotated[str, typer.Option(help="VLA image: pinhole (1280x720 rectified left eye, the teleop's recorded view) or fisheye (both eyes, 2560x720)")] = "pinhole",
-    image_size: Annotated[str, typer.Option(help="resize the VLA image to WxH before sending (default: as rendered)")] = "",
-    image_key: Annotated[str, typer.Option(help="the image's key in the request (the dataset's)")] = "observation.images.ego_view",
+    black_hands: Annotated[bool, typer.Option(help="draw the Dex3 hands black, as the teleop records them since 2026-10-18 (--no-black-hands: light grey)")] = True,
+    image_size: Annotated[str, typer.Option(help="VLA image size per eye, WxH, area-downscaled from the full render (default 640x360 = what the teleop records since 2026-10-18; empty = as rendered, 1280x720)")] = "640x360",
+    image_key: Annotated[str, typer.Option(help="the image's key in the request (the dataset's); with --image-camera pinhole both rectified eyes are sent as observation.images.ego_view_left / ego_view_right (the 2026-10-16 recording keys) and this key is used only for other cameras")] = "observation.images.ego_view_left",
     instruction: Annotated[str, typer.Option(help="task instruction (default: the scene task's)")] = "",
     reference_hz: Annotated[float, typer.Option(help="rate of the VLA's reference frames; 50 = one per control step, as the dataset's teleop.latest_obs")] = 50.0,
     settle_s: Annotated[float, typer.Option(help="extra standing on the walking policy before the VLA is first asked (0: ask from the first step; walking mode lasts until the VLA's frames are valid)")] = 0.0,
@@ -226,7 +227,7 @@ def main(
     sonic_env = env.unwrapped
     task, robot = sonic_env.task, sonic_env.task.robot
     if set_dir is None:
-        robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg)
+        robot.mjcf_path = teleop_mjcf(robot_kind, backpack_kg, tilt_deg=head_tilt_deg, black_hands=black_hands)
         if head_tilt_deg:
             tilt_head_sensor(task, head_tilt_deg)
     control_dt = 4 * robot.sim_dt
@@ -300,12 +301,28 @@ def main(
                         print(f"[eval] Isaac HBVCAM frame missing at step {step_id['n']} (blank sent)", flush=True)
                     img = np.zeros((PINHOLE_H, PINHOLE_W, 3), np.uint8)
             else:
-                img = np.hstack(view.render()) if image_camera == "fisheye" else view.render()
-            if resize:
-                import cv2
-                img = cv2.resize(img, resize, interpolation=cv2.INTER_AREA)
-            cache.update(step=step_id["n"], img=img)
+                img = None if image_camera == "fisheye" else view.render()
+            right = None
+            if image_camera == "pinhole" and not use_isaac and set_dir is None:   # both rectified eyes of the same state (2026-10-16)
+                right = view.render("right")
+            import cv2
+
+            def rs(x):                                                       # per eye, as the teleop records
+                return x if x is None or not resize else cv2.resize(x, resize, interpolation=cv2.INTER_AREA)
+            if image_camera == "fisheye" and img is None:
+                img = np.hstack([rs(e) for e in view.render()])
+            else:
+                img, right = rs(img), rs(right)
+            cache.update(step=step_id["n"], img=img, right=right)
         return cache["img"]
+
+    def vla_images():
+        """What the VLA receives: both rectified eyes under the recording's keys (pinhole), else the one image under --image-key."""
+        img = vla_image()
+        if image_camera == "pinhole":
+            right = cache.get("right")
+            return {"observation.images.ego_view_left": img, "observation.images.ego_view_right": img if right is None else right}
+        return {image_key: img}
 
     def third_person_frame() -> np.ndarray:
         if use_isaac and set_dir is None:
@@ -320,6 +337,7 @@ def main(
     client = HttpActionClient(host, port)
     agent = HoloMotionV14VlaAgent(robot, client=client, image_fn=vla_image, clock=clock, reference_hz=reference_hz,
                                   settle_s=settle_s, engage_timeout_s=engage_timeout_s, image_key=image_key)
+    agent.image_fn = vla_images                                            # both eyes (pinhole) under the recording's keys
     clocked = clock.install()
     print(f"[eval] controller clock: {len(clocked)} modules on sim time; policies from {models_dir}")
     print(f"[eval] renderer: {'Isaac (SIMPLE standard, mujoco_isaac)' if use_isaac else 'MuJoCo'}; sim-mode {sim_mode}")
@@ -361,7 +379,7 @@ def main(
                     sim_mode=engine_mode, renderer="isaac" if use_isaac else "mujoco",
                     env_knobs={k: v for k, v in os.environ.items() if k.startswith(prefix) or k.startswith("SIMPLE_")},
                     setup_ranges=None if scenes_from else setup_ranges, backpack_kg=backpack_kg, robot=robot_kind,
-                    head_tilt_deg=head_tilt_deg, robot_mjcf=robot.mjcf_path, physics_dt=sonic_config["SIMULATE_DT"],
+                    head_tilt_deg=head_tilt_deg, black_hands=bool(black_hands), robot_mjcf=robot.mjcf_path, physics_dt=sonic_config["SIMULATE_DT"],
                     render_hz=render_hz, policy_models_dir=str(models_dir), velocity_onnx=str(agent.node.velocity_onnx_path),
                     motion_onnx=str(agent.node.motion_onnx_path), eval=dict(host=host, port=port, policy=policy_name,
                     server_info=info, image_camera=image_camera, image_size=image_size, reference_hz=reference_hz))

@@ -636,18 +636,21 @@
        Intrinsics (fisheye K/D per eye) come from the 2026-09-10 stereo calibration, not this file. -->
   <link name="head_stereo_left_optical_frame"></link>
   <joint name="head_stereo_left_optical_joint" type="fixed">
-    <origin xyz="0.067974825 0.030355827 0.426216236" rpy="-2.169288919 0.000000000 -1.570796327"/>
+    <origin xyz="0.070524825 0.030355827 0.424456236" rpy="-2.431088307 0.000000000 -1.570796327"/>
     <parent link="torso_link"/>
     <child link="head_stereo_left_optical_frame"/>
   </joint>
   <link name="head_stereo_right_optical_frame"></link>
   <joint name="head_stereo_right_optical_joint" type="fixed">
-    <origin xyz="0.067572276 -0.030355827 0.426718221" rpy="-2.169646752 -0.002785440 -1.576804238"/>
+    <origin xyz="0.070122276 -0.030355827 0.424958221" rpy="-2.431446140 -0.002785440 -1.576804238"/>
     <parent link="torso_link"/>
     <child link="head_stereo_right_optical_frame"/>
   </joint>
 
-  <!-- module body: x forward along the lens axes, y left, z up; axes follow the left eye.
+  <!-- 2026-10-16: rot0 mount: the camera pitches 49.3 deg below horizontal on the torso (the rot15 bracket gave 34.3 deg;
+       that version is kept as g1_29dof_with_hand_hbvcam_stereo_rot15.urdf). Lens centres moved +2.55 mm forward, 1.76 mm down
+       with the bracket's seat plate (head_stereo_mount-rot0.step).
+       module body: x forward along the lens axes, y left, z up; axes follow the left eye.
        Origin at the midpoint of the two eye origins, taken as the front of the lenses
        (they sit flush with the head_link face), so the module extends backward into the head.
        Visual only, dimensions from the datasheet drawing. -->
@@ -704,7 +707,7 @@
     </visual>
   </link>
   <joint name="head_stereo_joint" type="fixed">
-    <origin xyz="0.0677735505 0 0.4264672285" rpy="0 0.598492592 0"/>
+    <origin xyz="0.070323550 0.000000000 0.424707229" rpy="0.000000000 0.860291980 0.000000000"/>
     <parent link="torso_link"/>
     <child link="head_stereo_link"/>
   </joint>

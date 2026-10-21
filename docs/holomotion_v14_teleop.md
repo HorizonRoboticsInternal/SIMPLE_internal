@@ -390,3 +390,115 @@ The motion model runs in ~3 ms per step on CPU and the walking model in ~0.5 ms.
 Not yet verified: a live PICO session (headset body tracking → motion mode). The publisher reads the SDK exactly as
 v1.4's own workstation node does (`get_body_joints_pose`, 24 × (x, y, z, qx, qy, qz, qw)), but it needs a first run
 with the headset.
+
+## 2026-10-16 update: the HoloMotion interface recorded under its own names, rot0 camera, both eyes
+
+- Every recording carries the HoloMotion v1.4 interface per 50 Hz control tick, named as HoloMotion names it (layouts and
+  the message -> column map in the dataset's `meta/holomotion_raw.json`):
+  - `holomotion.MotionReference.{dof_pos, dof_vel, root_pos, root_rot_wxyz, frame_index, header.stamp}`: the newest
+    reference frame fed this tick (holomotion_interfaces/msg/MotionReference; joints in `complete_dof_order`). This is what
+    the PICO operator provides today and what a VLA must provide. `MotionReference.frames` / `frames_meta` /
+    `frames_this_tick` keep every frame received since the previous tick (up to 4; 65 = dof_pos dof_vel root_pos root_rot_wxyz).
+  - `holomotion.LowState.motor_state.{q,dq}`, `holomotion.LowState.imu_state.{quaternion,gyroscope}` (unitree_hg/msg/LowState as fed).
+  - `holomotion.VRState.{left_controller,right_controller}` (robo_orchard_pico_msg_ros2/msg/VRState fields: status, a/b/x/y
+    buttons, axis_x, axis_y, trigger, grip, axis_click, menu_button) and the raw `holomotion.pico` sample.
+  - `holomotion.obs.<term>`: the motion-tracking policy's observation terms with the config's names and order
+    (`actor_ref_gravity_projection_cur` … `actor_ref_future_root_ori_robot_frame_6d`, 18 terms = the 604-wide ONNX input);
+    `holomotion.obs_velocity.<term>` the same for the walking policy (6 terms, 776). The term layout is baked in
+    `src/simple/teleop/holomotion_v14/holomotion_obs_layout.json` (re-bake with `HOLOMOTION_DUMP_OBS_LAYOUT=<path>` during a
+    recording with motion tracking on) and checked against the live builder.
+  - `holomotion.policy_obs` / `policy_obs_dim` / `policy_ran` (the exact ONNX input), `holomotion.actions_onnx` (raw ONNX
+    output, the model's joint order), `holomotion.action` / `kps` / `kds` (what the node publishes on /humanoid/action|kps|kds).
+  The vendored robot code is unchanged; the capture wraps the runtime's policy call from SIMPLE's side (`sim_node.py`).
+- The stereo URDF (`data/robots/g1_sonic/g1_29dof_with_hand_hbvcam_stereo.urdf`) is at the **rot0** bracket: 49.3 deg
+  below horizontal on the torso (rot15 gave 34.3; the September recordings were rot15 + `--head-tilt-deg 10` = 44.3).
+  `--head-tilt-deg` now defaults to 0 in the teleop and the evaluation. The previous files are kept as `*_rot15.*`;
+  `replay_holomotion_v14._build_env` rebuilds old episodes with the legacy robot (`teleop_mjcf(..., legacy=True)`) when
+  their model hash says so, so their exact logs stay bit-exact.
+- With `--record-camera pinhole` (the default) both rectified eyes are recorded as `observation.images.ego_view_left`
+  (R1/P1) and `observation.images.ego_view_right` (R2/P2), 1280 x 720 each, from the same state; the single `ego_view`
+  stream is no longer written. The MJCF gets `hbvcam_right_pinhole` next to `hbvcam_left_pinhole`. The evaluation
+  (`eval_holomotion_v14`) sends both eyes under the same keys.
+- Confirmation page: http://10.40.11.11:8899/holomotion_v14_pipeline_update/ (built by docs/_scan/holomotion_v14_pipeline_update/build.py
+  from a scripted synthetic recording in data/teleop_holomotion_v14_test_rot0).
+- Replay check (2026-10-16, `docs/_scan/holomotion_v14_pipeline_update/replay_node_from_dataset.py`): a fresh node driven
+  from the recorded raw inputs only (LowState, VRState, MotionReference.frames, clock on the frames' stamps) reproduces the
+  motion-tracking policy's ONNX input and output bit-exactly on every motion tick from the first one (748/748 on the test
+  episode); the walking-policy phase before the switch is not reproduced (its 8-step history predates the recording).
+  `MotionReference.frames` keeps the newest 16 frames of each tick (`frames_this_tick` counts all arrivals).
+- Cold start, replay from frame 0 (2026-10-16, later the same day): every recording also stores the controller's internal
+  state at the start of its frame 0 (`replay/episode_XXXXXX.npz`: the `holomotion_start.*` arrays, written by
+  `src/simple/teleop/holomotion_v14/node_state.py`; a summary with `cold_start` in `meta/episodes.jsonl` and in the exact
+  log's info) and the node's clock per tick (`holomotion.tick_time`). `node_state.restore` puts a fresh node into that
+  state (starting from the same fresh-start reset the agent applies at every scene reset, `node_state.fresh_start`), so
+  `replay_node_from_dataset.py` reproduces the ONNX input and output bit-exactly from frame 0: cold-start recording
+  (`--record-on-motion`, frame 0 = the engage tick) 744/744 policy ticks; quick-start recording (frame 0 in walking
+  mode) 947/947, the walking phase included. In v1.4 the motion-tracking engage is the controller reset (last action,
+  KV cache, RoPE step, yaw alignment), so `--record-on-motion` gives a cold controller start on frame 0 by construction;
+  the recorder prints `COLD start` / `WARM start` when a recording begins. Collect VLA data with `--record-on-motion`.
+  No per-recording environment reset is needed (the v1.3 hand-off's manual reset step): the scene is reset after every
+  save and the exact log holds the physics start state (`state0`), which still replays bit-exactly.
+  Two traps the snapshot had to cover: the evaluator's low-state cache is keyed by message identity and refreshed once
+  per policy step, so between steps (the yaw alignment at the engage) it reads the previous tick's IMU; and a node
+  straight from `setup()` carries a warm-up push in its walking history that a reset node does not.
+  Test recordings: `data/teleop_holomotion_v14_test_{cold,warm}` (scripts in `docs/_scan/holomotion_v14_pipeline_update/`).
+
+- Resume guard (2026-10-18): recording into a folder that already holds a dataset with another column set (e.g. the
+  September `level-3_pinhole` sets: one `ego_view`, no `holomotion.*`) used to fail LeRobot's `validate_frame` on the
+  first recorded tick, because the exporter resumes an existing folder with its own feature list. The CLI now compares
+  the two at startup (`_check_resume_columns`) and exits with a message before writing anything. The default
+  `--save-dir data/teleop_holomotion_v14` holds the September episodes, so new collections need a new folder (the
+  runbook uses `data/teleop_holomotion_v14_rot0`). Runbook updated: docs/pico_sim_teleop_runbook.html.
+
+- Recorded image size (2026-10-18, user: "640*360 is enough for image recording"): `--record-size` (default 640x360)
+  downsizes each recorded eye with area averaging from the 1280x720 render; the headset stream stays 1280x720. The camera
+  model and calibration are unchanged; meta/holomotion_raw.json `images` stores the intrinsics at the recorded size
+  (fx = fy = 246.783, cx = 317.156, cy = 179.733 px; baseline 60.517 mm; x' = (x + 0.5) s - 0.5). A 15 s episode is now
+  ~7 MB (each eye 0.95 MB instead of 2.7). `eval_holomotion_v14 --image-size` now defaults to 640x360 per eye, so the VLA
+  gets what it was trained on (empty = as rendered). The resume guard also refuses a folder whose image size differs.
+- v1.3 vs v1.4 reference (measured 2026-10-18 on data/teleop_holomotion_v14_test_640): the policy's window = the 11
+  newest RECEIVED frames (current 10 behind the newest, ~14 ms apart at the 70 Hz publisher, 7-8 ticks back);
+  `reference_actions` (11x79, realformat) = newest frame of ticks t..t+10, hands 0, and differs from the policy window at
+  t-10 by up to 0.06 rad. Exact window: holomotion.obs.actor_ref_* or rebuilt from holomotion.MotionReference.frames.
+  Runbook section 10 has the comparison table.
+
+- Black hands and re-recording (2026-10-18, user: "the robot hand is white in the simulation, it should be black ... replay
+  the holomotion inputs for these 50 eps ... save as new 50 recordings"; "in the future the robot hand should be black by
+  default"): `--black-hands` (default on, teleop and eval) builds the robot as `teleop_mjcf(..., black_hands=True)`: every
+  geom whose mesh is a left_hand_*/right_hand_* mesh (palm on wrist_yaw_link + fingers) gets rgba 0.10 0.10 0.10 1, as the
+  scene kits draw them; only geom_rgba differs from the grey model. The exact log records `black_hands`; the replay rebuilds
+  from it (logs without the key stay grey and keep matching their hash).
+  `python -m simple.cli.rerecord_holomotion_v14 <dataset> --save-dir <new root>` re-records a dataset closed loop from its
+  recorded HoloMotion inputs: scene rebuilt from setup + environment_config, the live quick-start placement re-done (the
+  task gates' start position), frame-0 physics (state0, rest state, band), the controller restored from the frame-0
+  snapshot, the agent in its frame-0 state (stored since 2026-10-18 as holomotion_start.agent_json; older logs: POLICY, no
+  buttons held), fed holomotion.pico + MotionReference.frames on holomotion.tick_time, through the teleop recorder itself.
+  Each frame is checked: physics bit for bit, policy ONNX I/O bit for bit, success on the source's last frame
+  (meta/rerecord_summary.json). Frame 0's object poses are copied from the source (live they came from the step before
+  frame 0). The user's 50 bottle_bin episodes -> data/teleop_holomotion_v14_rot0_blackhands.
+  Two replay bugs found on the way: `_build_env` attached the old-episode `elif backpack` to `if tilt`, so tilt-0 episodes got
+  the plain backpack robot and only the robot_mjcf override restored the recorded file (same in scripts/render_teleop_isaac.py),
+  now fixed; and the robot_mjcf override would undo a requested variant (the re-recorder drops it).
+
+- Reference window column (2026-10-19, user: "i need the reference frame at each 20 ms which is the one you feed to holomotion"):
+  `holomotion.reference_window` (11 x 65 per 20 ms step) + `holomotion.reference_window_frame_index` (11) [renamed the same
+  day, see the next note]: the node's
+  queue after the step's frames were fed, row 0 = current (10 arrivals behind the newest), rows 1-10 = future 1-10; zeros
+  until 11 frames have arrived. Agent extras raw_ref_window / raw_ref_window_index. A single 65-value frame per 20 ms
+  cannot be bit-exact (the queue moved by 1-2 frames per step at 70 Hz): replaying from teleop.latest_obs diverges from
+  20 ms on. Feeding the window column whole every 20 ms is bit-exact (replay_window_column_test.py: eps 0/30/47). Measured on
+  the 50 episodes: the frame the model tracks is 145 ms (131-242) behind teleop.latest_obs, 1.4 deg mean / 48 deg max per joint.
+  The 50 black-hand episodes were re-recorded with the column (data/teleop_holomotion_v14_rot0_blackhands; the previous copy is
+  data/teleop_holomotion_v14_rot0_blackhands_20261018_nowindow). New live recordings need a new --save-dir (the runbook now says
+  data/teleop_holomotion_v14_v2) because data/teleop_holomotion_v14_rot0 lacks the column and the recorder refuses to mix formats.
+- Window column renamed to the v1.3 hand-off's name (2026-10-19, user: "i want the same naming"): `reference_actions`
+  (715 = 11 x 65, block 0 = current, blocks 1-10 = future; v1.3's blocks were 79 = 65 + 14 hand values, user: "it only
+  needs to be 11*65 slot but with reference_actions name") + `reference_actions_frame_index` (11). It replaces the realformat look-ahead column of the same name (block k = teleop.latest_obs of frame t + k), which
+  is no longer written; `reference_qpos` and `holomotion_obs.*` still derive from teleop.latest_obs. The converter
+  scripts/holomotion_sim_realformat.py keeps a live `reference_actions` when `reference_actions_frame_index` exists.
+  Test: docs/_scan/holomotion_v14_pipeline_update/reference_actions_column_test.py. The 50 black-hand episodes were
+  re-recorded with the new column (closed-loop stored-input replay: 50/50 physics + policy I/O bit-exact, 46/50 succeed, the
+  same 4 hand-saved) and installed as data/teleop_holomotion_v14_rot0_blackhands; the previous copy (column named
+  holomotion.reference_window) is data/teleop_holomotion_v14_rot0_blackhands_20261019_refwindowcol. All shared columns are
+  identical; reference_actions == the old holomotion.reference_window on 50/50. The mp4s differ by encoder noise (mean |diff|
+  1.4/255, same between any two re-records: not bit-exact video, physics is).

@@ -31,6 +31,7 @@ from simple.core.action import ActionCmd
 from simple.robots.g1_sonic import G1Sonic
 from simple.teleop.holomotion.protocol import DEX3_NATURAL_TO_MJCF
 from simple.teleop.holomotion_v14 import DEFAULT_REFERENCE_URI, ensure_vendor_path
+from simple.teleop.holomotion_v14 import node_state as NS
 from simple.teleop.holomotion_v14.sim_node import build_sim_policy_node, robot_yaml
 from simple.teleop.holomotion_v14.wire import ReferenceSubscriber
 
@@ -44,6 +45,33 @@ NEUTRAL_PICO_SAMPLE = dict(A=0, B=0, X=0, Y=0, L3=0, R3=0, left_menu=0, right_me
                            left_grip=0.0, right_grip=0.0)
 ESTOP_DAMPING_SEC = 2.0            # main_node.cpp emergency_damping_duration_
 PICO_TIMEOUT_SEC = 0.5             # the adapter's control_timeout_sec
+
+
+RAW_PICO_NAMES = ["left_x", "left_y", "right_x", "right_y", "left_grip", "right_grip", "left_trigger", "right_trigger",
+                  "button_bits", "l_active", "r_active", "left_menu"]          # holomotion.pico column layout
+
+
+VRSTATE_FIELDS = ["status", "a_button", "b_button", "x_button", "y_button", "axis_x", "axis_y", "trigger", "grip", "axis_click", "menu_button"]
+
+
+def vrstate_vectors(fed: dict | None) -> dict:
+    """robo_orchard_pico_msg_ros2/VRState as the node receives it: left_controller / right_controller fields (VRSTATE_FIELDS
+    order), built with the same adapter the node is fed through (sim_node._VRState); NaN when nothing was fed this tick."""
+    if fed is None:
+        return {k: np.full(len(VRSTATE_FIELDS), np.nan, dtype=np.float32) for k in ("left_controller", "right_controller")}
+    from simple.teleop.holomotion_v14.sim_node import _VRState
+    vr = _VRState(fed)
+    return {k: np.array([float(getattr(getattr(vr, k), f)) for f in VRSTATE_FIELDS], dtype=np.float32) for k in ("left_controller", "right_controller")}
+
+
+def raw_pico_vector(s: dict | None) -> np.ndarray:
+    """The controller sample of a tick as a fixed 12-vector (NaN when no sample was available)."""
+    if not s:
+        return np.full(len(RAW_PICO_NAMES), np.nan, dtype=np.float32)
+    la, ra = s.get("left_axis", (0.0, 0.0)), s.get("right_axis", (0.0, 0.0))
+    return np.array([la[0], la[1], ra[0], ra[1], s.get("left_grip", 0.0), s.get("right_grip", 0.0), s.get("left_trigger", 0.0),
+                     s.get("right_trigger", 0.0), int(s.get("button_bits", 0)), int(bool(s.get("l_active", 0))),
+                     int(bool(s.get("r_active", 0))), int(bool(s.get("left_menu", 0)))], dtype=np.float32)
 
 
 class HoloMotionV14Agent(SonicWbcAgent):
@@ -165,21 +193,10 @@ class HoloMotionV14Agent(SonicWbcAgent):
 
     # ------------------------------------------------------------------ state
     def reset_policy(self) -> None:
-        """A fresh start, as after re-launching the robot stack: runtime state, obs history, VR queue, KV cache."""
-        from humanoid_policy.policy_runtime import PolicyRuntimeState
-        from humanoid_policy.utils.remote_controller_filter import RemoteController
+        """A fresh start, as after re-launching the robot stack: runtime state, obs history, VR queue, KV cache
+        (node_state.fresh_start, shared with the replay's restore so both start from the same node)."""
         n = self.node
-        n.runtime.state = PolicyRuntimeState(num_actions=n.num_actions)
-        n._init_obs_buffers()
-        n.observation_evaluator.initialize_observation_state()
-        for fn in ("clear_motion_yaw_alignment", "clear_vr_fk_cache"):
-            if hasattr(n.observation_evaluator, fn):
-                getattr(n.observation_evaluator, fn)()
-        if n.motion_kv_cache is not None:
-            n.motion_kv_cache.fill(0)
-        n.pico_controller = RemoteController()
-        n._pico_enable_velocity = n._pico_switch_to_motion = False
-        n._pico_last_receive_time = None
+        NS.fresh_start(n)
         n.set_robot_state("ZERO_TORQUE")
         self.main_state = "WAIT"
         self._state_t0 = time.monotonic()
@@ -341,7 +358,17 @@ class HoloMotionV14Agent(SonicWbcAgent):
         return bool(self.robot.elastic_band and self.robot.elastic_band.enable and self.robot.use_floating_root_link)
 
     # ------------------------------------------------------------------ step
+    def agent_state(self) -> dict:
+        """The agent's own state outside the policy node (main state, button-edge memory, hand targets, band drop): what
+        a replay must set besides node_state.restore to continue from this tick (2026-10-18)."""
+        arr = lambda v: None if v is None else np.asarray(v, dtype=np.float64).tolist()  # noqa: E731
+        return dict(main_state=self.main_state, last_bits=int(self._last_bits), dropping=bool(self._dropping),
+                    quick_active=self._quick is not None, left_hand=arr(self._left_hand), right_hand=arr(self._right_hand),
+                    hold_real=arr(self._hold_real), mtd_from=arr(self._mtd_from),
+                    state_age=float(time.monotonic() - self._state_t0))
+
     def get_action(self, observation, instruction=None, **kwargs) -> ActionCmd:
+        self.tick_agent_state = self.agent_state()             # before this tick's buttons are handled
         proprio = kwargs["privileged_info"]["proprio"]
         body_q = np.asarray(proprio["body_q"], dtype=np.float32)
         body_dq = np.asarray(proprio["body_dq"], dtype=np.float32)
@@ -359,21 +386,52 @@ class HoloMotionV14Agent(SonicWbcAgent):
 
         # the policy node, exactly as on the robot: lowstate, controller, reference frames, then its 50 Hz timer
         n = self.node
+        # the node's internal state at the start of this tick, before any of its inputs (2026-10-16): the recorder keeps
+        # the one of the tick a recording starts on, so the controller can be restored and replayed from frame 0
+        self.tick_state = NS.snapshot(n)
+        tick_time = NS.clock_now(self.tick_state)
         n.feed_lowstate(q_real, dq_real, base[3:7], base_vel[3:6])
+        fed = None                                 # the controller sample the node receives this tick (recorded as VRState)
         if s is not None and not s.get("left_menu"):
             s_fwd = dict(s)
             if self.button_map == "sim":          # A walking, Y motion tracking, B free for the PICO app's view toggle
                 s_fwd["A"], s_fwd["B"] = int(bool(s.get("A"))), int(bool(s.get("Y")))
             else:                                 # the robot's v1.4.1 map: A walking, B motion tracking, Y back to walking
                 s_fwd["A"] = int(bool(s.get("A")) or bool(s.get("Y")))
-            n.feed_pico(s_fwd)
+            fed = s_fwd
         elif s is not None:
-            n.feed_pico({**s, "A": 0, "B": 0, "X": 0, "Y": 0})         # left menu held: buttons belong to the CLI
+            fed = {**s, "A": 0, "B": 0, "X": 0, "Y": 0}                 # left menu held: buttons belong to the CLI
+        if fed is not None:
+            n.feed_pico(fed)
         for f in frames:
             n.feed_reference(f["latest_obs"], int(f["frame_index"][0]), int(f.get("timestamp_ns", [0])[0]))
+        # raw inputs of this tick, for the recorder (2026-10-16): every reference frame received since the last tick,
+        # the low state and the controller sample as fed to the node, then the policy's exact ONNX input / output
+        raw_frames = [(np.asarray(f["latest_obs"], dtype=np.float32).reshape(-1)[:65].copy(), int(f["frame_index"][0]),
+                       int(f.get("timestamp_ns", [0])[0])) for f in frames]
+        raw_lowstate = np.concatenate([q_real, dq_real, base[3:7], base_vel[3:6]]).astype(np.float32)
+        raw_pico = raw_pico_vector(s if s is not None else None)
+        raw_vr = vrstate_vectors(fed)                                  # robo_orchard_pico_msg_ros2/VRState fields, as the node reads them
+        n.last_policy_io = None
         t_run = time.perf_counter()
         n.run()
         run_ms = (time.perf_counter() - t_run) * 1e3
+        pio = n.last_policy_io
+        # the node's 11-frame reference window after this step's frames (2026-10-19): current + future 1..10, 65 each;
+        # fed whole every 20 ms it reproduces the model input (holomotion.reference_window)
+        vr = n._vr_reference
+        if vr is not None and vr.prev_dof_pos is not None and vr.dof_pos_queue is not None:
+            cur = np.concatenate([vr.prev_dof_pos, vr.prev_dof_vel, vr.prev_root_pos, vr.prev_root_rot]).astype(np.float32)
+            fut = np.concatenate([vr.dof_pos_queue, vr.dof_vel_queue, vr.root_pos_queue, vr.root_rot_queue], axis=1).astype(np.float32)
+            raw_window = np.vstack([cur[None, :], fut])
+            raw_window_idx = np.concatenate([[-1 if vr.prev_frame_idx is None else int(vr.prev_frame_idx)], vr.frame_idx_queue]).astype(np.int64)
+        else:                                                          # queue not filled yet (before the first 11 frames)
+            raw_window = np.zeros((11, 65), dtype=np.float32); raw_window_idx = np.full(11, -1, dtype=np.int64)
+        port = n.runtime.port                                          # the observation layouts, once each builder has run
+        for mode_, b in (("motion", getattr(port, "motion_obs_builder", None)), ("velocity", getattr(port, "velocity_obs_builder", None))):
+            if b is not None and mode_ not in n.obs_layouts and getattr(b, "_obs_slices", None):
+                n.obs_layouts[mode_] = dict(terms=[(str(nm), int(st), int(en)) for nm, st, en, _h in b._obs_slices],
+                                            dof_names_onnx=list(b.dof_names_onnx), dim=int(b._obs_buffer.shape[0]))
 
         # band
         band = self._band_active()
@@ -429,6 +487,21 @@ class HoloMotionV14Agent(SonicWbcAgent):
                         else np.asarray(n._vr_reference.latest_obs, dtype=np.float32).reshape(-1)[:65].copy()),
             raw_action=np.asarray(st.actions_onnx, dtype=np.float32).copy(),
             target_real=np.asarray(target, dtype=np.float32).copy(),
+            # raw HoloMotion inputs (2026-10-16)
+            raw_ref_frames=raw_frames,
+            raw_lowstate=raw_lowstate,
+            raw_pico=raw_pico,
+            raw_vrstate=raw_vr,
+            raw_policy_obs=None if pio is None else pio["obs"],
+            raw_policy_out=None if pio is None else pio["out"],
+            raw_policy_mode=None if pio is None else pio["mode"],
+            raw_action_real=None if n.action_target is None else np.asarray(n.action_target, dtype=np.float32).copy(),
+            raw_kps=np.asarray(n.action_kps, dtype=np.float32).copy(),
+            raw_kds=np.asarray(n.action_kds, dtype=np.float32).copy(),
+            raw_obs_layouts=n.obs_layouts,
+            raw_tick_time=tick_time,
+            raw_ref_window=raw_window,
+            raw_ref_window_index=raw_window_idx,
         )
 
     def publish_low_state(self, proprio):

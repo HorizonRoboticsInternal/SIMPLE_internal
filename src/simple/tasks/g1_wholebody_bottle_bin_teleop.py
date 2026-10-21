@@ -411,7 +411,8 @@ def _define_task():
         def __init__(self, *args, **kwargs):
             # Parent constructors mutate robot_cfg; isolate it from other tasks.
             self.robot_cfg = deepcopy(self.robot_cfg)
-            kwargs["robot_uid"] = "g1comp_sonic"
+            if os.environ.get("BOTTLE_BIN_ROBOT", "g1comp") == "g1comp":   # BOTTLE_BIN_ROBOT=g1: SIMPLE's stock G1Sonic with its own MJCF (the HoloMotion teleop robot)
+                kwargs["robot_uid"] = "g1comp_sonic"
             super().__init__(*args, **kwargs)
 
         isaac_hidden_scene_groups = ("furniture",)

@@ -195,24 +195,24 @@
             <geom pos="0.0039635 0 -0.054" type="mesh" rgba="0.2 0.2 0.2 1" mesh="head_link"/>
             <geom pos="0.0039635 0 -0.054" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.7 0.7 0.7 1" mesh="waist_support_link"/>
             <geom pos="0.0039635 0 -0.054" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="waist_support_link"/>
-            <geom name="head_stereo_body_0" size="0.0008 0.04 0.0125" pos="0.0533153 0 0.436327" quat="0.955559 0 0.2948 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.05 0.05 0.05 1"/>
-            <geom name="head_stereo_body_1" size="0.00495 0.0085 0.0085" pos="0.0580659 0.030356 0.433087" quat="0.955559 0 0.2948 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
-            <geom name="head_stereo_body_2" size="0.00495 0.0085 0.0085" pos="0.0580659 -0.030356 0.433087" quat="0.955559 0 0.2948 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
-            <geom name="head_stereo_body_3" size="0.007 0.0034" pos="0.0649645 0.030356 0.428383" quat="0.467227 0 0.884137 0" type="cylinder" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
-            <geom name="head_stereo_body_4" size="0.007 0.0034" pos="0.0649645 -0.030356 0.428383" quat="0.467227 0 0.884137 0" type="cylinder" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
+            <geom name="head_stereo_body_0" size="0.0008 0.04 0.0125" pos="0.0589098 0 0.437973" quat="0.908905 0 0.417003 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.05 0.05 0.05 1"/>
+            <geom name="head_stereo_body_1" size="0.00495 0.0085 0.0085" pos="0.06266 0.030356 0.433614" quat="0.908905 0 0.417003 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
+            <geom name="head_stereo_body_2" size="0.00495 0.0085 0.0085" pos="0.06266 -0.030356 0.433614" quat="0.908905 0 0.417003 0" type="box" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
+            <geom name="head_stereo_body_3" size="0.007 0.0034" pos="0.068106 0.030356 0.427285" quat="0.347827 0 0.937559 0" type="cylinder" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
+            <geom name="head_stereo_body_4" size="0.007 0.0034" pos="0.068106 -0.030356 0.427285" quat="0.347827 0 0.937559 0" type="cylinder" contype="0" conaffinity="0" group="1" mass="0" rgba="0.2 0.2 0.2 1"/>
             <site name="imu" pos="-0.03959 -0.00224 0.13792" size="0.01"/>
-            <site name="head_stereo_left_optical_frame" pos="0.0679748 0.0303558 0.426216" quat="0.330379 -0.62518 0.62518 -0.330379" size="0.004" group="4" rgba="0.1 0.65 0.6 1"/>
-            <site name="head_stereo_right_optical_frame" pos="0.0675723 -0.0303558 0.426718" quat="0.3284 -0.623818 0.626655 -0.332126" size="0.004" group="4" rgba="0.1 0.65 0.6 1"/>
-            <camera name="head_stereo_left_front" pos="0.0679748 0.0303558 0.426216" quat="0.62518 0.330379 -0.330379 -0.62518" fovy="90"/>
-            <camera name="head_stereo_left_right" pos="0.0679748 0.0303558 0.426216" quat="0.208455 -0.208455 -0.675682 -0.675682" fovy="90"/>
-            <camera name="head_stereo_left_left" pos="0.0679748 0.0303558 0.426216" quat="0.675682 0.675682 0.208455 -0.208455" fovy="90"/>
-            <camera name="head_stereo_left_up" pos="0.0679748 0.0303558 0.426216" quat="0.208455 0.675682 -0.675682 -0.208455" fovy="90"/>
-            <camera name="head_stereo_left_down" pos="0.0679748 0.0303558 0.426216" quat="0.675682 -0.208455 0.208455 -0.675682" fovy="90"/>
-            <camera name="head_stereo_right_front" pos="0.0675723 -0.0303558 0.426718" quat="0.623818 0.3284 -0.332126 -0.626655" fovy="90"/>
-            <camera name="head_stereo_right_right" pos="0.0675723 -0.0303558 0.426718" quat="0.206258 -0.210898 -0.675955 -0.675326" fovy="90"/>
-            <camera name="head_stereo_right_left" pos="0.0675723 -0.0303558 0.426718" quat="0.675955 0.675326 0.206258 -0.210898" fovy="90"/>
-            <camera name="head_stereo_right_up" pos="0.0675723 -0.0303558 0.426718" quat="0.208892 0.67332 -0.67796 -0.208263" fovy="90"/>
-            <camera name="head_stereo_right_down" pos="0.0675723 -0.0303558 0.426718" quat="0.67332 -0.208892 0.208263 -0.67796" fovy="90"/>
+            <site name="head_stereo_left_optical_frame" pos="0.0705248 0.0303558 0.424456" quat="0.245951 -0.662954 0.662954 -0.245951" size="0.004" group="4" rgba="0.1 0.65 0.6 1"/>
+            <site name="head_stereo_right_optical_frame" pos="0.0701223 -0.0303558 0.424958" quat="0.244166 -0.661346 0.664645 -0.24749" size="0.004" group="4" rgba="0.1 0.65 0.6 1"/>
+            <camera name="head_stereo_left_front" pos="0.0705248 0.0303558 0.424456" quat="0.662954 0.245951 -0.245951 -0.662954" fovy="90"/>
+            <camera name="head_stereo_left_right" pos="0.0705248 0.0303558 0.424456" quat="0.294866 -0.294866 -0.642693 -0.642693" fovy="90"/>
+            <camera name="head_stereo_left_left" pos="0.0705248 0.0303558 0.424456" quat="0.642693 0.642693 0.294866 -0.294866" fovy="90"/>
+            <camera name="head_stereo_left_up" pos="0.0705248 0.0303558 0.424456" quat="0.294866 0.642693 -0.642693 -0.294866" fovy="90"/>
+            <camera name="head_stereo_left_down" pos="0.0705248 0.0303558 0.424456" quat="0.642693 -0.294866 0.294866 -0.642693" fovy="90"/>
+            <camera name="head_stereo_right_front" pos="0.0701223 -0.0303558 0.424958" quat="0.661346 0.244166 -0.24749 -0.664645" fovy="90"/>
+            <camera name="head_stereo_right_right" pos="0.0701223 -0.0303558 0.424958" quat="0.292641 -0.297323 -0.642644 -0.642626" fovy="90"/>
+            <camera name="head_stereo_right_left" pos="0.0701223 -0.0303558 0.424958" quat="0.642644 0.642626 0.292641 -0.297323" fovy="90"/>
+            <camera name="head_stereo_right_up" pos="0.0701223 -0.0303558 0.424958" quat="0.294991 0.640294 -0.644977 -0.294973" fovy="90"/>
+            <camera name="head_stereo_right_down" pos="0.0701223 -0.0303558 0.424958" quat="0.640294 -0.294991 0.294973 -0.644977" fovy="90"/>
             <body name="left_shoulder_pitch_link" pos="0.0039563 0.10022 0.23778" quat="0.990264 0.139201 1.38722e-05 -9.86868e-05">
               <inertial pos="0 0.035892 -0.011628" quat="0.654152 0.0130458 -0.326267 0.68225" mass="0.718" diaginertia="0.000465864 0.000432842 0.000406394"/>
               <joint name="left_shoulder_pitch_joint" class="arm_motor" pos="0 0 0" axis="0 1 0" range="-3.0892 2.6704" actuatorfrcrange="-25 25"/>

@@ -524,7 +524,8 @@ def _define_task():
         def __init__(self, *args, **kwargs):
             # Parent constructors mutate robot_cfg; isolate it from other tasks.
             self.robot_cfg = deepcopy(self.robot_cfg)
-            kwargs["robot_uid"] = "g1comp_sonic"
+            if os.environ.get("COFFEE_CART_ROBOT", "g1comp") == "g1comp":   # COFFEE_CART_ROBOT=g1: SIMPLE's stock G1Sonic with its own MJCF (the HoloMotion teleop robot)
+                kwargs["robot_uid"] = "g1comp_sonic"
             super().__init__(*args, **kwargs)
 
         isaac_hidden_scene_groups = ("furniture",)  # the HSSD room's own furniture is hidden in Isaac: a 1 m high island of hssd:scene31 spans the cart route and a cabinet row sits where the desk stands (user: nothing between cart and desk, nothing blocking the cart at the end)

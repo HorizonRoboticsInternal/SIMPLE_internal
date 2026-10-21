@@ -18,3 +18,9 @@ Copied unchanged on 2026-09-29 from `docs/_scan/g1_head_stereo_camera/dist/g1_hb
 
 - `hbvcam_fisheye.py` + `g1_29dof_with_hand_hbvcam_stereo.urdf`: the bundle's fisheye helper (same layout as the
   bundle, so its paths work); the teleop's `--stream-camera fisheye` uses its face definitions and fisheye ray model.
+
+
+2026-10-16: rebuilt for the **rot0** head bracket (camera 49.3 deg below horizontal on the torso; the rot15 bracket gave 34.3 deg).
+`data/robots/g1_sonic/g1_29dof_with_hand_hbvcam_stereo.urdf` edited (optical frames pitched 15 deg further down, lens centres
++2.55 mm forward / 1.76 mm down with the bracket's seat plate), MJCF regenerated with `pack_bundle.build_mjcf`. The previous
+files are kept as `*_rot15.xml` / `*_rot15.urdf`. New sha256: xml `0e1a196775af4b2b…`, urdf `06e8dde97097a0c9…`.
