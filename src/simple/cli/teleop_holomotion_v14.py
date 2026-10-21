@@ -567,6 +567,19 @@ def _stream_status(agent, rec_state, rec_frames: int, episodes_saved: int, num_e
     return lines
 
 
+def _task_success(privileged_info, episode_buffer) -> dict:
+    """The task's check at save time, for the episode's `realformat` record: success = the last gate latched (bottle_bin:
+    the whole bottle in the bin for 0.5 s after the hand let go); success_frame = the recorded frame on which it latched
+    (the gate's t / t_placed run at the env's 20 ms step, so the frame is counted back from the last one)."""
+    prog = (privileged_info.get("task_progress") or {}) if isinstance(privileged_info, dict) else {}
+    ok = bool(prog.get("placed"))
+    n = len(episode_buffer.get("timestamp") or []) if isinstance(episode_buffer, dict) else 0
+    frame = None
+    if ok and n and prog.get("t") is not None and prog.get("t_placed") is not None:
+        frame = max(0, n - 1 - int(round((float(prog["t"]) - float(prog["t_placed"])) / 0.02)))
+    return dict(success=ok, success_frame=frame)
+
+
 def _save_episode_meta(exporter, episode_index: int, extra: dict):
     """Add fields to the episode's line in meta/episodes.jsonl."""
     import json
@@ -930,7 +943,7 @@ def main(
                     extra = {"scene_setup": setup, "init_pose": episode_init_pose}
                     if rf_sampler is not None:
                         RF.finish_episode(exporter.episode_buffer, rf_sampler)
-                        extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg), setup,
+                        extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg, **_task_success(privileged_info, exporter.episode_buffer)), setup,
                                                               xlog.model_sha if xlog is not None else "")
                     exporter.save_episode()
                     _dump_obs_layouts(agent, run_save_dir)
@@ -1001,7 +1014,7 @@ def main(
                 extra = {"scene_setup": setup, "init_pose": episode_init_pose}
                 if rf_sampler is not None:
                     RF.finish_episode(exporter.episode_buffer, rf_sampler)
-                    extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg), setup,
+                    extra["realformat"] = RF.episode_meta(dict(backpack_kg=backpack_kg, head_tilt_deg=head_tilt_deg, **_task_success(privileged_info, exporter.episode_buffer)), setup,
                                                           xlog.model_sha if xlog is not None and xlog.recording else "")
                 exporter.save_episode()
                 if xlog is not None and xlog.recording:

@@ -289,7 +289,7 @@ def main(
                                                                  "episode_index", "init_pose", "environment_config", "holomotion_start")}
         run_meta.update(black_hands=bool(black_hands), robot_mjcf=robot.mjcf_path, reference_source=reference_source,
                         rerecorded_from=dict(dataset=str(src), episode=int(ep), model_sha256=info.get("model_sha256")))
-        extra["realformat"] = RF.episode_meta(run_meta, setup, xlog.model_sha)
+        extra["realformat"] = RF.episode_meta(dict(run_meta, success=term_at is not None, success_frame=term_at), setup, xlog.model_sha)
         exporter.save_episode()
         T._dump_obs_layouts(agent, str(out_dir))
         _save_episode_env_config(exporter, task, ep_idx)

@@ -22,7 +22,10 @@ Instructions sent to the VLA:
 
 Success is the task's last gate at reward ≥ 0.9: the bottle in the bin, the bowl in the sink, the cup placed on the
 table. `results.json` also records every gate:
-- bottle_bin: grasped, at_bin, placed;
+- bottle_bin: grasped, at_bin, placed. `placed` (since 2026-10-21) = the whole bottle inside the bin, every collision vertex within
+  the inner walls (5 mm tolerance) and its lowest point below the rim, for 0.5 s after the right hand let go. Before, only the
+  bottle's base point was tested, inside the opening shrunk by one bottle radius, so a bottle lying in the bin could fail;
+  `scripts/holomotion_v14_checks/bottle_bin_gate_recheck.py` re-evaluates recorded episodes from their exact replay logs;
 - bowl_sink: at_bowl, grasped, at_basin, placed;
 - coffee_cart: cart_pushed, cup_lifted, placed.
 

@@ -234,5 +234,8 @@ def finish_episode(episode_buffer: dict[str, Any], sampler: "LiveSampler | None"
 
 
 def episode_meta(run_meta: dict, setup: dict, model_sha256: str) -> dict:
+    """Per-episode record (episodes.jsonl `realformat`).  `success`: the task's check (bottle_bin: the whole bottle in the
+    bin for 0.5 s after the hand let go) at the frame the recording ended, from run_meta["success"]; `success_frame`: the
+    first frame it held (None when it never did, or was not known).  Until 2026-10-21 success was always written as null."""
     return {"live": True, "model_sha256": model_sha256, "seed": setup.get("seed"), "backpack_kg": run_meta.get("backpack_kg"),
-            "head_tilt_deg": run_meta.get("head_tilt_deg"), "success": None}
+            "head_tilt_deg": run_meta.get("head_tilt_deg"), "success": run_meta.get("success"), "success_frame": run_meta.get("success_frame")}

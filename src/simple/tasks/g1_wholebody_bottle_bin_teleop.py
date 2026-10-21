@@ -468,9 +468,9 @@ def _define_task():
         #             moment does not count)
         #   at_bin    after grasping, the pelvis has walked at least MIN_WALK from the start, is within
         #             AT_BIN_RADIUS of the bin centre and has stood still (< AT_BIN_SPEED) for AT_BIN_HOLD_S
-        #   placed    after grasping, the bottle axis is inside the bin's inner opening, below the rim, the right
-        #             hand has let go, and it stays there for PLACE_HOLD_S (a can that bounces off the rim and out
-        #             does not count)
+        #   placed    after grasping, the whole bottle is inside the bin (every collision vertex within the inner
+        #             walls, lowest point below the rim), the right hand has let go, and it stays there for
+        #             PLACE_HOLD_S (a can that bounces off the rim and out does not count)
         # info["task_progress"] carries the flags, the times they were met and robot_touched_bin (a diagnostic:
         # the robot walked into the bin; not a gate).  The bin's pose is read from the simulator each step, so
         # moving or turning it at run time (sweep_replay.py) is respected.
@@ -478,6 +478,7 @@ def _define_task():
         GRASP_HOLD_S = 0.5
         GRASP_TILT = 60.0                                  # deg, can axis from vertical
         PLACE_HOLD_S = 0.5
+        BIN_TOL = 0.005                                    # m, contact tolerance against the bin's inner walls
         MIN_WALK = 0.50
         AT_BIN_RADIUS = 0.80
         AT_BIN_SPEED = 0.15
@@ -519,6 +520,7 @@ def _define_task():
             self._g_target = bid(str(self.target.asset.label))
             self._g_bin = bid("trash_bin")
             self._g_target_geoms = {g for g in range(m.ngeom) if m.geom_bodyid[g] == self._g_target}
+            self._g_target_verts = self._collision_vertices(m, self._g_target_geoms)
             self._g_bin_geoms = {g for g in range(m.ngeom) if m.geom_bodyid[g] == self._g_bin}
             names = {b: (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, b) or "") for b in range(m.nbody)}
             self._g_rhand_geoms = {g for g in range(m.ngeom) if names[m.geom_bodyid[g]].startswith("right_hand_")}
@@ -543,15 +545,46 @@ def _define_task():
                     bin_ = True
             return hand, bin_, table
 
-        def _in_bin(self, target_xyz, bin_xyz, bin_quat_wxyz):
-            """Bottle axis inside the inner opening and below the rim.  BIN_W (0.36) lies along world x when the
-            bin is turned +-90 deg, along world y at 0 deg (as build_scene.py and replay_in_scene.py take it)."""
+        @staticmethod
+        def _collision_vertices(m, geoms):
+            """Vertices of a body's collision geoms in the body frame: the mesh vertices, or the corners of the
+            axis-aligned bound of a primitive geom.  Used by _in_bin for the whole-bottle test."""
+            import mujoco
+            out = []
+            for g in sorted(geoms):
+                if not (m.geom_contype[g] or m.geom_conaffinity[g]):
+                    continue
+                if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH:
+                    mid = int(m.geom_dataid[g])
+                    v = m.mesh_vert[m.mesh_vertadr[mid]:m.mesh_vertadr[mid] + m.mesh_vertnum[mid]].astype(float)
+                else:
+                    c, h = m.geom_aabb[g, :3], m.geom_aabb[g, 3:]
+                    v = c + h * np.array([[sx, sy, sz] for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)], dtype=float)
+                R = np.zeros(9)
+                mujoco.mju_quat2Mat(R, m.geom_quat[g])
+                out.append(v @ R.reshape(3, 3).T + m.geom_pos[g])
+            return np.concatenate(out) if out else np.zeros((1, 3))
+
+        def _in_bin(self, target_pose, bin_xyz, bin_quat_wxyz):
+            """The whole bottle is in the bin: every vertex of its collision geoms lies within the inner walls
+            (BIN_TOL contact tolerance) and its lowest point is below the rim.
+            Until 2026-10-21 this tested the bottle's body origin, which is its BASE, inside the opening shrunk by
+            one bottle radius: right for a standing bottle, but a bottle lying in the bin with its base near a long
+            wall never passed (rot0 teleop episodes 30, 35, 46 and 49 of 2026-10-19, all placed by the operator).
+            For a standing bottle the two tests agree to within BIN_TOL and fire on the same step.
+            BIN_W (0.36) lies along the bin's local y (world y at yaw 0, world x at +-90 deg, as build_scene.py
+            and replay_in_scene.py take it); BIN_D along its local x."""
+            import mujoco
             w, x, y, z = bin_quat_wxyz
-            yaw = float(np.degrees(np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))))
-            along_x, along_y = (BS.BIN_W, BS.BIN_D) if abs(round(yaw)) % 180 == 90 else (BS.BIN_D, BS.BIN_W)
-            hx, hy = along_x / 2 - BS.BIN_T - BS.BOTTLE_R, along_y / 2 - BS.BIN_T - BS.BOTTLE_R
-            dx, dy = target_xyz[0] - bin_xyz[0], target_xyz[1] - bin_xyz[1]
-            return bool(abs(dx) <= hx and abs(dy) <= hy and target_xyz[2] < BS.BIN_H)
+            yaw = float(np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
+            hx, hy = BS.BIN_D / 2 - BS.BIN_T + self.BIN_TOL, BS.BIN_W / 2 - BS.BIN_T + self.BIN_TOL
+            R = np.zeros(9)
+            mujoco.mju_quat2Mat(R, np.asarray(target_pose[3:7], dtype=float))
+            v = np.asarray(target_pose[:3], dtype=float) + self._g_target_verts @ R.reshape(3, 3).T
+            c, s = np.cos(-yaw), np.sin(-yaw)                  # world offsets -> the bin's frame
+            dx, dy = v[:, 0] - bin_xyz[0], v[:, 1] - bin_xyz[1]
+            lx, ly = c * dx - s * dy, s * dx + c * dy
+            return bool(np.all(np.abs(lx) <= hx) and np.all(np.abs(ly) <= hy) and float(v[:, 2].min()) < BS.BIN_H)
 
         def update_gates(self, info, mujoco_env=None):
             if mujoco_env is None or "target" not in info or "trash_bin" not in info:
