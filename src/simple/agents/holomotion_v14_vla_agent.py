@@ -87,7 +87,7 @@ class HoloMotionV14VlaAgent(HoloMotionV14Agent):
         robot: G1Sonic,
         *,
         client,
-        image_fn: Callable[[], np.ndarray],
+        image_fn: Callable[[], np.ndarray | dict[str, np.ndarray]],
         clock,
         reference_hz: float = 50.0,
         settle_s: float = 0.0,
@@ -95,9 +95,7 @@ class HoloMotionV14VlaAgent(HoloMotionV14Agent):
         image_key: str = "observation.images.ego_view",
         dataset_name: str = "simple",
     ) -> None:
-        super().__init__(robot, reference_uri="tcp://127.0.0.1:1", enable_pico_stream=False, button_map="sim", quiet=True)
-        self.sub.close()                                      # no publisher: the VLA feeds the node
-        self.sub = _VlaFeed()
+        super().__init__(robot, enable_pico_stream=False, button_map="sim", quiet=True, reference_subscriber=_VlaFeed())
         self.client, self.image_fn, self.clock = client, image_fn, clock
         self.reference_hz, self.settle_s, self.engage_timeout_s = float(reference_hz), float(settle_s), float(engage_timeout_s)
         self.image_key, self.dataset_name = image_key, dataset_name
@@ -131,6 +129,24 @@ class HoloMotionV14VlaAgent(HoloMotionV14Agent):
         self._proprio = None
         self._instruction = None
 
+    def prepare_eval_controller(self, observation, *, info) -> None:
+        """Complete native quick-start using a fixed observation, without physics.
+
+        The two controller-only calls enable walking and release its startup
+        button. Their actions are discarded: no PD, env.step or clock advance.
+        Motion is selected when the first model reference window is available.
+        """
+        for _ in range(2):
+            self.sub.last_pico = dict(
+                NEUTRAL_PICO_SAMPLE, l_active=1, r_active=1,
+                timestamp_ns=int(round(self.clock.now * 1e9)),
+            )
+            HoloMotionV14Agent.get_action(self, observation, privileged_info=info)
+        if (self._quick is not None or self.main_state != "POLICY"
+                or not self.node.policy_enabled
+                or self.node.current_policy_mode != "velocity"):
+            raise RuntimeError("Holomotion controller-only initialization failed")
+
     # ------------------------------------------------------------------ VLA
     def _query(self) -> bool:
         n = self.node
@@ -152,7 +168,10 @@ class HoloMotionV14VlaAgent(HoloMotionV14Agent):
             self._reset_history = False
         t0 = _wall.perf_counter()
         try:
-            pred, *_ = self.client.query_action({self.image_key: self.image_fn()}, self._instruction, state, {},
+            images = self.image_fn()
+            if not isinstance(images, dict):
+                images = {self.image_key: images}
+            pred, *_ = self.client.query_action(images, self._instruction, state, {},
                                                 history=history, dataset=self.dataset_name)
             pred = np.asarray(pred, dtype=np.float64)
             if pred.ndim == 1:

@@ -24,6 +24,7 @@ button reaches the policy.
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import numpy as np
 
@@ -86,6 +87,7 @@ class HoloMotionV14Agent(SonicWbcAgent):
         stream_view: str = "single",
         stream_port: int = 13579,
         quiet: bool = False,
+        reference_subscriber: Any | None = None,
     ) -> None:
         super().__init__(robot)
         ensure_vendor_path()
@@ -107,7 +109,8 @@ class HoloMotionV14Agent(SonicWbcAgent):
         self.node = build_sim_policy_node(quiet=quiet)
         print(f"[HoloMotion v1.4] policy node ready in {time.monotonic() - t0:.1f} s "
               f"(velocity {self.node.velocity_onnx_path}, motion {self.node.motion_onnx_path})")
-        self.sub = ReferenceSubscriber(reference_uri)
+        # VLA supplies an in-process feed; teleop keeps the ZMQ subscriber.
+        self.sub = reference_subscriber if reference_subscriber is not None else ReferenceSubscriber(reference_uri)
         self.reference_uri = reference_uri
 
         # robot (real / motor) order <-> SIMPLE MJCF order, by name

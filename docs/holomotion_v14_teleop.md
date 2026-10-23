@@ -502,3 +502,20 @@ with the headset.
   holomotion.reference_window) is data/teleop_holomotion_v14_rot0_blackhands_20261019_refwindowcol. All shared columns are
   identical; reference_actions == the old holomotion.reference_window on 50/50. The mp4s differ by encoder noise (mean |diff|
   1.4/255, same between any two re-records: not bit-exact video, physics is).
+
+
+## Native VLA evaluation integration
+
+VLA evaluation enters through `eval_holomotion_v14 --adapter <module>`.
+The module provides `make_eval_agent`; the existing Holomotion episode loop
+handles scene loading, rendering, rollout and results. WBC evaluation is unchanged.
+The eval dataset supplies scene metadata and a relative `physics_initial_state`
+snapshot; `eval_setup` restores physical state and registers the versioned
+`robots/g1_rot0_teleop/20261019/g1_rot0_teleop.xml` asset. The three real-scene
+tasks accept `SIMPLE_ROBOT_UID`, retaining their defaults when unset.
+
+The controller initializes without advancing physics. Recorded PICO and policy
+history are not required. VLA injects an in-process reference feed; teleop keeps
+its ZMQ transport. Image callbacks accept real camera dictionaries. Model-specific
+52D conversion, hand ordering and chunk scheduling remain in the external adapter.
+`rerecord_holomotion_v14` remains a recorded-input tool with no VLA server options.

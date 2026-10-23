@@ -524,7 +524,9 @@ def _define_task():
         def __init__(self, *args, **kwargs):
             # Parent constructors mutate robot_cfg; isolate it from other tasks.
             self.robot_cfg = deepcopy(self.robot_cfg)
-            if os.environ.get("COFFEE_CART_ROBOT", "g1comp") == "g1comp":   # COFFEE_CART_ROBOT=g1: SIMPLE's stock G1Sonic with its own MJCF (the HoloMotion teleop robot)
+            if os.environ.get("SIMPLE_ROBOT_UID"):
+                kwargs["robot_uid"] = os.environ["SIMPLE_ROBOT_UID"]
+            elif os.environ.get("COFFEE_CART_ROBOT", "g1comp") == "g1comp":   # COFFEE_CART_ROBOT=g1: SIMPLE's stock G1Sonic with its own MJCF (the HoloMotion teleop robot)
                 kwargs["robot_uid"] = "g1comp_sonic"
             super().__init__(*args, **kwargs)
 

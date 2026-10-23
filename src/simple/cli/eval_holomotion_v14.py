@@ -130,6 +130,7 @@ def _third_person(sonic_env, L: dict, renderer_box: dict, size=(640, 360)) -> np
 
 
 def main(
+    adapter: Annotated[str, typer.Option(help="External VLA module providing make_eval_agent")] = "",
     scene: Annotated[str, typer.Option(help=f"real-to-sim scene: {', '.join(SCENES)}")] = "bottle_bin",
     host: Annotated[str, typer.Option(help="VLA server (HttpActionClient: POST /act, optional GET /info)")] = "127.0.0.1",
     port: Annotated[int, typer.Option()] = 21000,
@@ -209,6 +210,14 @@ def main(
         meta = set_dir / "meta" / "scene_env.json"
         for k, v in (json.load(open(meta)).get("env", {}) if meta.exists() else {}).items():
             os.environ.setdefault(k, v)
+
+    if adapter:
+        if set_dir is None:
+            raise typer.BadParameter("--adapter requires a fixed --eval-set dataset")
+        from simple.teleop.holomotion_v14.eval_setup import register_rot0_robot
+
+        register_rot0_robot()
+        os.environ["SIMPLE_ROBOT_UID"] = "g1_rot0_teleop"
 
     # ---- scene, robot, cameras: the teleop's defaults
     if set_dir is not None:
@@ -333,13 +342,21 @@ def main(
 
     # ---- VLA and controller
     from simple.agents.holomotion_v14_vla_agent import HoloMotionV14VlaAgent
-    clock = ControllerClock()
-    client = HttpActionClient(host, port)
-    agent = HoloMotionV14VlaAgent(robot, client=client, image_fn=vla_image, clock=clock, reference_hz=reference_hz,
-                                  settle_s=settle_s, engage_timeout_s=engage_timeout_s, image_key=image_key)
-    agent.image_fn = vla_images                                            # both eyes (pinhole) under the recording's keys
-    clocked = clock.install()
-    print(f"[eval] controller clock: {len(clocked)} modules on sim time; policies from {models_dir}")
+    if adapter:
+        import importlib
+
+        agent = importlib.import_module(adapter).make_eval_agent(
+            robot, host, port, sonic_config=sonic_config, env=sonic_env
+        )
+        clock = agent.clock
+    else:
+        clock = ControllerClock()
+        client = HttpActionClient(host, port)
+        agent = HoloMotionV14VlaAgent(robot, client=client, image_fn=vla_image, clock=clock, reference_hz=reference_hz,
+                                      settle_s=settle_s, engage_timeout_s=engage_timeout_s, image_key=image_key)
+        agent.image_fn = vla_images
+        clock.install()
+    print(f"[eval] controller clock on sim time; policies from {models_dir}")
     print(f"[eval] renderer: {'Isaac (SIMPLE standard, mujoco_isaac)' if use_isaac else 'MuJoCo'}; sim-mode {sim_mode}")
     print(f"[eval] robot {robot.mjcf_path}; VLA image {image_camera}{' -> ' + image_size if resize else ''}; "
           f"reference frames at {reference_hz:g} Hz")
@@ -395,17 +412,34 @@ def main(
                 setups.apply(ep["setup"])
             if ep.get("environment_config"):                   # a recorded episode: its exact scene, as the replay loads it
                 cfg = ep["environment_config"]
-                observation, privileged_info = env.reset(options={"state_dict": json.loads(cfg) if isinstance(cfg, str) else cfg})
+                cfg = json.loads(cfg) if isinstance(cfg, str) else dict(cfg)
+                snapshot = cfg.pop("physics_initial_state", None) if adapter else None
+                observation, privileged_info = env.reset(options={"state_dict": cfg})
             else:
                 observation, privileged_info = env.reset()
             if ep.get("init_seed") is not None:                # drawn after the reset: it needs the loaded robot's joints
                 ep["init_pose"] = _draw_init_pose(np.random.RandomState(ep["init_seed"]), robot, init_pose_scale)
             isaac["robot"] = None                            # the reset compiles a new model: prims rebuilt below
-            placed = _stand_on_floor(sonic_env, agent, ep["init_pose"])
+            if adapter:
+                from simple.teleop.holomotion_v14.eval_setup import restore_episode_physics
+
+                if not snapshot:
+                    raise ValueError("Eval dataset is missing physics_initial_state")
+                dataset_root = set_dir.resolve()
+                snapshot_path = (dataset_root / snapshot).resolve()
+                if not snapshot_path.is_relative_to(dataset_root):
+                    raise ValueError("physics_initial_state must be inside the eval dataset")
+                restore_episode_physics(sonic_env, snapshot_path)
+            else:
+                placed = _stand_on_floor(sonic_env, agent, ep["init_pose"])
             if use_isaac:
                 _isaac_views_for_episode()
             observation, privileged_info = sonic_env._get_obs(), sonic_env._get_info()
-            agent.reset_episode(placed[agent.mjcf_to_real], episode_index=int(ep["index"]))
+            if adapter:
+                agent.reset_for_eval(observation, info=privileged_info, episode_index=int(ep["index"]))
+                agent.begin_rollout(observation, info=privileged_info)
+            else:
+                agent.reset_episode(placed[agent.mjcf_to_real], episode_index=int(ep["index"]))
             instr = instruction or task.instruction
             if ep is episodes[0]:
                 print(f"[eval] instruction: {instr!r}")
@@ -434,7 +468,8 @@ def main(
                     observation, reward, terminated, truncated, privileged_info = env.step(action)
                     if xlog is not None:
                         xlog.add_frame(action)
-                    clock.advance(control_dt)
+                    if not adapter:  # External adapter owns its per-step clock.
+                        clock.advance(control_dt)
                     pelvis_min = min(pelvis_min, float(privileged_info["proprio"]["floating_base_pose"][2]))
                     if not headless:
                         sonic_env.update_viewer()

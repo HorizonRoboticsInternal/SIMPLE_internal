@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 import tempfile
 import gymnasium as gym
-import zmq
 
 from gymnasium import spaces
 from typing import Any, Dict, Optional
