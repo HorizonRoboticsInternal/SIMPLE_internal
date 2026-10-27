@@ -47,6 +47,10 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         indices = self._dwbc_robot_model.get_joint_group_indices("upper_body")
         self.sonic_upper_joint_names = [name for name, idx in self._dwbc_robot_model.joint_to_dof_index.items() if idx in indices]
 
+    def initialize_from_episode(self, initial_robot_state: dict):
+        super().initialize_from_episode(initial_robot_state)
+        self._last_base_height_cmd = float(initial_robot_state["base_height_command"])
+
     def _make_session_id(self):
         return f"psi0-decoupled-wbc-{os.getpid()}-{self._session_idx}"
 
@@ -149,8 +153,8 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
             self._last_base_height_cmd = float(action_cmd["base_height_command"][0])
             wbc_action = self._wbc_policy.get_action(time=t_now)
             self._cached_target_q = self._dwbc_robot_model.get_body_actuated_joints(wbc_action["q"])
-            self._cached_left_hand_q = self._dwbc_robot_model.get_hand_actuated_joints(wbc_action["q"], side="left")
-            self._cached_right_hand_q = self._dwbc_robot_model.get_hand_actuated_joints(wbc_action["q"], side="right")
+            self._cached_left_hand_q = self._hand_command(wbc_action["q"], "left")
+            self._cached_right_hand_q = self._hand_command(wbc_action["q"], "right")
 
             # createa a new ActionCmd for the g1_sonic robot
             action_cmd = ActionCmd(

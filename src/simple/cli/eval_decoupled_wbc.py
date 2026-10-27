@@ -418,9 +418,7 @@ def _run_eval_worker(
                 seed=reset_seed, options={"state_dict": env_conf}
             )
 
-        # Reset the agent BEFORE stabilization so the WBC pipeline starts the
-        # episode fresh and the upper body gets the smooth 2-second ramp to the
-        # default pose on every episode (not just the first). 
+        # Clear controller state before either explicit initialization or warmup.
         if policy == "vlt":
             reset_kwargs = {
                 "camera_infos": env_conf["camera_info"],
@@ -431,13 +429,25 @@ def _run_eval_worker(
         else:
             reset_kwargs = {}
         agent.reset(**reset_kwargs)
+        # Only the three real-scene tasks opt into warmup-free initialization.
+        initial_state = (
+            sonic_env.initial_robot_state
+            if env_id in {
+                "simple/G1WholebodyBowlSinkTeleop-v0",
+                "simple/G1WholebodyBottleBinTeleop-v0",
+                "simple/G1WholebodyCoffeeCartTeleop-v0",
+            }
+            else None
+        )
+        if initial_state is not None:
+            agent.initialize_from_episode(initial_state)
 
         # engage RL policy immediately
         agent._wbc_policy.lower_body_policy.use_policy_action = True
 
         # --- Wait for robot to stabilize (velocity-based) ---
         sim_cnt = 0
-        while not robot.stabilized and sim_cnt < 300:
+        while initial_state is None and not robot.stabilized and sim_cnt < 300:
             step_start = time.monotonic()
             action = agent.get_stabilize_action(observation)
             observation, *_, info = sonic_env.step(action) # call the raw env step to avoid consuming the max_episode_steps limit in the TimeLimit wrapper
@@ -459,9 +469,10 @@ def _run_eval_worker(
         episode_start_time = time.perf_counter()
         instruction = task.instruction
 
-        print(
-            f"Robot stabilized after {sim_cnt} simulation steps. Engaging Policy Now!"
-        )
+        if initial_state is not None:
+            print("Episode robot state restored; starting policy without physics warmup.")
+        else:
+            print(f"Robot stabilized after {sim_cnt} simulation steps. Engaging Policy Now!")
 
         # # TEST: stop here and move on to the next episode (skip policy eval)
         # if save_video and isinstance(env, VideoRecorder):

@@ -7,6 +7,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import time
+from copy import deepcopy
 from threading import Lock
 from typing import Any
 
@@ -40,6 +41,7 @@ class SonicLocoManipEnv(BaseDualSim):
 
         self.reward_lock = Lock()
 
+        self.initial_robot_state: dict[str, Any] | None = None
         self.last_reward = 0
         # if self.offscreen:
         #     self.init_renderers()
@@ -116,6 +118,60 @@ class SonicLocoManipEnv(BaseDualSim):
         proprio = self.task.robot.prepare_obs()
         return {**info, "proprio": proprio}
     
+    def _restore_initial_robot_state(self, state: dict[str, Any]) -> None:
+        """Restore an episode's stationary robot state without advancing physics."""
+        if not isinstance(state, dict) or state.get("version") != 1:
+            raise ValueError("initial_robot_state must use version 1")
+        positions = state.get("joint_positions")
+        names = self.task.robot.joint_names
+        if not isinstance(positions, dict) or set(positions) != set(names):
+            raise ValueError("initial_robot_state must specify every robot joint exactly")
+        values = np.asarray([positions[name] for name in names], dtype=float)
+        pose = np.asarray(state.get("base_pose"), dtype=float)
+        height = float(state.get("base_height_command", float("nan")))
+        if values.shape != (len(names),) or not np.isfinite(values).all():
+            raise ValueError("initial robot joint positions must be finite scalars")
+        if pose.shape != (7,) or not np.isfinite(pose).all():
+            raise ValueError("initial base_pose must contain finite xyz and wxyz")
+        if not np.isclose(np.linalg.norm(pose[3:]), 1.0, atol=1e-6, rtol=0):
+            raise ValueError("initial base_pose quaternion must have unit norm")
+        if not np.isfinite(height) or height <= 0:
+            raise ValueError("initial base_height_command must be positive and finite")
+
+        model, data = self.mjModel, self.mjData
+        joints = [model.joint(name) for name in names]
+        # Find the robot's free ancestor, rather than assuming it precedes objects.
+        body = int(model.jnt_bodyid[joints[0].id])
+        base_joint = None
+        while body:
+            start = int(model.body_jntadr[body])
+            for joint_id in range(start, start + int(model.body_jntnum[body])):
+                if model.jnt_type[joint_id] == mujoco.mjtJoint.mjJNT_FREE:
+                    base_joint = joint_id
+                    break
+            if base_joint is not None:
+                break
+            body = int(model.body_parentid[body])
+        if base_joint is None:
+            raise ValueError("initial_robot_state requires a free robot base")
+        for joint in joints:
+            if model.jnt_type[joint.id] != mujoco.mjtJoint.mjJNT_HINGE:
+                raise ValueError("initial_robot_state requires scalar robot joints")
+        actuators = [data.actuator(name) for name in names]
+        # G1 Sonic uses torque motors: zero torque until the first WBC action.
+        for actuator in actuators:
+            if np.any(model.actuator_biasprm[actuator.id]):
+                raise ValueError("initial_robot_state requires torque motor actuators")
+
+        data.joint(base_joint).qpos[:] = pose
+        data.joint(base_joint).qvel[:] = 0.0
+        for name, value, actuator in zip(names, values, actuators):
+            data.joint(name).qpos[:] = value
+            data.joint(name).qvel[:] = 0.0
+            actuator.ctrl[:] = 0.0
+        mujoco.mj_forward(model, data)
+        self.initial_robot_state = deepcopy(state)
+
     @warmed_reset
     def reset(
         self, 
@@ -123,6 +179,7 @@ class SonicLocoManipEnv(BaseDualSim):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:  # type: ignore
+        self.initial_robot_state = None
         super().reset(seed=seed, options=options)
         # reset task layout in mujoco with domain randomization
         self.task.reset(seed, options)
@@ -157,7 +214,10 @@ class SonicLocoManipEnv(BaseDualSim):
             self.viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE # mjCAMERA_TRACKING
 
         initial_joints = getattr(self.task, "initial_joint_positions", {})
-        if initial_joints:
+        state = ((options or {}).get("state_dict") or {}).get("initial_robot_state")
+        if state is not None:
+            self._restore_initial_robot_state(state)
+        elif initial_joints:
             for name, value in initial_joints.items():
                 joint = self.mjData.joint(name)
                 joint.qpos[:] = value
