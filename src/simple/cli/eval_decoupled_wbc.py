@@ -54,6 +54,59 @@ def _append_eval_stats_line(eval_dir: str, line: str) -> None:
         os.fsync(f.fileno())
 
 
+def _append_eval_progress_line(eval_dir: str, line: str) -> None:
+    """Persist progress independently of success stats, including parallel workers."""
+    import fcntl
+
+    path = Path(eval_dir) / "eval_stats_progress.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", buffering=1) as stream:
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+        try:
+            stream.write(line)
+            stream.flush()
+            os.fsync(stream.fileno())
+        finally:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def _save_episode_progress(
+    eval_dir: str, episode: str, success: bool, info: dict[str, Any]
+) -> None:
+    """Save existing task fields without recomputing or advancing any task gates."""
+    progress = info.get("task_progress", info.get("progress"))
+    record = {"episode": episode, "success": bool(success), "progress": progress}
+    _append_eval_progress_line(
+        eval_dir, "episode: " + json.dumps(record, sort_keys=True) + "\n"
+    )
+
+
+def _summarize_eval_progress(eval_dir: str) -> None:
+    """Summarize boolean fields for the current run; unavailable fields are excluded."""
+    path = Path(eval_dir) / "eval_stats_progress.txt"
+    current_run = path.read_text().rsplit("\nrun: ", 1)[-1]
+    records = [
+        json.loads(line.removeprefix("episode: "))
+        for line in current_run.splitlines()
+        if line.startswith("episode: ")
+    ]
+    counts: dict[str, list[int]] = {}
+    for record in records:
+        for key, value in (record["progress"] or {}).items():
+            if isinstance(value, bool):
+                count = counts.setdefault(key, [0, 0])
+                count[0] += int(value)
+                count[1] += 1
+    lines = [f"summary: {len(records)} completed episodes\n"]
+    for key, (achieved, available) in sorted(counts.items()):
+        lines.append(
+            f"{key}: {achieved}/{available} ({achieved / available:.1%})\n"
+        )
+    missing = sum(record["progress"] is None for record in records)
+    lines.append(f"episodes without progress: {missing}\n")
+    _append_eval_progress_line(eval_dir, "".join(lines))
+
+
 @contextmanager
 def _redirect_stdio_to_log(log_path: str | None):
     if not log_path:
@@ -504,6 +557,7 @@ def _run_eval_worker(
         stats[task_id] = is_success
         episode_seconds = time.perf_counter() - episode_start_time
         _append_eval_stats_line(eval_dir, f"{task_id}: {is_success} \n")
+        _save_episode_progress(eval_dir, task_id, is_success, info)
         report(
             "episode_end",
             episode=task_id,
@@ -587,6 +641,7 @@ def run_eval(
     worker_states = {wid: WorkerProgress() for wid in range(num_workers)}
     _append_eval_stats_line(eval_dir, "================\n")
     _append_eval_stats_line(eval_dir, f"run: {env_id} - {policy}\n")
+    _append_eval_progress_line(eval_dir, f"================\nrun: {env_id} - {policy}\n")
 
     worker_kwargs = dict(
         env_id=env_id,
@@ -802,6 +857,7 @@ def run_eval(
     console.print(f"Eval log: {log_path}")
 
     _append_eval_stats_line(eval_dir, f"success rate: {sr:.2f} \n")
+    _summarize_eval_progress(eval_dir)
     return EvalResult(
         env_id=env_id,
         policy=policy,
