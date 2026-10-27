@@ -482,6 +482,12 @@ def _define_task():
 
             def load(self, asset_id: str, *args, **kwargs):
                 f = self.files
+                if asset_id == "wall":
+                    mesh = fixed_asset(ASSET_DIR, "wall.obj")
+                    usd = fixed_asset(ASSET_DIR, "wall.usda")
+                    return SceneAsset("wall", "white wall beyond the table", usd, mesh, [mesh],
+                                      stable_poses=[[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]],
+                                      static=True, rgba=[0.95, 0.95, 0.95, 1.0])
                 if asset_id == "coffee_cup":
                     return SceneAsset("coffee_cup", "white coffee cup", f["cup"]["usd"], f["cup"]["obj"], f["cup"]["mujoco"],
                                       stable_poses=[[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]], rgba=[0.95, 0.95, 0.94, 1.0], mass=CUP_MASS)
@@ -508,7 +514,7 @@ def _define_task():
                 return self.load("coffee_cup")
 
             def __len__(self):
-                return 3
+                return 4
 
             def __iter__(self):
                 yield self.load("coffee_cup")
@@ -587,6 +593,16 @@ def _define_task():
             for name, (asset_id, pos, quat) in extra.items():
                 asset_id, pos, quat = restore_furniture(self._layout, options, name, asset_id, pos, quat)
                 _sync_extra(self._layout, am, name, asset_id, pos, quat)
+            wall = state.get("layout", {}).get("actors", {}).get("wall")
+            if wall is not None:
+                if wall["asset"]["res_id"] != "coffee_cart" or wall["asset"]["uid"] != "wall":
+                    raise ValueError("Expected coffee_cart:wall for the saved wall actor")
+                pose = wall["pose"]
+                _sync_extra(self._layout, am, "wall", "wall", pose["position"], pose["quaternion"])
+                self._layout.actors["wall"].set_material({
+                    "reflection_roughness_constant": 0.5,
+                    "metallic_constant": 0.0, "specular_level": 0.0,
+                })
             # the cup starts on the cart's box top, not on the table SIMPLE placed it against
             if "target" in self._layout.actors:
                 _p = self._layout.actors["target"].pose.position          # keep the x, y SIMPLE sampled in the (jittered) target region
