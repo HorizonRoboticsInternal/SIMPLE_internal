@@ -1,0 +1,462 @@
+{
+  "source_transform": [
+    [
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      -1,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      1.24
+    ],
+    [
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "units": "Provisional metres from the OBJ scale; not independently measured.",
+  "floor_source_y": -1.24,
+  "counter_height_m": 0.855,
+  "joints": [
+    {
+      "name": "peninsula_drawer_1",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 1 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_1"
+    },
+    {
+      "name": "peninsula_drawer_2",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 2 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_2"
+    },
+    {
+      "name": "peninsula_drawer_3",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 3 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_3"
+    },
+    {
+      "name": "peninsula_drawer_4",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 4 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_4"
+    },
+    {
+      "name": "peninsula_drawer_5",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 5 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_5"
+    },
+    {
+      "name": "peninsula_drawer_6",
+      "type": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 0\u201318 s; drawer 6 geometry visible. Travel estimated.",
+      "body": "peninsula_drawer_6"
+    },
+    {
+      "name": "utility_drawer",
+      "type": "slide",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": [
+        0,
+        0.4
+      ],
+      "unit": "m",
+      "mass_kg": 1.8,
+      "evidence": "Kitchen video 19\u201321 s.",
+      "body": "utility_drawer"
+    },
+    {
+      "name": "sink_left",
+      "type": "hinge",
+      "axis": [
+        0,
+        0,
+        -1
+      ],
+      "range": [
+        0,
+        1.65
+      ],
+      "unit": "rad",
+      "mass_kg": 2.2,
+      "evidence": "Kitchen video 22\u201324 s.",
+      "body": "sink_left"
+    },
+    {
+      "name": "sink_right",
+      "type": "hinge",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": [
+        0,
+        1.65
+      ],
+      "unit": "rad",
+      "mass_kg": 2.2,
+      "evidence": "Kitchen video 24\u201327 s.",
+      "body": "sink_right"
+    },
+    {
+      "name": "dishwasher_door",
+      "type": "hinge",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        1.57
+      ],
+      "unit": "rad",
+      "mass_kg": 5,
+      "evidence": "Kitchen video 28\u201332 s.",
+      "body": "dishwasher_door"
+    },
+    {
+      "name": "dishwasher_upper_rack",
+      "type": "slide",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": [
+        0,
+        0.43
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 33\u201337 s.",
+      "body": "dishwasher_upper_rack"
+    },
+    {
+      "name": "dishwasher_lower_rack",
+      "type": "slide",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": [
+        0,
+        0.48
+      ],
+      "unit": "m",
+      "mass_kg": 1.5,
+      "evidence": "Kitchen video 38\u201343 s.",
+      "body": "dishwasher_lower_rack"
+    },
+    {
+      "name": "freezer_door",
+      "type": "hinge",
+      "axis": [
+        0,
+        0,
+        -1
+      ],
+      "range": [
+        0,
+        1.65
+      ],
+      "unit": "rad",
+      "mass_kg": 11,
+      "evidence": "Kitchen video 52\u201356 s.",
+      "body": "freezer_door"
+    },
+    {
+      "name": "refrigerator_door",
+      "type": "hinge",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": [
+        0,
+        1.65
+      ],
+      "unit": "rad",
+      "mass_kg": 14,
+      "evidence": "Kitchen video 46\u201351 s.",
+      "body": "refrigerator_door"
+    },
+    {
+      "name": "bin_lid",
+      "type": "hinge",
+      "axis": [
+        -1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        1.45
+      ],
+      "unit": "rad",
+      "mass_kg": 0.55,
+      "evidence": "Bin video: rear-hinged lid opens when foot presses pedal.",
+      "body": "bin_lid"
+    },
+    {
+      "name": "bin_pedal",
+      "type": "hinge",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": [
+        0,
+        0.18125
+      ],
+      "unit": "rad",
+      "mass_kg": 0.2,
+      "evidence": "Bin video 2\u20137 s and 8\u201311 s. Pedal/lid coupling is an approximate 8:1 angular relation.",
+      "body": "bin_pedal"
+    }
+  ],
+  "scan_parts": [
+    {
+      "name": "peninsula_drawer_1_scan_0",
+      "triangles": 69,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "peninsula_drawer_1_scan_1",
+      "triangles": 287,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "peninsula_drawer_2_scan_1",
+      "triangles": 161,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "peninsula_drawer_3_scan_0",
+      "triangles": 48,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "peninsula_drawer_3_scan_1",
+      "triangles": 107,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "peninsula_drawer_4_scan_0",
+      "triangles": 119,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "peninsula_drawer_4_scan_1",
+      "triangles": 112,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "peninsula_drawer_5_scan_0",
+      "triangles": 126,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "peninsula_drawer_5_scan_1",
+      "triangles": 352,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "peninsula_drawer_6_scan_0",
+      "triangles": 17,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "peninsula_drawer_6_scan_1",
+      "triangles": 337,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "utility_drawer_scan_0",
+      "triangles": 161,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "utility_drawer_scan_1",
+      "triangles": 145,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "sink_left_scan_0",
+      "triangles": 169,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "sink_left_scan_1",
+      "triangles": 101,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "sink_right_scan_0",
+      "triangles": 274,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "sink_right_scan_1",
+      "triangles": 11,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "dishwasher_door_scan_0",
+      "triangles": 650,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "freezer_door_scan_0",
+      "triangles": 1870,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "freezer_door_scan_1",
+      "triangles": 360,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "refrigerator_door_scan_0",
+      "triangles": 2880,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "refrigerator_door_scan_1",
+      "triangles": 3002,
+      "material": "room_scan_1"
+    },
+    {
+      "name": "bin_body_scan",
+      "triangles": 6031,
+      "material": "bin_scan"
+    },
+    {
+      "name": "bin_lid_scan",
+      "triangles": 1458,
+      "material": "bin_scan"
+    },
+    {
+      "name": "room_static_0",
+      "triangles": 84005,
+      "material": "room_scan_0"
+    },
+    {
+      "name": "room_static_1",
+      "triangles": 109281,
+      "material": "room_scan_1"
+    }
+  ],
+  "physical_parameters": "Estimated masses, friction, damping and pedal coupling; no force/torque calibration in the source video.",
+  "interiors": "Cabinet/drawer boxes, dishwasher racks, fridge shelves and bin liner reconstructed from visible evidence; unseen details simplified.",
+  "passive_surfaces": "Lower peninsula doors, upper cupboards and background props remain fixed. The 16 existing mechanism joints are retained. Eight selected countertop objects are now independent free rigid bodies.",
+  "bin_registration": {
+    "from": "trashbin.obj Y-up",
+    "after_yup_to_zup_rotation_z_degrees": -90,
+    "translation": [
+      -0.663,
+      0.004,
+      -0.08
+    ],
+    "method": "Manual alignment of dedicated bin scan to room footprint; no scale change."
+  },
+  "scan_parts_note": "Historical source-scan inventory only. Runtime visuals are the authored meshes in assets/object_manifest.json.",
+  "movable_objects": [
+    "plate_a",
+    "plate_b",
+    "bottle_red",
+    "bottle_green",
+    "carton_bags",
+    "carton_wrap",
+    "bowl_small",
+    "bowl_large"
+  ],
+  "runtime_entry": "scene.xml: 16 mechanism joints, 8 free joints, 0 actuators; object_physics.json contains rigid-object details."
+}

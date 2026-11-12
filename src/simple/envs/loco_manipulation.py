@@ -107,7 +107,10 @@ class LocoManipulationEnv(BaseDualSim):
 
 
     def _render_frame(self):
-        # frame_mujoco = self.mujoco.render()
+        # benchmark speed-up: skip the MuJoCo camera render when Isaac renders the observation
+        # (mujoco_isaac, no debug tiling); the mujoco-only sim mode still needs it
+        skip_mujoco = self.isaac is not None and not self.task.metadata.get("debug", False)
+        frame_mujoco = None if skip_mujoco else self.mujoco.render()
 
         if self.isaac:
             frame_isaac = self.isaac.render()

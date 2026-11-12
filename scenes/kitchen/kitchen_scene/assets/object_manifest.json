@@ -1,0 +1,1970 @@
+{
+  "materials": {
+    "white": {
+      "rgba": [
+        0.89,
+        0.89,
+        0.855,
+        1
+      ],
+      "roughness": 0.34,
+      "metallic": 0,
+      "texture": null
+    },
+    "porcelain": {
+      "rgba": [
+        0.96,
+        0.96,
+        0.92,
+        1
+      ],
+      "roughness": 0.25,
+      "metallic": 0,
+      "texture": null
+    },
+    "steel": {
+      "rgba": [
+        0.58,
+        0.61,
+        0.63,
+        1
+      ],
+      "roughness": 0.28,
+      "metallic": 0.8,
+      "texture": null
+    },
+    "chrome": {
+      "rgba": [
+        0.74,
+        0.77,
+        0.79,
+        1
+      ],
+      "roughness": 0.18,
+      "metallic": 0.95,
+      "texture": null
+    },
+    "dark": {
+      "rgba": [
+        0.025,
+        0.03,
+        0.035,
+        1
+      ],
+      "roughness": 0.42,
+      "metallic": 0,
+      "texture": null
+    },
+    "rubber": {
+      "rgba": [
+        0.04,
+        0.045,
+        0.05,
+        1
+      ],
+      "roughness": 0.88,
+      "metallic": 0,
+      "texture": null
+    },
+    "bluewall": {
+      "rgba": [
+        0.1,
+        0.37,
+        0.53,
+        1
+      ],
+      "roughness": 0.9,
+      "metallic": 0,
+      "texture": null
+    },
+    "wall": {
+      "rgba": [
+        0.85,
+        0.86,
+        0.84,
+        1
+      ],
+      "roughness": 0.85,
+      "metallic": 0,
+      "texture": null
+    },
+    "gold": {
+      "rgba": [
+        0.76,
+        0.56,
+        0.22,
+        1
+      ],
+      "roughness": 0.4,
+      "metallic": 0.5,
+      "texture": null
+    },
+    "green": {
+      "rgba": [
+        0.31,
+        0.61,
+        0.08,
+        1
+      ],
+      "roughness": 0.35,
+      "metallic": 0,
+      "texture": null
+    },
+    "red": {
+      "rgba": [
+        0.7,
+        0.025,
+        0.025,
+        1
+      ],
+      "roughness": 0.35,
+      "metallic": 0,
+      "texture": null
+    },
+    "blue": {
+      "rgba": [
+        0.035,
+        0.21,
+        0.51,
+        1
+      ],
+      "roughness": 0.4,
+      "metallic": 0,
+      "texture": null
+    },
+    "liner": {
+      "rgba": [
+        0.19,
+        0.2,
+        0.19,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": null
+    },
+    "water": {
+      "rgba": [
+        0.05,
+        0.25,
+        0.55,
+        1
+      ],
+      "roughness": 0.18,
+      "metallic": 0.12,
+      "texture": null
+    },
+    "glass": {
+      "rgba": [
+        0.6,
+        0.77,
+        0.82,
+        0.34
+      ],
+      "roughness": 0.18,
+      "metallic": 0.1,
+      "texture": null
+    },
+    "rack_coating": {
+      "rgba": [
+        0.63,
+        0.65,
+        0.66,
+        1
+      ],
+      "roughness": 0.43,
+      "metallic": 0.15,
+      "texture": null
+    },
+    "bags": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "bags.png"
+    },
+    "wrap": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "wrap.png"
+    },
+    "tea": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "tea.png"
+    },
+    "snack_red": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "snack_red.png"
+    },
+    "snack_blue": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "snack_blue.png"
+    },
+    "snack_gold": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "snack_gold.png"
+    },
+    "drinks": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "drinks.png"
+    },
+    "plate": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "plate.png"
+    },
+    "decoration": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.62,
+      "metallic": 0,
+      "texture": "decoration.png"
+    },
+    "concrete": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.54,
+      "metallic": 0,
+      "texture": "concrete.png"
+    },
+    "mat": {
+      "rgba": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "roughness": 0.93,
+      "metallic": 0,
+      "texture": "mat.png"
+    }
+  },
+  "meshes": [
+    {
+      "name": "room_shell_concrete_world",
+      "body": "world",
+      "family": "room_shell",
+      "material": "concrete",
+      "file": "meshes/000_world_room_shell_concrete.obj",
+      "triangles": 12,
+      "objects": [
+        "Polished aggregate floor"
+      ]
+    },
+    {
+      "name": "room_shell_bluewall_world",
+      "body": "world",
+      "family": "room_shell",
+      "material": "bluewall",
+      "file": "meshes/001_world_room_shell_bluewall.obj",
+      "triangles": 12,
+      "objects": [
+        "Blue kitchen wall"
+      ]
+    },
+    {
+      "name": "room_shell_wall_world",
+      "body": "world",
+      "family": "room_shell",
+      "material": "wall",
+      "file": "meshes/002_world_room_shell_wall.obj",
+      "triangles": 12,
+      "objects": [
+        "White east wall"
+      ]
+    },
+    {
+      "name": "room_shell_steel_world",
+      "body": "world",
+      "family": "room_shell",
+      "material": "steel",
+      "file": "meshes/003_world_room_shell_steel.obj",
+      "triangles": 376,
+      "objects": [
+        "East baseboard",
+        "North baseboard"
+      ]
+    },
+    {
+      "name": "countertops_white_world",
+      "body": "world",
+      "family": "countertops",
+      "material": "white",
+      "file": "meshes/004_world_countertops_white.obj",
+      "triangles": 1504,
+      "objects": [
+        "Peninsula white worktop",
+        "Sink counter left",
+        "Sink counter right",
+        "Sink counter front",
+        "Sink counter back",
+        "Counter corner",
+        "Raised bar partition",
+        "Bar overhang"
+      ]
+    },
+    {
+      "name": "countertops_steel_world",
+      "body": "world",
+      "family": "countertops",
+      "material": "steel",
+      "file": "meshes/005_world_countertops_steel.obj",
+      "triangles": 376,
+      "objects": [
+        "Peninsula plinth",
+        "Rear plinth"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_world",
+      "body": "world",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/006_world_cabinet_fronts_white.obj",
+      "triangles": 1504,
+      "objects": [
+        "Lower cabinet door 1",
+        "Lower cabinet door 2",
+        "Lower cabinet door 3",
+        "Lower cabinet door 4",
+        "Lower cabinet door 5",
+        "Lower cabinet door 6",
+        "Peninsula end panel",
+        "Utility lower door"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_world",
+      "body": "world",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/007_world_cabinet_fronts_chrome.obj",
+      "triangles": 560,
+      "objects": [
+        "Lower door pull 1",
+        "Lower door pull 2",
+        "Lower door pull 3",
+        "Lower door pull 4",
+        "Lower door pull 5",
+        "Lower door pull 6",
+        "Utility lower pull"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_1",
+      "body": "peninsula_drawer_1",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/008_peninsula_drawer_1_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 1"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_1",
+      "body": "peninsula_drawer_1",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/009_peninsula_drawer_1_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 1"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_2",
+      "body": "peninsula_drawer_2",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/010_peninsula_drawer_2_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 2"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_2",
+      "body": "peninsula_drawer_2",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/011_peninsula_drawer_2_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 2"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_3",
+      "body": "peninsula_drawer_3",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/012_peninsula_drawer_3_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 3"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_3",
+      "body": "peninsula_drawer_3",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/013_peninsula_drawer_3_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 3"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_4",
+      "body": "peninsula_drawer_4",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/014_peninsula_drawer_4_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 4"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_4",
+      "body": "peninsula_drawer_4",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/015_peninsula_drawer_4_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 4"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_5",
+      "body": "peninsula_drawer_5",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/016_peninsula_drawer_5_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 5"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_5",
+      "body": "peninsula_drawer_5",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/017_peninsula_drawer_5_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 5"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_peninsula_drawer_6",
+      "body": "peninsula_drawer_6",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/018_peninsula_drawer_6_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Drawer face 6"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_peninsula_drawer_6",
+      "body": "peninsula_drawer_6",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/019_peninsula_drawer_6_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Drawer pull 6"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_utility_drawer",
+      "body": "utility_drawer",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/020_utility_drawer_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "Utility drawer face"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_utility_drawer",
+      "body": "utility_drawer",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/021_utility_drawer_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "Utility drawer pull"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_sink_left",
+      "body": "sink_left",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/022_sink_left_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "sink_left face"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_sink_left",
+      "body": "sink_left",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/023_sink_left_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "sink_left pull"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_white_sink_right",
+      "body": "sink_right",
+      "family": "cabinet_fronts",
+      "material": "white",
+      "file": "meshes/024_sink_right_cabinet_fronts_white.obj",
+      "triangles": 188,
+      "objects": [
+        "sink_right face"
+      ]
+    },
+    {
+      "name": "cabinet_fronts_chrome_sink_right",
+      "body": "sink_right",
+      "family": "cabinet_fronts",
+      "material": "chrome",
+      "file": "meshes/025_sink_right_cabinet_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "sink_right pull"
+      ]
+    },
+    {
+      "name": "upper_cabinets_white_world",
+      "body": "world",
+      "family": "upper_cabinets",
+      "material": "white",
+      "file": "meshes/026_world_upper_cabinets_white.obj",
+      "triangles": 2068,
+      "objects": [
+        "Upper cupboard carcass",
+        "Upper white door 0",
+        "Upper white door 1",
+        "Upper white door 2",
+        "Upper white door 3",
+        "Small upper door",
+        "Small upper door.001",
+        "Microwave cubby side",
+        "Microwave cubby side.001",
+        "Microwave cubby shelf",
+        "Microwave cubby shelf.001"
+      ]
+    },
+    {
+      "name": "upper_cabinets_chrome_world",
+      "body": "world",
+      "family": "upper_cabinets",
+      "material": "chrome",
+      "file": "meshes/027_world_upper_cabinets_chrome.obj",
+      "triangles": 192,
+      "objects": [
+        "Upper door vertical pull",
+        "Upper door vertical pull.001",
+        "Upper door vertical pull.002",
+        "Upper door vertical pull.003"
+      ]
+    },
+    {
+      "name": "sink_and_taps_steel_world",
+      "body": "world",
+      "family": "sink_and_taps",
+      "material": "steel",
+      "file": "meshes/028_world_sink_and_taps_steel.obj",
+      "triangles": 668,
+      "objects": [
+        "Sink bowl",
+        "Sink bowl floor",
+        "Drain basket wire",
+        "Drain basket wire.001",
+        "Drain basket wire.002",
+        "Drain basket wire.003",
+        "Drain basket wire.004",
+        "Drain basket wire.005",
+        "Drain basket wire.006",
+        "Drain basket wire.007"
+      ]
+    },
+    {
+      "name": "sink_and_taps_chrome_world",
+      "body": "world",
+      "family": "sink_and_taps",
+      "material": "chrome",
+      "file": "meshes/029_world_sink_and_taps_chrome.obj",
+      "triangles": 1976,
+      "objects": [
+        "Drain flange",
+        "Faucet base",
+        "Arched faucet",
+        "Faucet lever"
+      ]
+    },
+    {
+      "name": "sink_and_taps_dark_world",
+      "body": "world",
+      "family": "sink_and_taps",
+      "material": "dark",
+      "file": "meshes/030_world_sink_and_taps_dark.obj",
+      "triangles": 764,
+      "objects": [
+        "Drain opening"
+      ]
+    },
+    {
+      "name": "sink_and_taps_green_world",
+      "body": "world",
+      "family": "sink_and_taps",
+      "material": "green",
+      "file": "meshes/031_world_sink_and_taps_green.obj",
+      "triangles": 956,
+      "objects": [
+        "Dish soap",
+        "Sponge"
+      ]
+    },
+    {
+      "name": "sink_and_taps_white_world",
+      "body": "world",
+      "family": "sink_and_taps",
+      "material": "white",
+      "file": "meshes/032_world_sink_and_taps_white.obj",
+      "triangles": 764,
+      "objects": [
+        "Dish soap cap"
+      ]
+    },
+    {
+      "name": "dishwasher_front_steel_dishwasher_door",
+      "body": "dishwasher_door",
+      "family": "dishwasher_front",
+      "material": "steel",
+      "file": "meshes/033_dishwasher_door_dishwasher_front_steel.obj",
+      "triangles": 188,
+      "objects": [
+        "Stainless dishwasher front"
+      ]
+    },
+    {
+      "name": "dishwasher_front_chrome_dishwasher_door",
+      "body": "dishwasher_door",
+      "family": "dishwasher_front",
+      "material": "chrome",
+      "file": "meshes/034_dishwasher_door_dishwasher_front_chrome.obj",
+      "triangles": 1660,
+      "objects": [
+        "Dishwasher wide tubular pull",
+        "Dishwasher button",
+        "Dishwasher button.001",
+        "Dishwasher button.002",
+        "Dishwasher button.003",
+        "Dishwasher button.004"
+      ]
+    },
+    {
+      "name": "dishwasher_front_dark_dishwasher_door",
+      "body": "dishwasher_door",
+      "family": "dishwasher_front",
+      "material": "dark",
+      "file": "meshes/035_dishwasher_door_dishwasher_front_dark.obj",
+      "triangles": 188,
+      "objects": [
+        "Dishwasher top control strip"
+      ]
+    },
+    {
+      "name": "dishwasher_support_tines_rack_coating_dishwasher_upper_rack",
+      "body": "dishwasher_upper_rack",
+      "family": "dishwasher_support_tines",
+      "material": "rack_coating",
+      "file": "meshes/036_dishwasher_upper_rack_dishwasher_support_tines_rack_coating.obj",
+      "triangles": 6112,
+      "objects": [
+        "dishwasher_upper_rack_tine_0_0",
+        "dishwasher_upper_rack_tine_0_0 rounded tip",
+        "dishwasher_upper_rack_tine_0_1",
+        "dishwasher_upper_rack_tine_0_1 rounded tip",
+        "dishwasher_upper_rack_tine_0_2",
+        "dishwasher_upper_rack_tine_0_2 rounded tip",
+        "dishwasher_upper_rack_tine_0_3",
+        "dishwasher_upper_rack_tine_0_3 rounded tip",
+        "dishwasher_upper_rack_tine_0_4",
+        "dishwasher_upper_rack_tine_0_4 rounded tip",
+        "dishwasher_upper_rack_tine_0_5",
+        "dishwasher_upper_rack_tine_0_5 rounded tip",
+        "dishwasher_upper_rack_tine_0_6",
+        "dishwasher_upper_rack_tine_0_6 rounded tip",
+        "dishwasher_upper_rack_tine_1_0",
+        "dishwasher_upper_rack_tine_1_0 rounded tip",
+        "dishwasher_upper_rack_tine_1_1",
+        "dishwasher_upper_rack_tine_1_1 rounded tip",
+        "dishwasher_upper_rack_tine_1_2",
+        "dishwasher_upper_rack_tine_1_2 rounded tip",
+        "dishwasher_upper_rack_tine_1_3",
+        "dishwasher_upper_rack_tine_1_3 rounded tip",
+        "dishwasher_upper_rack_tine_1_4",
+        "dishwasher_upper_rack_tine_1_4 rounded tip",
+        "dishwasher_upper_rack_tine_1_5",
+        "dishwasher_upper_rack_tine_1_5 rounded tip",
+        "dishwasher_upper_rack_tine_1_6",
+        "dishwasher_upper_rack_tine_1_6 rounded tip",
+        "dishwasher_upper_rack_tine_2_0",
+        "dishwasher_upper_rack_tine_2_0 rounded tip",
+        "dishwasher_upper_rack_tine_2_1",
+        "dishwasher_upper_rack_tine_2_1 rounded tip",
+        "dishwasher_upper_rack_tine_2_2",
+        "dishwasher_upper_rack_tine_2_2 rounded tip",
+        "dishwasher_upper_rack_tine_2_3",
+        "dishwasher_upper_rack_tine_2_3 rounded tip",
+        "dishwasher_upper_rack_tine_2_4",
+        "dishwasher_upper_rack_tine_2_4 rounded tip",
+        "dishwasher_upper_rack_tine_2_5",
+        "dishwasher_upper_rack_tine_2_5 rounded tip",
+        "dishwasher_upper_rack_tine_2_6",
+        "dishwasher_upper_rack_tine_2_6 rounded tip",
+        "dishwasher_upper_rack_tine_3_0",
+        "dishwasher_upper_rack_tine_3_0 rounded tip",
+        "dishwasher_upper_rack_tine_3_1",
+        "dishwasher_upper_rack_tine_3_1 rounded tip",
+        "dishwasher_upper_rack_tine_3_2",
+        "dishwasher_upper_rack_tine_3_2 rounded tip",
+        "dishwasher_upper_rack_tine_3_3",
+        "dishwasher_upper_rack_tine_3_3 rounded tip",
+        "dishwasher_upper_rack_tine_3_4",
+        "dishwasher_upper_rack_tine_3_4 rounded tip",
+        "dishwasher_upper_rack_tine_3_5",
+        "dishwasher_upper_rack_tine_3_5 rounded tip",
+        "dishwasher_upper_rack_tine_3_6",
+        "dishwasher_upper_rack_tine_3_6 rounded tip",
+        "dishwasher_upper_rack_support_rail_0",
+        "dishwasher_upper_rack_support_rail_1",
+        "dishwasher_upper_rack_support_rail_2",
+        "dishwasher_upper_rack_support_rail_3"
+      ]
+    },
+    {
+      "name": "dishwasher_support_tines_rack_coating_dishwasher_lower_rack",
+      "body": "dishwasher_lower_rack",
+      "family": "dishwasher_support_tines",
+      "material": "rack_coating",
+      "file": "meshes/037_dishwasher_lower_rack_dishwasher_support_tines_rack_coating.obj",
+      "triangles": 6976,
+      "objects": [
+        "dishwasher_lower_rack_tine_0_0",
+        "dishwasher_lower_rack_tine_0_0 rounded tip",
+        "dishwasher_lower_rack_tine_0_1",
+        "dishwasher_lower_rack_tine_0_1 rounded tip",
+        "dishwasher_lower_rack_tine_0_2",
+        "dishwasher_lower_rack_tine_0_2 rounded tip",
+        "dishwasher_lower_rack_tine_0_3",
+        "dishwasher_lower_rack_tine_0_3 rounded tip",
+        "dishwasher_lower_rack_tine_0_4",
+        "dishwasher_lower_rack_tine_0_4 rounded tip",
+        "dishwasher_lower_rack_tine_0_5",
+        "dishwasher_lower_rack_tine_0_5 rounded tip",
+        "dishwasher_lower_rack_tine_0_6",
+        "dishwasher_lower_rack_tine_0_6 rounded tip",
+        "dishwasher_lower_rack_tine_0_7",
+        "dishwasher_lower_rack_tine_0_7 rounded tip",
+        "dishwasher_lower_rack_tine_0_8",
+        "dishwasher_lower_rack_tine_0_8 rounded tip",
+        "dishwasher_lower_rack_tine_1_0",
+        "dishwasher_lower_rack_tine_1_0 rounded tip",
+        "dishwasher_lower_rack_tine_1_1",
+        "dishwasher_lower_rack_tine_1_1 rounded tip",
+        "dishwasher_lower_rack_tine_1_2",
+        "dishwasher_lower_rack_tine_1_2 rounded tip",
+        "dishwasher_lower_rack_tine_1_3",
+        "dishwasher_lower_rack_tine_1_3 rounded tip",
+        "dishwasher_lower_rack_tine_1_4",
+        "dishwasher_lower_rack_tine_1_4 rounded tip",
+        "dishwasher_lower_rack_tine_1_5",
+        "dishwasher_lower_rack_tine_1_5 rounded tip",
+        "dishwasher_lower_rack_tine_1_6",
+        "dishwasher_lower_rack_tine_1_6 rounded tip",
+        "dishwasher_lower_rack_tine_1_7",
+        "dishwasher_lower_rack_tine_1_7 rounded tip",
+        "dishwasher_lower_rack_tine_1_8",
+        "dishwasher_lower_rack_tine_1_8 rounded tip",
+        "dishwasher_lower_rack_tine_2_0",
+        "dishwasher_lower_rack_tine_2_0 rounded tip",
+        "dishwasher_lower_rack_tine_2_1",
+        "dishwasher_lower_rack_tine_2_1 rounded tip",
+        "dishwasher_lower_rack_tine_2_2",
+        "dishwasher_lower_rack_tine_2_2 rounded tip",
+        "dishwasher_lower_rack_tine_2_3",
+        "dishwasher_lower_rack_tine_2_3 rounded tip",
+        "dishwasher_lower_rack_tine_2_4",
+        "dishwasher_lower_rack_tine_2_4 rounded tip",
+        "dishwasher_lower_rack_tine_2_5",
+        "dishwasher_lower_rack_tine_2_5 rounded tip",
+        "dishwasher_lower_rack_tine_2_6",
+        "dishwasher_lower_rack_tine_2_6 rounded tip",
+        "dishwasher_lower_rack_tine_3_0",
+        "dishwasher_lower_rack_tine_3_0 rounded tip",
+        "dishwasher_lower_rack_tine_3_1",
+        "dishwasher_lower_rack_tine_3_1 rounded tip",
+        "dishwasher_lower_rack_tine_3_2",
+        "dishwasher_lower_rack_tine_3_2 rounded tip",
+        "dishwasher_lower_rack_tine_3_3",
+        "dishwasher_lower_rack_tine_3_3 rounded tip",
+        "dishwasher_lower_rack_tine_3_4",
+        "dishwasher_lower_rack_tine_3_4 rounded tip",
+        "dishwasher_lower_rack_tine_3_5",
+        "dishwasher_lower_rack_tine_3_5 rounded tip",
+        "dishwasher_lower_rack_tine_3_6",
+        "dishwasher_lower_rack_tine_3_6 rounded tip",
+        "dishwasher_lower_rack_support_rail_0",
+        "dishwasher_lower_rack_support_rail_1",
+        "dishwasher_lower_rack_support_rail_2",
+        "dishwasher_lower_rack_support_rail_3"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_steel_freezer_door",
+      "body": "freezer_door",
+      "family": "refrigerator_fronts",
+      "material": "steel",
+      "file": "meshes/038_freezer_door_refrigerator_fronts_steel.obj",
+      "triangles": 1452,
+      "objects": [
+        "Brushed metal freezer_door",
+        "Dispenser key",
+        "Dispenser key.001",
+        "Dispenser key.002",
+        "Dispenser key.003"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_chrome_freezer_door",
+      "body": "freezer_door",
+      "family": "refrigerator_fronts",
+      "material": "chrome",
+      "file": "meshes/039_freezer_door_refrigerator_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "freezer_door long handle"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_dark_freezer_door",
+      "body": "freezer_door",
+      "family": "refrigerator_fronts",
+      "material": "dark",
+      "file": "meshes/040_freezer_door_refrigerator_fronts_dark.obj",
+      "triangles": 376,
+      "objects": [
+        "Water dispenser bezel",
+        "Dispenser drip tray"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_rubber_freezer_door",
+      "body": "freezer_door",
+      "family": "refrigerator_fronts",
+      "material": "rubber",
+      "file": "meshes/041_freezer_door_refrigerator_fronts_rubber.obj",
+      "triangles": 376,
+      "objects": [
+        "Water dispenser inset",
+        "Dispenser control panel"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_blue_freezer_door",
+      "body": "freezer_door",
+      "family": "refrigerator_fronts",
+      "material": "blue",
+      "file": "meshes/042_freezer_door_refrigerator_fronts_blue.obj",
+      "triangles": 764,
+      "objects": [
+        "Blue magnet"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_steel_refrigerator_door",
+      "body": "refrigerator_door",
+      "family": "refrigerator_fronts",
+      "material": "steel",
+      "file": "meshes/043_refrigerator_door_refrigerator_fronts_steel.obj",
+      "triangles": 188,
+      "objects": [
+        "Brushed metal refrigerator_door"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_chrome_refrigerator_door",
+      "body": "refrigerator_door",
+      "family": "refrigerator_fronts",
+      "material": "chrome",
+      "file": "meshes/044_refrigerator_door_refrigerator_fronts_chrome.obj",
+      "triangles": 80,
+      "objects": [
+        "refrigerator_door long handle"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_red_refrigerator_door",
+      "body": "refrigerator_door",
+      "family": "refrigerator_fronts",
+      "material": "red",
+      "file": "meshes/045_refrigerator_door_refrigerator_fronts_red.obj",
+      "triangles": 188,
+      "objects": [
+        "Red diamond backing"
+      ]
+    },
+    {
+      "name": "refrigerator_fronts_decoration_refrigerator_door",
+      "body": "refrigerator_door",
+      "family": "refrigerator_fronts",
+      "material": "decoration",
+      "file": "meshes/046_refrigerator_door_refrigerator_fronts_decoration.obj",
+      "triangles": 2,
+      "objects": [
+        "Redrawn red gold decoration"
+      ]
+    },
+    {
+      "name": "pedal_bin_steel_pedal_bin",
+      "body": "pedal_bin",
+      "family": "pedal_bin",
+      "material": "steel",
+      "file": "meshes/047_pedal_bin_pedal_bin_steel.obj",
+      "triangles": 440,
+      "objects": [
+        "Rounded stainless bin shell"
+      ]
+    },
+    {
+      "name": "pedal_bin_dark_pedal_bin",
+      "body": "pedal_bin",
+      "family": "pedal_bin",
+      "material": "dark",
+      "file": "meshes/048_pedal_bin_pedal_bin_dark.obj",
+      "triangles": 188,
+      "objects": [
+        "Bin bottom plinth"
+      ]
+    },
+    {
+      "name": "pedal_bin_liner_pedal_bin",
+      "body": "pedal_bin",
+      "family": "pedal_bin",
+      "material": "liner",
+      "file": "meshes/049_pedal_bin_pedal_bin_liner.obj",
+      "triangles": 264,
+      "objects": [
+        "Dark rolled liner"
+      ]
+    },
+    {
+      "name": "pedal_bin_steel_bin_lid",
+      "body": "bin_lid",
+      "family": "pedal_bin",
+      "material": "steel",
+      "file": "meshes/050_bin_lid_pedal_bin_steel.obj",
+      "triangles": 188,
+      "objects": [
+        "Solid rounded steel lid"
+      ]
+    },
+    {
+      "name": "pedal_bin_dark_bin_lid",
+      "body": "bin_lid",
+      "family": "pedal_bin",
+      "material": "dark",
+      "file": "meshes/051_bin_lid_pedal_bin_dark.obj",
+      "triangles": 204,
+      "objects": [
+        "Lid inner seal",
+        "Lid hinge pin"
+      ]
+    },
+    {
+      "name": "pedal_bin_steel_bin_pedal",
+      "body": "bin_pedal",
+      "family": "pedal_bin",
+      "material": "steel",
+      "file": "meshes/052_bin_pedal_pedal_bin_steel.obj",
+      "triangles": 2632,
+      "objects": [
+        "Steel pedal",
+        "Pedal tread",
+        "Pedal tread.001",
+        "Pedal tread.002",
+        "Pedal tread.003",
+        "Pedal tread.004",
+        "Pedal tread.005",
+        "Pedal tread.006",
+        "Pedal tread.007",
+        "Pedal tread.008",
+        "Pedal tread.009",
+        "Pedal tread.010",
+        "Pedal tread.011",
+        "Pedal tread.012"
+      ]
+    },
+    {
+      "name": "pedal_bin_rubber_bin_pedal",
+      "body": "bin_pedal",
+      "family": "pedal_bin",
+      "material": "rubber",
+      "file": "meshes/053_bin_pedal_pedal_bin_rubber.obj",
+      "triangles": 188,
+      "objects": [
+        "Pedal rubber grip"
+      ]
+    },
+    {
+      "name": "plates_and_packages_plate_plate_a",
+      "body": "plate_a",
+      "family": "plates_and_packages",
+      "material": "plate",
+      "file": "meshes/054_plate_a_plates_and_packages_plate.obj",
+      "triangles": 1728,
+      "objects": [
+        "Blue rim paper plate"
+      ]
+    },
+    {
+      "name": "plates_and_packages_plate_plate_b",
+      "body": "plate_b",
+      "family": "plates_and_packages",
+      "material": "plate",
+      "file": "meshes/055_plate_b_plates_and_packages_plate.obj",
+      "triangles": 1728,
+      "objects": [
+        "Blue rim paper plate.001"
+      ]
+    },
+    {
+      "name": "plates_and_packages_plate_world",
+      "body": "world",
+      "family": "plates_and_packages",
+      "material": "plate",
+      "file": "meshes/056_world_plates_and_packages_plate.obj",
+      "triangles": 8640,
+      "objects": [
+        "Stacked white plate",
+        "Stacked white plate.001",
+        "Stacked white plate.002",
+        "Stacked white plate.003",
+        "Stacked white plate.004"
+      ]
+    },
+    {
+      "name": "plates_and_packages_bags_carton_bags",
+      "body": "carton_bags",
+      "family": "plates_and_packages",
+      "material": "bags",
+      "file": "meshes/057_carton_bags_plates_and_packages_bags.obj",
+      "triangles": 194,
+      "objects": [
+        "Storage bag carton",
+        "Storage bag carton label",
+        "Storage bag carton side label",
+        "Storage bag carton top label"
+      ]
+    },
+    {
+      "name": "plates_and_packages_wrap_carton_wrap",
+      "body": "carton_wrap",
+      "family": "plates_and_packages",
+      "material": "wrap",
+      "file": "meshes/058_carton_wrap_plates_and_packages_wrap.obj",
+      "triangles": 194,
+      "objects": [
+        "Cling wrap carton",
+        "Cling wrap carton label",
+        "Cling wrap carton side label",
+        "Cling wrap carton top label"
+      ]
+    },
+    {
+      "name": "cups_condiments_dark_world",
+      "body": "world",
+      "family": "cups_condiments",
+      "material": "dark",
+      "file": "meshes/059_world_cups_condiments_dark.obj",
+      "triangles": 940,
+      "objects": [
+        "Tall cup organizer back",
+        "Cup organizer partition",
+        "Cup organizer partition.001",
+        "Cup organizer partition.002",
+        "Cup organizer base"
+      ]
+    },
+    {
+      "name": "cups_condiments_white_world",
+      "body": "world",
+      "family": "cups_condiments",
+      "material": "white",
+      "file": "meshes/060_world_cups_condiments_white.obj",
+      "triangles": 8960,
+      "objects": [
+        "Stacked drinking cups",
+        "Stacked drinking cups.001",
+        "Stacked drinking cups.002",
+        "Stacked drinking cups.003",
+        "Stacked drinking cups.004",
+        "Stacked drinking cups.005",
+        "Stacked drinking cups.006",
+        "Stacked drinking cups.007",
+        "Stacked drinking cups.008",
+        "Stacked drinking cups.009",
+        "Stacked drinking cups.010",
+        "Stacked drinking cups.011",
+        "Stacked drinking cups.012",
+        "Stacked drinking cups.013",
+        "Stacked drinking cups.014",
+        "Stacked drinking cups.015",
+        "Stacked drinking cups.016",
+        "Stacked drinking cups.017",
+        "Stacked drinking cups.018",
+        "Stacked drinking cups.019",
+        "Stacked drinking cups.020",
+        "Stacked drinking cups.021",
+        "Stacked drinking cups.022",
+        "Stacked drinking cups.023",
+        "Stacked drinking cups.024",
+        "Stacked drinking cups.025",
+        "Stacked drinking cups.026",
+        "Stacked drinking cups.027"
+      ]
+    },
+    {
+      "name": "cups_condiments_red_bottle_red",
+      "body": "bottle_red",
+      "family": "cups_condiments",
+      "material": "red",
+      "file": "meshes/061_bottle_red_cups_condiments_red.obj",
+      "triangles": 768,
+      "objects": [
+        "Red squeeze bottle"
+      ]
+    },
+    {
+      "name": "cups_condiments_white_bottle_red",
+      "body": "bottle_red",
+      "family": "cups_condiments",
+      "material": "white",
+      "file": "meshes/062_bottle_red_cups_condiments_white.obj",
+      "triangles": 764,
+      "objects": [
+        "Red squeeze bottle cap"
+      ]
+    },
+    {
+      "name": "cups_condiments_green_bottle_green",
+      "body": "bottle_green",
+      "family": "cups_condiments",
+      "material": "green",
+      "file": "meshes/063_bottle_green_cups_condiments_green.obj",
+      "triangles": 768,
+      "objects": [
+        "Green squeeze bottle"
+      ]
+    },
+    {
+      "name": "cups_condiments_white_bottle_green",
+      "body": "bottle_green",
+      "family": "cups_condiments",
+      "material": "white",
+      "file": "meshes/064_bottle_green_cups_condiments_white.obj",
+      "triangles": 764,
+      "objects": [
+        "Green squeeze bottle cap"
+      ]
+    },
+    {
+      "name": "water_jug_water_world",
+      "body": "world",
+      "family": "water_jug",
+      "material": "water",
+      "file": "meshes/065_world_water_jug_water.obj",
+      "triangles": 1344,
+      "objects": [
+        "Blue water jug"
+      ]
+    },
+    {
+      "name": "water_jug_blue_world",
+      "body": "world",
+      "family": "water_jug",
+      "material": "blue",
+      "file": "meshes/066_world_water_jug_blue.obj",
+      "triangles": 2348,
+      "objects": [
+        "Jug molded ring",
+        "Jug molded ring.001",
+        "Jug molded ring.002",
+        "Jug molded ring.003",
+        "Jug neck cap",
+        "Jug molded grip"
+      ]
+    },
+    {
+      "name": "hot_water_urn_dark_world",
+      "body": "world",
+      "family": "hot_water_urn",
+      "material": "dark",
+      "file": "meshes/067_world_hot_water_urn_dark.obj",
+      "triangles": 3064,
+      "objects": [
+        "Urn base",
+        "Urn lid grip",
+        "Urn front spigot",
+        "Urn tap lever",
+        "Urn side handle",
+        "Urn side handle.001",
+        "Urn base.001",
+        "Urn lid grip.001",
+        "Urn front spigot.001",
+        "Urn tap lever.001",
+        "Urn side handle.002",
+        "Urn side handle.003"
+      ]
+    },
+    {
+      "name": "hot_water_urn_steel_world",
+      "body": "world",
+      "family": "hot_water_urn",
+      "material": "steel",
+      "file": "meshes/068_world_hot_water_urn_steel.obj",
+      "triangles": 2552,
+      "objects": [
+        "Stainless urn",
+        "Stainless urn.001"
+      ]
+    },
+    {
+      "name": "hot_water_urn_chrome_world",
+      "body": "world",
+      "family": "hot_water_urn",
+      "material": "chrome",
+      "file": "meshes/069_world_hot_water_urn_chrome.obj",
+      "triangles": 1528,
+      "objects": [
+        "Urn lid",
+        "Urn lid.001"
+      ]
+    },
+    {
+      "name": "coffee_station_dark_world",
+      "body": "world",
+      "family": "coffee_station",
+      "material": "dark",
+      "file": "meshes/070_world_coffee_station_dark.obj",
+      "triangles": 1188,
+      "objects": [
+        "Coffee machine base",
+        "Coffee maker hood",
+        "Carafe lid",
+        "Carafe handle"
+      ]
+    },
+    {
+      "name": "coffee_station_steel_world",
+      "body": "world",
+      "family": "coffee_station",
+      "material": "steel",
+      "file": "meshes/071_world_coffee_station_steel.obj",
+      "triangles": 188,
+      "objects": [
+        "Coffee maker rear"
+      ]
+    },
+    {
+      "name": "coffee_station_glass_world",
+      "body": "world",
+      "family": "coffee_station",
+      "material": "glass",
+      "file": "meshes/072_world_coffee_station_glass.obj",
+      "triangles": 764,
+      "objects": [
+        "Coffee carafe"
+      ]
+    },
+    {
+      "name": "kettle_glass_world",
+      "body": "world",
+      "family": "kettle",
+      "material": "glass",
+      "file": "meshes/073_world_kettle_glass.obj",
+      "triangles": 512,
+      "objects": [
+        "Glass kettle"
+      ]
+    },
+    {
+      "name": "kettle_steel_world",
+      "body": "world",
+      "family": "kettle",
+      "material": "steel",
+      "file": "meshes/074_world_kettle_steel.obj",
+      "triangles": 1528,
+      "objects": [
+        "Kettle steel band",
+        "Kettle steel band.001"
+      ]
+    },
+    {
+      "name": "kettle_dark_world",
+      "body": "world",
+      "family": "kettle",
+      "material": "dark",
+      "file": "meshes/075_world_kettle_dark.obj",
+      "triangles": 812,
+      "objects": [
+        "Kettle lid",
+        "Kettle black handle"
+      ]
+    },
+    {
+      "name": "microwaves_steel_world",
+      "body": "world",
+      "family": "microwaves",
+      "material": "steel",
+      "file": "meshes/076_world_microwaves_steel.obj",
+      "triangles": 4888,
+      "objects": [
+        "Microwave body",
+        "Microwave keypad",
+        "Microwave keypad.001",
+        "Microwave keypad.002",
+        "Microwave keypad.003",
+        "Microwave keypad.004",
+        "Microwave keypad.005",
+        "Microwave keypad.006",
+        "Microwave keypad.007",
+        "Microwave keypad.008",
+        "Microwave keypad.009",
+        "Microwave keypad.010",
+        "Microwave keypad.011",
+        "Microwave body.001",
+        "Microwave keypad.012",
+        "Microwave keypad.013",
+        "Microwave keypad.014",
+        "Microwave keypad.015",
+        "Microwave keypad.016",
+        "Microwave keypad.017",
+        "Microwave keypad.018",
+        "Microwave keypad.019",
+        "Microwave keypad.020",
+        "Microwave keypad.021",
+        "Microwave keypad.022",
+        "Microwave keypad.023"
+      ]
+    },
+    {
+      "name": "microwaves_dark_world",
+      "body": "world",
+      "family": "microwaves",
+      "material": "dark",
+      "file": "meshes/077_world_microwaves_dark.obj",
+      "triangles": 376,
+      "objects": [
+        "Microwave black bezel",
+        "Microwave black bezel.001"
+      ]
+    },
+    {
+      "name": "microwaves_rubber_world",
+      "body": "world",
+      "family": "microwaves",
+      "material": "rubber",
+      "file": "meshes/078_world_microwaves_rubber.obj",
+      "triangles": 376,
+      "objects": [
+        "Microwave glass window",
+        "Microwave glass window.001"
+      ]
+    },
+    {
+      "name": "microwaves_chrome_world",
+      "body": "world",
+      "family": "microwaves",
+      "material": "chrome",
+      "file": "meshes/079_world_microwaves_chrome.obj",
+      "triangles": 96,
+      "objects": [
+        "Microwave handle",
+        "Microwave handle.001"
+      ]
+    },
+    {
+      "name": "microwaves_green_world",
+      "body": "world",
+      "family": "microwaves",
+      "material": "green",
+      "file": "meshes/080_world_microwaves_green.obj",
+      "triangles": 376,
+      "objects": [
+        "Microwave display",
+        "Microwave display.001"
+      ]
+    },
+    {
+      "name": "floor_mats_mat_world",
+      "body": "world",
+      "family": "floor_mats",
+      "material": "mat",
+      "file": "meshes/081_world_floor_mats_mat.obj",
+      "triangles": 376,
+      "objects": [
+        "Peninsula anti fatigue mat",
+        "Dishwasher anti fatigue mat"
+      ]
+    },
+    {
+      "name": "bar_stools_dark_world",
+      "body": "world",
+      "family": "bar_stools",
+      "material": "dark",
+      "file": "meshes/082_world_bar_stools_dark.obj",
+      "triangles": 1128,
+      "objects": [
+        "Stool molded seat",
+        "Stool backrest",
+        "Stool molded seat.001",
+        "Stool backrest.001",
+        "Stool molded seat.002",
+        "Stool backrest.002"
+      ]
+    },
+    {
+      "name": "bar_stools_chrome_world",
+      "body": "world",
+      "family": "bar_stools",
+      "material": "chrome",
+      "file": "meshes/083_world_bar_stools_chrome.obj",
+      "triangles": 384,
+      "objects": [
+        "Chrome stool leg",
+        "Chrome stool leg.001",
+        "Chrome stool leg.002",
+        "Chrome stool leg.003",
+        "Stool foot rail",
+        "Chrome stool leg.004",
+        "Chrome stool leg.005",
+        "Chrome stool leg.006",
+        "Chrome stool leg.007",
+        "Stool foot rail.001",
+        "Chrome stool leg.008",
+        "Chrome stool leg.009",
+        "Chrome stool leg.010",
+        "Chrome stool leg.011",
+        "Stool foot rail.002"
+      ]
+    },
+    {
+      "name": "snack_shelf_chrome_world",
+      "body": "world",
+      "family": "snack_shelf",
+      "material": "chrome",
+      "file": "meshes/084_world_snack_shelf_chrome.obj",
+      "triangles": 5296,
+      "objects": [
+        "Pantry shelf upright",
+        "Pantry shelf upright.001",
+        "Pantry shelf upright.002",
+        "Pantry shelf upright.003",
+        "Wire shelf long edge",
+        "Wire shelf long edge.001",
+        "Wire shelf rung",
+        "Wire shelf rung.001",
+        "Wire shelf rung.002",
+        "Wire shelf rung.003",
+        "Wire shelf rung.004",
+        "Wire shelf rung.005",
+        "Wire shelf rung.006",
+        "Wire shelf rung.007",
+        "Wire shelf rung.008",
+        "Wire shelf rung.009",
+        "Wire shelf rung.010",
+        "Wire shelf rung.011",
+        "Wire shelf rung.012",
+        "Wire shelf rung.013",
+        "Wire shelf rung.014",
+        "Wire shelf rung.015",
+        "Wire shelf rung.016",
+        "Wire shelf rung.017",
+        "Wire shelf rung.018",
+        "Wire shelf rung.019",
+        "Wire shelf rung.020",
+        "Wire shelf rung.021",
+        "Wire shelf rung.022",
+        "Wire shelf rung.023",
+        "Wire shelf short edge",
+        "Wire shelf short edge.001",
+        "Wire shelf long edge.002",
+        "Wire shelf long edge.003",
+        "Wire shelf rung.024",
+        "Wire shelf rung.025",
+        "Wire shelf rung.026",
+        "Wire shelf rung.027",
+        "Wire shelf rung.028",
+        "Wire shelf rung.029",
+        "Wire shelf rung.030",
+        "Wire shelf rung.031",
+        "Wire shelf rung.032",
+        "Wire shelf rung.033",
+        "Wire shelf rung.034",
+        "Wire shelf rung.035",
+        "Wire shelf rung.036",
+        "Wire shelf rung.037",
+        "Wire shelf rung.038",
+        "Wire shelf rung.039",
+        "Wire shelf rung.040",
+        "Wire shelf rung.041",
+        "Wire shelf rung.042",
+        "Wire shelf rung.043",
+        "Wire shelf rung.044",
+        "Wire shelf rung.045",
+        "Wire shelf rung.046",
+        "Wire shelf rung.047",
+        "Wire shelf short edge.002",
+        "Wire shelf short edge.003",
+        "Wire shelf long edge.004",
+        "Wire shelf long edge.005",
+        "Wire shelf rung.048",
+        "Wire shelf rung.049",
+        "Wire shelf rung.050",
+        "Wire shelf rung.051",
+        "Wire shelf rung.052",
+        "Wire shelf rung.053",
+        "Wire shelf rung.054",
+        "Wire shelf rung.055",
+        "Wire shelf rung.056",
+        "Wire shelf rung.057",
+        "Wire shelf rung.058",
+        "Wire shelf rung.059",
+        "Wire shelf rung.060",
+        "Wire shelf rung.061",
+        "Wire shelf rung.062",
+        "Wire shelf rung.063",
+        "Wire shelf rung.064",
+        "Wire shelf rung.065",
+        "Wire shelf rung.066",
+        "Wire shelf rung.067",
+        "Wire shelf rung.068",
+        "Wire shelf rung.069",
+        "Wire shelf rung.070",
+        "Wire shelf rung.071",
+        "Wire shelf short edge.004",
+        "Wire shelf short edge.005",
+        "Wire shelf long edge.006",
+        "Wire shelf long edge.007",
+        "Wire shelf rung.072",
+        "Wire shelf rung.073",
+        "Wire shelf rung.074",
+        "Wire shelf rung.075",
+        "Wire shelf rung.076",
+        "Wire shelf rung.077",
+        "Wire shelf rung.078",
+        "Wire shelf rung.079",
+        "Wire shelf rung.080",
+        "Wire shelf rung.081",
+        "Wire shelf rung.082",
+        "Wire shelf rung.083",
+        "Wire shelf rung.084",
+        "Wire shelf rung.085",
+        "Wire shelf rung.086",
+        "Wire shelf rung.087",
+        "Wire shelf rung.088",
+        "Wire shelf rung.089",
+        "Wire shelf rung.090",
+        "Wire shelf rung.091",
+        "Wire shelf rung.092",
+        "Wire shelf rung.093",
+        "Wire shelf rung.094",
+        "Wire shelf rung.095",
+        "Wire shelf short edge.006",
+        "Wire shelf short edge.007",
+        "Wire shelf long edge.008",
+        "Wire shelf long edge.009",
+        "Wire shelf rung.096",
+        "Wire shelf rung.097",
+        "Wire shelf rung.098",
+        "Wire shelf rung.099",
+        "Wire shelf rung.100",
+        "Wire shelf rung.101",
+        "Wire shelf rung.102",
+        "Wire shelf rung.103",
+        "Wire shelf rung.104",
+        "Wire shelf rung.105",
+        "Wire shelf rung.106",
+        "Wire shelf rung.107",
+        "Wire shelf rung.108",
+        "Wire shelf rung.109",
+        "Wire shelf rung.110",
+        "Wire shelf rung.111",
+        "Wire shelf rung.112",
+        "Wire shelf rung.113",
+        "Wire shelf rung.114",
+        "Wire shelf rung.115",
+        "Wire shelf rung.116",
+        "Wire shelf rung.117",
+        "Wire shelf rung.118",
+        "Wire shelf rung.119",
+        "Wire shelf short edge.008",
+        "Wire shelf short edge.009"
+      ]
+    },
+    {
+      "name": "snack_shelf_snack_red_world",
+      "body": "world",
+      "family": "snack_shelf",
+      "material": "snack_red",
+      "file": "meshes/085_world_snack_shelf_snack_red.obj",
+      "triangles": 776,
+      "objects": [
+        "Pantry snack carton",
+        "Pantry snack carton label",
+        "Pantry snack carton side label",
+        "Pantry snack carton top label",
+        "Pantry snack carton.004",
+        "Pantry snack carton label.004",
+        "Pantry snack carton side label.004",
+        "Pantry snack carton top label.004",
+        "Pantry snack carton.008",
+        "Pantry snack carton label.008",
+        "Pantry snack carton side label.008",
+        "Pantry snack carton top label.008",
+        "Pantry snack carton.012",
+        "Pantry snack carton label.012",
+        "Pantry snack carton side label.012",
+        "Pantry snack carton top label.012"
+      ]
+    },
+    {
+      "name": "snack_shelf_snack_blue_world",
+      "body": "world",
+      "family": "snack_shelf",
+      "material": "snack_blue",
+      "file": "meshes/086_world_snack_shelf_snack_blue.obj",
+      "triangles": 776,
+      "objects": [
+        "Pantry snack carton.001",
+        "Pantry snack carton label.001",
+        "Pantry snack carton side label.001",
+        "Pantry snack carton top label.001",
+        "Pantry snack carton.005",
+        "Pantry snack carton label.005",
+        "Pantry snack carton side label.005",
+        "Pantry snack carton top label.005",
+        "Pantry snack carton.009",
+        "Pantry snack carton label.009",
+        "Pantry snack carton side label.009",
+        "Pantry snack carton top label.009",
+        "Pantry snack carton.013",
+        "Pantry snack carton label.013",
+        "Pantry snack carton side label.013",
+        "Pantry snack carton top label.013"
+      ]
+    },
+    {
+      "name": "snack_shelf_snack_gold_world",
+      "body": "world",
+      "family": "snack_shelf",
+      "material": "snack_gold",
+      "file": "meshes/087_world_snack_shelf_snack_gold.obj",
+      "triangles": 776,
+      "objects": [
+        "Pantry snack carton.002",
+        "Pantry snack carton label.002",
+        "Pantry snack carton side label.002",
+        "Pantry snack carton top label.002",
+        "Pantry snack carton.006",
+        "Pantry snack carton label.006",
+        "Pantry snack carton side label.006",
+        "Pantry snack carton top label.006",
+        "Pantry snack carton.010",
+        "Pantry snack carton label.010",
+        "Pantry snack carton side label.010",
+        "Pantry snack carton top label.010",
+        "Pantry snack carton.014",
+        "Pantry snack carton label.014",
+        "Pantry snack carton side label.014",
+        "Pantry snack carton top label.014"
+      ]
+    },
+    {
+      "name": "snack_shelf_tea_world",
+      "body": "world",
+      "family": "snack_shelf",
+      "material": "tea",
+      "file": "meshes/088_world_snack_shelf_tea.obj",
+      "triangles": 776,
+      "objects": [
+        "Pantry snack carton.003",
+        "Pantry snack carton label.003",
+        "Pantry snack carton side label.003",
+        "Pantry snack carton top label.003",
+        "Pantry snack carton.007",
+        "Pantry snack carton label.007",
+        "Pantry snack carton side label.007",
+        "Pantry snack carton top label.007",
+        "Pantry snack carton.011",
+        "Pantry snack carton label.011",
+        "Pantry snack carton side label.011",
+        "Pantry snack carton top label.011",
+        "Pantry snack carton.015",
+        "Pantry snack carton label.015",
+        "Pantry snack carton side label.015",
+        "Pantry snack carton top label.015"
+      ]
+    },
+    {
+      "name": "bulk_drinks_drinks_world",
+      "body": "world",
+      "family": "bulk_drinks",
+      "material": "drinks",
+      "file": "meshes/089_world_bulk_drinks_drinks.obj",
+      "triangles": 388,
+      "objects": [
+        "Drinks case",
+        "Drinks case label",
+        "Drinks case side label",
+        "Drinks case top label",
+        "Drinks case.001",
+        "Drinks case label.001",
+        "Drinks case side label.001",
+        "Drinks case top label.001"
+      ]
+    },
+    {
+      "name": "bulk_drinks_green_world",
+      "body": "world",
+      "family": "bulk_drinks",
+      "material": "green",
+      "file": "meshes/090_world_bulk_drinks_green.obj",
+      "triangles": 13824,
+      "objects": [
+        "Drink multipack bottle",
+        "Drink multipack bottle.001",
+        "Drink multipack bottle.002",
+        "Drink multipack bottle.003",
+        "Drink multipack bottle.004",
+        "Drink multipack bottle.005",
+        "Drink multipack bottle.006",
+        "Drink multipack bottle.007",
+        "Drink multipack bottle.008",
+        "Drink multipack bottle.009",
+        "Drink multipack bottle.010",
+        "Drink multipack bottle.011",
+        "Drink multipack bottle.012",
+        "Drink multipack bottle.013",
+        "Drink multipack bottle.014",
+        "Drink multipack bottle.015",
+        "Drink multipack bottle.016",
+        "Drink multipack bottle.017"
+      ]
+    },
+    {
+      "name": "bulk_drinks_white_world",
+      "body": "world",
+      "family": "bulk_drinks",
+      "material": "white",
+      "file": "meshes/091_world_bulk_drinks_white.obj",
+      "triangles": 13752,
+      "objects": [
+        "Drink multipack bottle cap",
+        "Drink multipack bottle cap.001",
+        "Drink multipack bottle cap.002",
+        "Drink multipack bottle cap.003",
+        "Drink multipack bottle cap.004",
+        "Drink multipack bottle cap.005",
+        "Drink multipack bottle cap.006",
+        "Drink multipack bottle cap.007",
+        "Drink multipack bottle cap.008",
+        "Drink multipack bottle cap.009",
+        "Drink multipack bottle cap.010",
+        "Drink multipack bottle cap.011",
+        "Drink multipack bottle cap.012",
+        "Drink multipack bottle cap.013",
+        "Drink multipack bottle cap.014",
+        "Drink multipack bottle cap.015",
+        "Drink multipack bottle cap.016",
+        "Drink multipack bottle cap.017"
+      ]
+    },
+    {
+      "name": "wall_utilities_steel_world",
+      "body": "world",
+      "family": "wall_utilities",
+      "material": "steel",
+      "file": "meshes/092_world_wall_utilities_steel.obj",
+      "triangles": 188,
+      "objects": [
+        "Water cooler body"
+      ]
+    },
+    {
+      "name": "wall_utilities_dark_world",
+      "body": "world",
+      "family": "wall_utilities",
+      "material": "dark",
+      "file": "meshes/093_world_wall_utilities_dark.obj",
+      "triangles": 1644,
+      "objects": [
+        "Water cooler dark top",
+        "Water cooler front recess",
+        "Background waste bin",
+        "Background bin bottom",
+        "Background waste bin.001",
+        "Background bin bottom.001",
+        "Blue bin paper slot"
+      ]
+    },
+    {
+      "name": "wall_utilities_red_world",
+      "body": "world",
+      "family": "wall_utilities",
+      "material": "red",
+      "file": "meshes/094_world_wall_utilities_red.obj",
+      "triangles": 764,
+      "objects": [
+        "Water cooler tap"
+      ]
+    },
+    {
+      "name": "wall_utilities_blue_world",
+      "body": "world",
+      "family": "wall_utilities",
+      "material": "blue",
+      "file": "meshes/095_world_wall_utilities_blue.obj",
+      "triangles": 1492,
+      "objects": [
+        "Water cooler tap.001",
+        "Background waste bin.002",
+        "Background bin bottom.002",
+        "Blue bin top"
+      ]
+    },
+    {
+      "name": "movable_bowls_porcelain_bowl_small",
+      "body": "bowl_small",
+      "family": "movable_bowls",
+      "material": "porcelain",
+      "file": "meshes/096_bowl_small_movable_bowls_porcelain.obj",
+      "triangles": 1728,
+      "objects": [
+        "Small hollow bowl"
+      ]
+    },
+    {
+      "name": "movable_bowls_blue_bowl_small",
+      "body": "bowl_small",
+      "family": "movable_bowls",
+      "material": "blue",
+      "file": "meshes/097_bowl_small_movable_bowls_blue.obj",
+      "triangles": 576,
+      "objects": [
+        "Small hollow bowl blue rim"
+      ]
+    },
+    {
+      "name": "movable_bowls_porcelain_bowl_large",
+      "body": "bowl_large",
+      "family": "movable_bowls",
+      "material": "porcelain",
+      "file": "meshes/098_bowl_large_movable_bowls_porcelain.obj",
+      "triangles": 1728,
+      "objects": [
+        "Large hollow bowl"
+      ]
+    },
+    {
+      "name": "movable_bowls_blue_bowl_large",
+      "body": "bowl_large",
+      "family": "movable_bowls",
+      "material": "blue",
+      "file": "meshes/099_bowl_large_movable_bowls_blue.obj",
+      "triangles": 576,
+      "objects": [
+        "Large hollow bowl blue rim"
+      ]
+    }
+  ],
+  "object_count": 665,
+  "method": "Independent Blender objects; no visible scan meshes or scan atlases. Source-guided approximation."
+}

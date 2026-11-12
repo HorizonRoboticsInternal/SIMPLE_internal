@@ -1,0 +1,12 @@
+{
+ "note": "HoloMotion v1.4 sim teleop kit 'kitchen' (2026-10-26). The robot stands in the aisle in front of the peninsula worktop of the manipulable kitchen, the SIMPLE bottle on the worktop ahead of it, the sink 1.2 m to its right. Distances in m, robot (pelvis) at the origin facing +x; pelvis_to_edge = KITCHEN_ROBOT_TO_EDGE (front of the feet to the worktop edge) + toe_offset.",
+ "layout": {
+  "pelvis_to_edge": 0.475,
+  "toe_offset": 0.125,
+  "robot_y_k": 0.875,
+  "bottle_behind_edge": 0.115,
+  "bottle_y": 0.0
+ },
+ "robot": {"yaw_deg_in_kitchen": 180.0},
+ "bottle": {"diameter": 0.065, "height": 0.212, "mass": 0.5}
+}

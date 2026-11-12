@@ -12,6 +12,7 @@ from __future__ import annotations
 # if TYPE_CHECKING:
     # from simple.core import Randomizer
     # from simple.core import Layout
+import os
 from copy import deepcopy
 from typing import Protocol, Any, runtime_checkable
 from abc import abstractmethod
@@ -69,12 +70,44 @@ class DRManager:
             inner_state_dict[name] = rnd.state_dict()
         return inner_state_dict
     
+    _level3_queue: list = []
+
+    @classmethod
+    def _next_level3_offset(cls):
+        """Next (dx, dy) of the level-3 start design: SIMPLE_LEVEL3_EPISODES offsets evenly spread over
+        +-SIMPLE_LEVEL3_BACK x +-SIMPLE_LEVEL3_SIDE, each axis shuffled by SIMPLE_LEVEL3_SEED, consumed in order."""
+        if not cls._level3_queue:
+            import os
+            import numpy as np
+            n = int(os.environ.get("SIMPLE_LEVEL3_EPISODES", "10"))
+            back = float(os.environ.get("SIMPLE_LEVEL3_BACK", "0.10")); side = float(os.environ.get("SIMPLE_LEVEL3_SIDE", "0.05"))
+            rng = np.random.RandomState(int(os.environ.get("SIMPLE_LEVEL3_SEED", "0")))
+            xs = np.linspace(-back, back, n); ys = np.linspace(-side, side, n); rng.shuffle(xs); rng.shuffle(ys)
+            cls._level3_queue = [(round(float(x), 4), round(float(y), 4)) for x, y in zip(xs, ys)]
+        return cls._level3_queue.pop(0)
+
+    _level3_dz_queue: list = []
+
+    @classmethod
+    def _next_level3_dz(cls, dz_max: float):
+        """Next table-height offset of the level-3 design: SIMPLE_LEVEL3_EPISODES values evenly spread over +-dz_max,
+        shuffled by SIMPLE_LEVEL3_SEED + 7 (independent of the start-offset order)."""
+        if not cls._level3_dz_queue:
+            import os
+            import numpy as np
+            n = int(os.environ.get("SIMPLE_LEVEL3_EPISODES", "10"))
+            rng = np.random.RandomState(int(os.environ.get("SIMPLE_LEVEL3_SEED", "0")) + 7)
+            zs = np.linspace(-dz_max, dz_max, n); rng.shuffle(zs)
+            cls._level3_dz_queue = [round(float(z), 4) for z in zs]
+        return cls._level3_dz_queue.pop(0)
+
     def load_state_dict(self, state_dict: dict[str, Any],dr_level: int | None = None) -> None:
         """
           Depends on DR level to load state dict.If dr_level is None, load all state dict.
           If dr_level is 0, change distrcator,and table material.
           if dr_level is 1, change lighting,material,disctractors,
           if dr_level is 2, change spatial pose too.
+          if dr_level is 3, change the robot start too (a different offset every scene, see _next_level3_offset).
         """
         if dr_level is None:
             dr_state_dict = state_dict["dr_state_dict"].copy()
@@ -101,10 +134,44 @@ class DRManager:
             else:
                 dr_state_dict["spatial"] = None
 
-
+        elif dr_level == 3:
+            # Level 3 = level 2 + an alternative layout: the robot starts somewhere else. Every scene gets a
+            # different start offset from the base episode's start, evenly spread inside the box
+            # +-SIMPLE_LEVEL3_BACK (x, back/forward) x +-SIMPLE_LEVEL3_SIDE (y, sideways) and shuffled by
+            # SIMPLE_LEVEL3_SEED, SIMPLE_LEVEL3_EPISODES offsets per cycle (defaults 0.10 m, 0.05 m, 0, 10).
+            # Distractors, materials, lighting and object poses are re-sampled as at level 2; the table
+            # (scene state) stays as in the base episode. The start is stored in the scene's state.
+            dr_state_dict = state_dict["dr_state_dict"].copy()
+            dr_state_dict.pop("distractors", None)
+            dr_state_dict.pop("material", None)
+            dr_state_dict.pop("lighting", None)
+            spatial = dr_state_dict.get("spatial") or {}
+            robot_key = next((k for k in ("g1_sonic", "g1_wholebody") if k in spatial), None)
+            if robot_key is None:
+                dr_state_dict.pop("spatial", None)
+            else:
+                robot = deepcopy(spatial[robot_key])
+                dx, dy = self._next_level3_offset()
+                pos = list(robot["position"]); pos[0] = float(pos[0]) + dx; pos[1] = float(pos[1]) + dy
+                robot["position"] = pos
+                dr_state_dict["spatial"] = {robot_key: robot}
+            # optional: a different table height per scene as well (SIMPLE_LEVEL3_TABLE_DZ = half-range in m, default off),
+            # applied to the base scene's table pose so everything placed on it follows
+            dz_max = float(os.environ.get("SIMPLE_LEVEL3_TABLE_DZ", "0") or 0)
+            sc = dr_state_dict.get("scene")
+            if dz_max > 0 and isinstance(sc, dict) and isinstance(sc.get("table"), dict) and "pose" in sc["table"]:
+                sc = deepcopy(sc); dz = self._next_level3_dz(dz_max)
+                pz = list(sc["table"]["pose"]["position"]); pz[2] = float(pz[2]) + dz; sc["table"]["pose"]["position"] = pz
+                dr_state_dict["scene"] = sc
 
         else:
             raise ValueError(f"Invalid DR level {dr_level}")
+
+        # An empty lighting state (older recordings never stored their lights)
+        # cannot be inherited: loading it would leave the scene unlit (black
+        # frames). Drop it so lighting is re-sampled from the task config.
+        if dr_level is not None and not dr_state_dict.get("lighting"):
+            dr_state_dict.pop("lighting", None)
 
         for name, rnd_state in dr_state_dict.items():
             rnd =self.get_randomizer(name)

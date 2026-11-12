@@ -367,23 +367,26 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
 
         match action_cmd.type:
             case "elastic_band":
-                pose = np.concatenate(
-                    [
-                        self.mjData.xpos[self.band_attached_link],
-                        self.mjData.xquat[self.band_attached_link],
-                        np.zeros(6),
-                    ]
-                )
-                mujoco.mj_objectVelocity(
-                    self.mjModel,
-                    self.mjData,
-                    mujoco.mjtObj.mjOBJ_BODY,
-                    self.band_attached_link,
-                    pose[7:13],
-                    0,
-                )
-                pose[7:10], pose[10:13] = pose[10:13], pose[7:10].copy()
-                self.mjData.xfrc_applied[self.band_attached_link] = self.elastic_band.Advance(pose)
+                self._apply_elastic_band()
+
+            case "holomotion":
+                # HoloMotion motion-tracking policy: PD position control with the
+                # per-joint gains exported in the policy's ONNX metadata (MJCF order).
+                if action_cmd["apply_elastic_band"]:
+                    self._apply_elastic_band()
+                target_q = np.asarray(action_cmd["target_q"], dtype=np.float64)
+                kp = np.asarray(action_cmd["kp"], dtype=np.float64)
+                kd = np.asarray(action_cmd["kd"], dtype=np.float64)
+                q_cur = self.mjData.qpos[self.body_joint_index + self.qpos_offset - 1]
+                dq_cur = self.mjData.qvel[self.body_joint_index + self.qvel_offset - 1]
+                self.torques[self.body_joint_index - 1] = kp * (target_q - q_cur) + kd * (0 - dq_cur)
+                if self.num_hand_dof > 0:
+                    self._apply_hand_pd(action_cmd["left_hand_q"], action_cmd["right_hand_q"])
+                self.torques = np.clip(self.torques, -self.torque_limit, self.torque_limit)
+                if self.sonic_config["FREE_BASE"]:
+                    self.mjData.ctrl = np.concatenate((np.zeros(6), self.torques))
+                else:
+                    self.mjData.ctrl = self.torques
 
             case "wbc_torque":
                 low_cmd = action_cmd["low_cmd"]
@@ -421,22 +424,8 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
                 self.torques[self.body_joint_index - 1] = body_torques
 
                 # Hand PD control (driven by trigger/grip via decoupled WBC teleop IK)
-                # Joint order: thumb_0, thumb_1, thumb_2, index_0, index_1, middle_0, middle_1
-                # Index + middle work together against thumb in a power grip,
-                # so their kp is halved to balance grip forces.
                 if self.num_hand_dof > 0:
-                    left_hand_q = action_cmd["left_hand_q"]
-                    right_hand_q = action_cmd["right_hand_q"]
-                    hand_kp = np.array([5.0, 5.0, 5.0, 2.5, 2.5, 2.5, 2.5])
-                    hand_kd = 1.0
-                    if left_hand_q is not None:
-                        lh_q_cur = self.mjData.qpos[self.left_hand_index + self.qpos_offset - 1]
-                        lh_dq_cur = self.mjData.qvel[self.left_hand_index + self.qvel_offset - 1]
-                        self.torques[self.left_hand_index - 1] = hand_kp * (left_hand_q - lh_q_cur) + hand_kd * (0 - lh_dq_cur)
-                    if right_hand_q is not None:
-                        rh_q_cur = self.mjData.qpos[self.right_hand_index + self.qpos_offset - 1]
-                        rh_dq_cur = self.mjData.qvel[self.right_hand_index + self.qvel_offset - 1]
-                        self.torques[self.right_hand_index - 1] = hand_kp * (right_hand_q - rh_q_cur) + hand_kd * (0 - rh_dq_cur)
+                    self._apply_hand_pd(action_cmd["left_hand_q"], action_cmd["right_hand_q"])
 
                 self.torques = np.clip(self.torques, -self.torque_limit, self.torque_limit)
 
@@ -446,6 +435,44 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
                     self.mjData.ctrl = self.torques
 
     
+    def _apply_elastic_band(self) -> None:
+        """Apply the elastic-band external force to the attached link."""
+        pose = np.concatenate(
+            [
+                self.mjData.xpos[self.band_attached_link],
+                self.mjData.xquat[self.band_attached_link],
+                np.zeros(6),
+            ]
+        )
+        mujoco.mj_objectVelocity(
+            self.mjModel,
+            self.mjData,
+            mujoco.mjtObj.mjOBJ_BODY,
+            self.band_attached_link,
+            pose[7:13],
+            0,
+        )
+        pose[7:10], pose[10:13] = pose[10:13], pose[7:10].copy()
+        self.mjData.xfrc_applied[self.band_attached_link] = self.elastic_band.Advance(pose)
+
+    def _apply_hand_pd(self, left_hand_q, right_hand_q) -> None:
+        """Dex3 hand PD torques into self.torques (targets in MJCF joint order).
+
+        Joint order: thumb_0, thumb_1, thumb_2, middle_0, middle_1, index_0, index_1.
+        Index + middle work together against thumb in a power grip,
+        so their kp is halved to balance grip forces.
+        """
+        hand_kp = np.array([5.0, 5.0, 5.0, 2.5, 2.5, 2.5, 2.5])
+        hand_kd = 1.0
+        if left_hand_q is not None:
+            lh_q_cur = self.mjData.qpos[self.left_hand_index + self.qpos_offset - 1]
+            lh_dq_cur = self.mjData.qvel[self.left_hand_index + self.qvel_offset - 1]
+            self.torques[self.left_hand_index - 1] = hand_kp * (left_hand_q - lh_q_cur) + hand_kd * (0 - lh_dq_cur)
+        if right_hand_q is not None:
+            rh_q_cur = self.mjData.qpos[self.right_hand_index + self.qpos_offset - 1]
+            rh_dq_cur = self.mjData.qvel[self.right_hand_index + self.qvel_offset - 1]
+            self.torques[self.right_hand_index - 1] = hand_kp * (right_hand_q - rh_q_cur) + hand_kd * (0 - rh_dq_cur)
+
     def compute_body_torques(self, low_cmd, use_sensor) -> np.ndarray:
         # PD control: tau = tau_ff + kp * (q_des - q) + kd * (dq_des - dq)
         body_torques = np.zeros(self.num_body_dof) # (29,)

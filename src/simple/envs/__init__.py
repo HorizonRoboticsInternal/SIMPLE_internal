@@ -431,6 +431,11 @@ register(
     kwargs={"task":"g1_wholebody_locomotion_pick_between_tables_teleop"},
 )
 register(
+    id="simple/G1WholebodyLocomotionPickBetweenTablesHoloMotionTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_locomotion_pick_between_tables_holomotion_teleop"},
+)
+register(
     id="simple/G1WholebodyHandoverTeleop-v0",
     entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
     kwargs={"task":"g1_wholebody_handover_teleop"},

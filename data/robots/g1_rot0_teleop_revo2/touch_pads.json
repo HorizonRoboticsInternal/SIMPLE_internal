@@ -1,0 +1,622 @@
+{
+ "right_hand_thumb_touch_link": {
+  "parent": "right_hand_thumb_tip_link",
+  "pad_pos": "0 0 0",
+  "pad_quat": "1 0 0 0",
+  "site_centre": [
+   0.0,
+   -0.0108,
+   -0.0007
+  ],
+  "site_quat": [
+   -0.0203,
+   0.7068,
+   0.7066,
+   0.0269
+  ],
+  "ray_pos": [
+   -1e-05,
+   -0.01084,
+   0.0003
+  ],
+  "ray_quat": [
+   0.7068,
+   0.0203,
+   -0.0269,
+   0.7066
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 2.02,
+  "pad_radius_mm": 10.4,
+  "box_half_mm": [
+   12.9,
+   11.2,
+   11.5
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    90
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 603.0,
+  "mesh_bounds_mm": [
+   [
+    -9.6,
+    -22.7,
+    -3.6
+   ],
+   [
+    9.6,
+    -0.0,
+    8.7
+   ]
+  ]
+ },
+ "right_hand_index_touch_link": {
+  "parent": "right_hand_index_tip_link",
+  "pad_pos": "0 0 0",
+  "pad_quat": "1 0 0 0",
+  "site_centre": [
+   0.0032,
+   0.0,
+   -0.0062
+  ],
+  "site_quat": [
+   0.5206,
+   0.0006,
+   -0.8538,
+   0.0009
+  ],
+  "ray_pos": [
+   0.00284,
+   -0.0,
+   -0.00636
+  ],
+  "ray_quat": [
+   -0.0006,
+   0.5206,
+   0.0009,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 0.61,
+  "pad_radius_mm": 5.6,
+  "box_half_mm": [
+   13.0,
+   7.2,
+   6.2
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    79
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 198.0,
+  "mesh_bounds_mm": [
+   [
+    1.3,
+    -5.7,
+    -16.6
+   ],
+   [
+    8.7,
+    5.7,
+    0.1
+   ]
+  ]
+ },
+ "right_hand_middle_touch_link": {
+  "parent": "right_hand_middle_tip_link",
+  "pad_pos": "0 0 0",
+  "pad_quat": "1 0 0 0",
+  "site_centre": [
+   0.0042,
+   0.0,
+   -0.0082
+  ],
+  "site_quat": [
+   0.5206,
+   -0.0007,
+   -0.8538,
+   -0.0012
+  ],
+  "ray_pos": [
+   0.00376,
+   0.0,
+   -0.00849
+  ],
+  "ray_quat": [
+   0.0007,
+   0.5206,
+   -0.0012,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 0.45,
+  "pad_radius_mm": 5.9,
+  "box_half_mm": [
+   12.6,
+   7.5,
+   6.5
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    81
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 226.0,
+  "mesh_bounds_mm": [
+   [
+    1.5,
+    -6.0,
+    -18.4
+   ],
+   [
+    9.4,
+    6.0,
+    0.1
+   ]
+  ]
+ },
+ "right_hand_ring_touch_link": {
+  "parent": "right_hand_ring_tip_link",
+  "pad_pos": "0 0 0",
+  "pad_quat": "1 0 0 0",
+  "site_centre": [
+   0.0041,
+   0.0,
+   -0.008
+  ],
+  "site_quat": [
+   0.5206,
+   -0.0014,
+   -0.8538,
+   -0.0023
+  ],
+  "ray_pos": [
+   0.00366,
+   0.0,
+   -0.00825
+  ],
+  "ray_quat": [
+   0.0014,
+   0.5206,
+   -0.0023,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 0.48,
+  "pad_radius_mm": 5.7,
+  "box_half_mm": [
+   12.1,
+   7.4,
+   6.3
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    81
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 210.0,
+  "mesh_bounds_mm": [
+   [
+    1.5,
+    -5.9,
+    -17.8
+   ],
+   [
+    9.0,
+    5.9,
+    0.1
+   ]
+  ]
+ },
+ "right_hand_pinky_touch_link": {
+  "parent": "right_hand_pinky_tip_link",
+  "pad_pos": "0 0 0",
+  "pad_quat": "1 0 0 0",
+  "site_centre": [
+   0.0042,
+   0.0,
+   -0.0081
+  ],
+  "site_quat": [
+   0.5206,
+   0.003,
+   -0.8538,
+   0.0049
+  ],
+  "ray_pos": [
+   0.00375,
+   -1e-05,
+   -0.00832
+  ],
+  "ray_quat": [
+   -0.003,
+   0.5206,
+   0.0049,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 0.52,
+  "pad_radius_mm": 5.3,
+  "box_half_mm": [
+   11.0,
+   7.4,
+   6.3
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    80
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 196.0,
+  "mesh_bounds_mm": [
+   [
+    1.6,
+    -5.9,
+    -16.8
+   ],
+   [
+    8.8,
+    5.9,
+    0.1
+   ]
+  ]
+ },
+ "left_hand_thumb_touch_link": {
+  "parent": "left_hand_thumb_distal_link",
+  "pad_pos": "-2.8e-05 0.0135453 0.00770572",
+  "pad_quat": "0.000502227 0.00134699 -0.0734605 -0.997297",
+  "site_centre": [
+   -0.0,
+   -0.0032,
+   -0.0073
+  ],
+  "site_quat": [
+   -0.0494,
+   -0.705,
+   0.7054,
+   -0.0544
+  ],
+  "ray_pos": [
+   -1e-05,
+   -0.00334,
+   -0.00797
+  ],
+  "ray_quat": [
+   0.705,
+   -0.0494,
+   -0.0544,
+   -0.7054
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 0.34,
+  "pad_radius_mm": 9.4,
+  "box_half_mm": [
+   13.1,
+   11.1,
+   9.6
+  ],
+  "fov_deg": [
+   90,
+   90
+  ],
+  "extent_deg": {
+   "x": [
+    -90,
+    90
+   ],
+   "y": [
+    -90,
+    90
+   ]
+  },
+  "outer_area_mm2": 603.0,
+  "mesh_bounds_mm": [
+   [
+    -9.6,
+    -14.1,
+    -12.5
+   ],
+   [
+    9.6,
+    9.2,
+    -0.0
+   ]
+  ]
+ },
+ "left_hand_index_touch_link": {
+  "parent": "left_hand_index_distal_link",
+  "pad_pos": "0.014497 0 0.023303",
+  "pad_quat": "0.971859 0 0.235565 0",
+  "site_centre": [
+   -0.0154,
+   0.0,
+   -0.0018
+  ],
+  "site_quat": [
+   0.5206,
+   0.0001,
+   -0.8538,
+   0.0001
+  ],
+  "ray_pos": [
+   -0.00587,
+   0.0,
+   0.00314
+  ],
+  "ray_quat": [
+   -0.0001,
+   0.5206,
+   0.0001,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 11.71,
+  "pad_radius_mm": 15.0,
+  "box_half_mm": [
+   13.0,
+   7.2,
+   17.3
+  ],
+  "fov_deg": [
+   53,
+   30
+  ],
+  "extent_deg": {
+   "x": [
+    -46,
+    27
+   ],
+   "y": [
+    -26,
+    26
+   ]
+  },
+  "outer_area_mm2": 198.0,
+  "mesh_bounds_mm": [
+   [
+    -7.4,
+    -5.7,
+    -7.1
+   ],
+   [
+    0.0,
+    5.7,
+    9.6
+   ]
+  ]
+ },
+ "left_hand_middle_touch_link": {
+  "parent": "left_hand_middle_distal_link",
+  "pad_pos": "0.012493 0 0.028393",
+  "pad_quat": "0.984807 0 0.17365 0",
+  "site_centre": [
+   -0.0132,
+   0.0,
+   -0.0002
+  ],
+  "site_quat": [
+   0.5736,
+   -0.0001,
+   -0.8192,
+   -0.0002
+  ],
+  "ray_pos": [
+   -0.00575,
+   -0.0,
+   0.00256
+  ],
+  "ray_quat": [
+   0.0001,
+   0.5736,
+   -0.0002,
+   0.8192
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 8.97,
+  "pad_radius_mm": 13.1,
+  "box_half_mm": [
+   12.9,
+   7.5,
+   14.9
+  ],
+  "fov_deg": [
+   58,
+   38
+  ],
+  "extent_deg": {
+   "x": [
+    -50,
+    43
+   ],
+   "y": [
+    -33,
+    33
+   ]
+  },
+  "outer_area_mm2": 226.0,
+  "mesh_bounds_mm": [
+   [
+    -7.9,
+    -6.0,
+    -7.7
+   ],
+   [
+    0.0,
+    6.0,
+    10.9
+   ]
+  ]
+ },
+ "left_hand_ring_touch_link": {
+  "parent": "left_hand_ring_distal_link",
+  "pad_pos": "0.012028 0 0.027796",
+  "pad_quat": "0.984807 0 0.17365 0",
+  "site_centre": [
+   -0.0128,
+   0.0,
+   -0.0001
+  ],
+  "site_quat": [
+   0.5736,
+   -0.0003,
+   -0.8192,
+   -0.0004
+  ],
+  "ray_pos": [
+   -0.00543,
+   -1e-05,
+   0.00253
+  ],
+  "ray_quat": [
+   0.0003,
+   0.5736,
+   -0.0004,
+   0.8192
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 8.79,
+  "pad_radius_mm": 12.7,
+  "box_half_mm": [
+   12.4,
+   7.4,
+   14.4
+  ],
+  "fov_deg": [
+   57,
+   38
+  ],
+  "extent_deg": {
+   "x": [
+    -50,
+    43
+   ],
+   "y": [
+    -33,
+    33
+   ]
+  },
+  "outer_area_mm2": 210.0,
+  "mesh_bounds_mm": [
+   [
+    -7.5,
+    -5.9,
+    -7.3
+   ],
+   [
+    0.0,
+    5.9,
+    10.6
+   ]
+  ]
+ },
+ "left_hand_pinky_touch_link": {
+  "parent": "left_hand_pinky_distal_link",
+  "pad_pos": "0.01401 0 0.021124",
+  "pad_quat": "0.971859 0 0.235565 0",
+  "site_centre": [
+   -0.0137,
+   0.0,
+   -0.004
+  ],
+  "site_quat": [
+   0.5206,
+   0.0005,
+   -0.8538,
+   0.0009
+  ],
+  "ray_pos": [
+   -0.00502,
+   2e-05,
+   0.00043
+  ],
+  "ray_quat": [
+   -0.0005,
+   0.5206,
+   0.0009,
+   0.8538
+  ],
+  "ray_inset_m": 0.001,
+  "surface_r_mm": 10.75,
+  "pad_radius_mm": 14.4,
+  "box_half_mm": [
+   11.0,
+   7.4,
+   16.5
+  ],
+  "fov_deg": [
+   51,
+   33
+  ],
+  "extent_deg": {
+   "x": [
+    -44,
+    35
+   ],
+   "y": [
+    -28,
+    28
+   ]
+  },
+  "outer_area_mm2": 196.0,
+  "mesh_bounds_mm": [
+   [
+    -7.1,
+    -5.9,
+    -8.1
+   ],
+   [
+    0.0,
+    5.9,
+    8.9
+   ]
+  ]
+ }
+}

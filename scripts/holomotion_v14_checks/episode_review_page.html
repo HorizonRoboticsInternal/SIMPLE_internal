@@ -1,0 +1,304 @@
+<title>__TITLE__</title>
+<!--FONTS-->
+<style>
+:root{--bg:#f4f6f7;--paper:#fcfcfb;--ink:#0b0b0b;--ink-2:#52514e;--muted:#6b6a66;--rule:#e2e4e6;--grid:#eceeef;--accent:#0f6b6b;--accent-soft:#e3f1f0;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--grip-closed:rgba(82,81,78,.30);--grip-pinch:rgba(82,81,78,.14);--cell-empty:#eef1f4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111315;--paper:#1a1a19;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#2d2f31;--grid:#262829;--accent:#5cc3bd;--accent-soft:#16302f;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--grip-closed:rgba(195,194,183,.30);--grip-pinch:rgba(195,194,183,.14);--cell-empty:#222426;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111315;--paper:#1a1a19;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#2d2f31;--grid:#262829;--accent:#5cc3bd;--accent-soft:#16302f;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--grip-closed:rgba(195,194,183,.30);--grip-pinch:rgba(195,194,183,.14);--cell-empty:#222426;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding-inline:16px;padding-block:22px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.wrap>*{min-width:0}
+.eyebrow{font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(21px,3vw,28px);margin:6px 0 4px;font-weight:600;text-wrap:balance}
+h2{font-size:17px;margin:0;font-weight:600}
+h3{font-size:14px;font-weight:600}
+p{margin:6px 0;max-width:84ch}.muted{color:var(--muted)}.small{font-size:13px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;display:grid;gap:10px}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{font:500 13px "IBM Plex Sans",system-ui,sans-serif;border:0;background:var(--paper);color:var(--ink-2);padding:5px 11px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.stage{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:1100px){.stage{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}}
+video{width:100%;max-width:100%;border-radius:8px;background:#000;display:block;cursor:pointer}
+.pbar{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pb-btn{flex:none;width:34px;height:34px;display:grid;place-items:center;padding:0;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;cursor:pointer}
+.pb-btn:hover{border-color:var(--accent)}.pb-btn svg{width:16px;height:16px}
+.pb-track{position:relative;flex:1;min-width:0;height:30px;cursor:pointer;touch-action:none;outline:none;user-select:none}
+.pb-track::before{content:"";position:absolute;left:0;right:0;top:13px;height:5px;border-radius:3px;background:var(--grid)}
+.pb-loaded,.pb-done{position:absolute;left:0;top:13px;height:5px;border-radius:3px;width:0;pointer-events:none}
+.pb-loaded{background:var(--muted);opacity:.35}.pb-done{background:var(--accent)}
+.pb-knob{position:absolute;top:8px;left:0;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;background:var(--accent);border:2px solid var(--paper);box-shadow:0 0 0 1px var(--accent);pointer-events:none}
+.pb-track:focus-visible .pb-knob{box-shadow:0 0 0 4px var(--accent-soft),0 0 0 1px var(--accent)}
+.pb-tick{position:absolute;top:2px;width:2px;height:8px;margin-left:-1px;border-radius:1px;background:var(--ink-2)}
+.pb-time{flex:none;min-width:16ch;text-align:right;font:500 13px "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.pb-rate{flex:none;height:34px;font:500 13px "IBM Plex Sans",system-ui,sans-serif;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;padding:0 4px}
+@media (max-width:560px){.pb-rate{display:none}}
+.vbox:fullscreen{background:#000;padding:16px;display:flex;flex-direction:column;justify-content:center;color-scheme:dark;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#3a3c3e;--grid:#2d2f31;--paper:#1a1a19;--accent:#5cc3bd;--accent-soft:#16302f}
+.vbox:fullscreen video{flex:1;min-height:0;object-fit:contain;border-radius:0}
+.stages{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.stages button{font:500 13px "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer}
+.stages button:hover{border-color:var(--accent)}
+.hands{display:grid;gap:14px;align-content:start}
+.hand h3{margin:0 0 6px;display:flex;justify-content:space-between;gap:8px}
+.hand h3 span{font-weight:500;color:var(--ink-2);font-size:13px}
+.pads{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pad{display:grid;gap:3px;justify-items:center;text-align:center}
+.padc{width:100%;max-width:76px;aspect-ratio:3/3.4;display:block}
+.pad .nm{font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.sw{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.pad .val{font:500 12px "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.pad .px{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.2em;line-height:1.3}
+.scale{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.scale .bar{flex:1;height:10px;border-radius:3px;max-width:220px}
+.ros{display:grid;gap:14px}
+.ros h3{margin:0 0 4px}
+table.ro{font-size:13px}.ro th,.ro td{padding:4px 9px;white-space:nowrap}.ro td{font:12.5px "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.ro thead th{vertical-align:bottom;font-size:12px}.ro .grp{text-align:center;color:var(--ink-2)}.ro td.dim{color:var(--muted)}.ro tbody th{color:var(--ink);font-weight:600}
+.ro tbody th span{margin-right:6px}
+.charts{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:1000px){.charts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.chart{position:relative}
+.chart h3{margin:0 0 4px}
+.chart canvas{width:100%;height:240px;display:block;cursor:crosshair}
+.chart .ov{position:absolute;left:0;top:25px}
+.tip{position:absolute;pointer-events:none;background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink);z-index:2}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink-2);align-items:center}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.legend b{display:inline-block;width:14px;height:10px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:6px 10px;border-bottom:1px solid var(--rule)}th{color:var(--muted);font-weight:600;font-size:13px}
+code{font:13px "IBM Plex Mono",ui-monospace,monospace;background:var(--accent-soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+</style>
+<div class="wrap">
+<header><div class="eyebrow" id="eyebrow">HoloMotion v1.4 sim teleop · Revo 2 · episode review</div>
+<h1 id="title">__TITLE__</h1><p class="muted" id="lede"></p></header>
+
+<section class="card stage">
+  <div><div class="vbox" id="vbox"><video id="v" preload="auto" playsinline src="__VIDEO__"></video>
+    <div class="pbar"><button class="pb-btn" id="pplay" type="button" aria-label="Play"><svg viewBox="0 0 16 16" aria-hidden="true"><path id="picon" d="M4.5 2.8v10.4l8.5-5.2z" fill="currentColor"/></svg></button>
+      <div class="pb-track" id="ptrack" role="slider" tabindex="0" aria-label="Video time (seconds)" aria-valuemin="0" aria-valuenow="0"><div class="pb-loaded" id="ploaded"></div><div class="pb-done" id="pdone"></div><div id="pticks"></div><div class="pb-knob" id="pknob"></div></div>
+      <span class="pb-time" id="clock">0.00 s</span>
+      <select class="pb-rate" id="prate" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+      <button class="pb-btn" id="pfull" type="button" aria-label="Full screen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
+    <div class="muted small" id="vnote" hidden>Loading the whole video so the picture can jump to any time (this server cannot send parts of a file): <span id="vpct">0%</span></div></div>
+    <div class="stages" id="stages"></div></div>
+  <div class="hands" id="hands"></div>
+</section>
+
+<section class="card">
+  <h2>Every tactile field at <span id="rot">0.00 s</span></h2>
+  <div class="ros" id="ros"></div>
+  <p class="muted small">Physical columns are the simulation's values, not clipped. The SDK columns are the Revo 2 Touch fields exactly as recorded (<code>tactile.{side}.force_normal</code>, <code>force_tangential</code>, <code>force_direction</code>, <code>proximity</code>, <code>status</code>): forces in 0.01 N counts that saturate at 2500 (25 N), the tangential direction in degrees clockwise from the fingertip seen from outside the pad (65535 = no tangential force), proximity as capacitance counts (more = closer, 0 = nothing within 1 cm). Contacts (<code>contacts</code>) is the number of contact points on the pad in the simulation; the real hand has no such field. <span id="statusnote"></span></p>
+</section>
+
+<section class="card">
+  <div class="row"><h2>Fingertip pads over the episode</h2><div class="seg" id="metric" role="group" aria-label="Chart"></div></div>
+  <div class="legend" id="legend"></div>
+  <div class="charts" id="charts"></div>
+  <p class="muted small" id="cnote"></p>
+</section>
+
+<section class="card"><h2>About this episode</h2><div class="scroll"><table id="facts"></table></div>
+<p class="muted small">Images and tactile values come from the filled dataset: the lean recording's bit-exact replay, with the head camera, the wrist cameras and the Revo 2 tactile pads computed on each frame's recorded state (<code>replay_holomotion_v14 --fill</code>). Every recorded tactile column is shown: the 3×3 taxel grid of each pad with its normal channel and its two shear channels (<code>taxels_N</code>; a simulation extra, the real sensor reports one value per pad, and unreliable as recorded: see the pad panel's "Recorded taxel grid" view), the pad totals in newtons (<code>force_normal_N</code>, <code>force_tangential_N</code>, <code>proximity_m</code>, <code>contacts</code>) and the SDK fields. Pads are drawn seen from outside, fingertip up, the view the SDK's direction angle uses. Video and tactile are sampled every 40 ms (every second recorded frame).</p></section>
+</div>
+<script>
+(()=>{
+const F=__FACTS__;
+const $=s=>document.querySelector(s), css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim(), cap=s=>s[0].toUpperCase()+s.slice(1);
+const PADS=["thumb","index","middle","ring","pinky"], SIDES=["left","right"], COLORS=()=>[1,2,3,4,5].map(i=>css("--s"+i));
+const dark=()=>document.documentElement.dataset.theme==="dark"||(document.documentElement.dataset.theme!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);
+const RAMP_L=["#cde2fb","#9ec5f4","#6da7ec","#3987e5","#256abf","#184f95","#0d366b"], RAMP_D=["#104281","#184f95","#256abf","#3987e5","#5598e7","#86b6ef","#cde2fb"];
+function hex(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));}
+function ramp(x){const R=dark()?RAMP_D:RAMP_L;if(!(x>0))return null;const u=Math.min(1,x)*(R.length-1),i=Math.floor(u),f=u-i,a=hex(R[i]),b=hex(R[Math.min(i+1,R.length-1)]);return `rgb(${a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(",")})`;}
+$("#lede").textContent=`${F.seconds} s, ${F.frames} frames at 50 fps · task “${F.task}” · ${F.bit_exact?"bit-exact replay":"replay NOT bit-exact"} · ${F.success?"task succeeded":"task gate not reached"}`;
+if(F.stages&&F.stages.length){$("#stages").innerHTML=F.stages.map(g=>`<button data-t="${g.t}">${g.label} · ${g.t.toFixed(1)} s</button>`).join("");$("#stages").addEventListener("click",e=>{const b=e.target.closest("button");if(b)seekTo(+b.dataset.t);});}
+const rows=[["dataset (lean recording)",F.dataset],["filled dataset (images + tactile)",F.filled],["episode",F.episode],["length",`${F.seconds} s (${F.frames} frames)`],["scene setup",`seed ${F.seed}, plate ${F.plate}, kitchen scene revision ${F.scene_rev}`],["robot file",F.robot]];
+if(F.stages)rows.push(["task stages",(F.stages.length?F.stages.map(g=>`${g.label} at ${g.t.toFixed(1)} s`).join(" · "):"none reached")+(F.loaded!=null?` · in the racks at the end: ${F.loaded||"nothing"}`:"")]);
+if(F.chase)rows.push(["third-person camera",`follows from behind the robot; when a wall or cabinet would hide it, the view cuts to another side (${F.chase.cuts} cuts); the whole robot is in view on ${(100*F.chase.all_visible/F.chase.frames).toFixed(1)}% of frames`]);
+for(const s of SIDES){const t=F.stats[s];rows.push([`${s} hand`,`pads touching ${t.touching_s} s · peak pad normal force ${t.peak_N} N`+(t.peak_tang_N!=null?`, tangential ${t.peak_tang_N} N`:"")+` · ${t.over_sensor_pct}% of contact samples above the real sensor's 25 N · grip closed ${t.grip_closed_s} s · pinch ${t.pinch_s} s`]);}
+$("#facts").innerHTML="<tbody>"+rows.map(r=>`<tr><th>${r[0]}</th><td>${String(r[1]).replace(/</g,"&lt;")}</td></tr>`).join("")+"</tbody>";
+{const nz=SIDES.map(s=>F.stats[s].status_nonzero); $("#statusnote").textContent=nz.every(x=>x===0)?"Status (status) is 0 (no fault) on every frame for both hands.":`Status is non-zero on ${nz[0]} left-hand and ${nz[1]} right-hand pad samples.`;}
+
+// ---- hand panels: pads seen from outside, fingertip up --------------------------------------------------------------------
+let padMode="pad";
+$("#hands").innerHTML=`<div class="row"><span class="small muted">Pads seen from outside, fingertip up</span><div class="seg" id="padmode" role="group" aria-label="Pad map"><button type="button" data-m="pad" aria-pressed="true">Pad force</button><button type="button" data-m="grid" aria-pressed="false">Recorded taxel grid</button></div></div>`+
+  SIDES.map(s=>`<div class="hand"><h3>${cap(s)} hand <span id="g_${s}">open</span></h3><div class="pads">${PADS.map((p,i)=>`<div class="pad"><canvas class="padc" id="pc_${s}_${i}" aria-label="${s} ${p} pad"></canvas><div class="nm"><span class="sw" style="background:var(--s${i+1})"></span>${p}</div><div class="val" id="nv_${s}_${i}">0.0 N</div><div class="px" id="tv_${s}_${i}"></div><div class="px" id="px_${s}_${i}"></div></div>`).join("")}</div></div>`).join("")+
+  `<div class="scale"><span>0</span><span class="bar" id="scalebar"></span><span id="scalemax"></span><span id="scalelbl"></span></div><p class="muted small" id="padnote" style="margin:0"></p>`;
+const gs=k=>SIDES.map(s=>F.stats[s][k]);
+const PADNOTE={pad:"Colour: the normal force on the pad, on the real sensor's 0–25 N range. Arrow: the pad's tangential force, pointing the way the SDK's direction angle says (full length = 25 N). Under each pad: normal force, tangential force, and the proximity reading when something is within 1 cm. These are the sensor's real outputs, computed from the contacts on the pad itself.",
+  grid:`The recorded 3×3 taxel grid (taxels_N, a simulation extra; the real sensor reports one value per pad): colour = normal force per taxel, arrows = sideways force per taxel. Not reliable: MuJoCo's touch_grid sensor also counts contacts that are not on the pad (other fingers, objects in front of it) and flips sign with contact order. While a pad touches something, the grid's total matches the pad force within ±20% on only ${gs("grid_match_pct").join("% (left) / ")}% (right) of samples, and ${gs("grid_no_contact_pct").join("% (left) / ")}% (right) of grid readings come with nothing touching the pad.`};
+function setPadMode(m){padMode=m; for(const b of document.querySelectorAll("#padmode button"))b.setAttribute("aria-pressed",String(b.dataset.m===m)); $("#padnote").textContent=PADNOTE[m];
+  if(D){$("#scalemax").textContent=`${(m==="grid"?D.cap:D.smax).toFixed(0)} N`;} $("#scalelbl").textContent=m==="grid"?"normal force per taxel":"normal force on the pad"; last=-1; update();}
+$("#padmode").addEventListener("click",e=>{const b=e.target.closest("button"); if(b)setPadMode(b.dataset.m);});
+$("#padnote").textContent=PADNOTE.pad; $("#scalelbl").textContent="normal force on the pad";
+$("#ros").innerHTML=SIDES.map(s=>`<div><h3>${cap(s)} hand</h3><div class="scroll"><table class="ro"><thead><tr><th rowspan="2">pad</th><th colspan="4" class="grp">physical (simulation)</th><th colspan="5" class="grp">SDK fields as recorded</th></tr>`+
+  `<tr><th>normal N</th><th>tangential N</th><th>proximity mm</th><th>contacts</th><th>normal_force1</th><th>tangential_force1</th><th>tangential_direction1</th><th>self_proximity1</th><th>status</th></tr></thead><tbody id="rb_${s}"></tbody></table></div></div>`).join("");
+
+// ---- charts: one metric at a time ---------------------------------------------------------------------------------------------
+const METRICS={
+  normal:{label:"Normal force",unit:"N",ymax:30,ticks:[0,10,20,30],sensor:true,agg:"max",val:(H,k,p)=>H.nf[k*5+p]*D.ns,fmt:v=>v.toFixed(1)+" N",
+    note:"Force pressing into each pad. Same scale for both hands, over the real Revo 2 Touch range (0–25 N, dashed); larger values run off the top and their true values show on hover. The simulated hand has no motor current limit, so a closed grip can press far harder than the real hand (which stalls near 10–15 N)."},
+  tang:{label:"Tangential force",unit:"N",ymax:30,ticks:[0,10,20,30],sensor:true,agg:"max",val:(H,k,p)=>H.tg?H.tg[k*5+p]*D.ns:null,fmt:v=>v.toFixed(1)+" N",
+    note:"Force along each pad's surface (friction: the object dragging or being held against gravity), on the same 0–25 N sensor range as the normal force."},
+  dir:{label:"Direction",unit:"°",ymax:360,ticks:[0,90,180,270,360],agg:"dots",val:(H,k,p)=>{if(!H.dir)return null;const v=H.dir[k*5+p];return v===65535?null:v;},fmt:v=>v.toFixed(0)+"°",
+    note:"Direction of the tangential force, clockwise from the fingertip seen from outside the pad: 0° = toward the fingertip, 90° = to the right, 180° = toward the finger base, 270° = to the left. Only drawn while the tangential force is at least 0.1 N (otherwise the SDK reports 65535)."},
+  prox:{label:"Proximity",unit:"mm",ymax:10,ticks:[0,2,4,6,8,10],agg:"min",val:(H,k,p)=>{const v=H.px[k*5+p];return v===255?null:v/20;},fmt:v=>v.toFixed(1)+" mm",
+    note:"Distance from each pad to the nearest object, when something is within the sensor's 1 cm range (gaps: nothing in range). Lower = closer; 0 mm = touching. The SDK reports it as capacitance counts (see the table above)."},
+  contacts:{label:"Contacts",unit:"",strips:true,agg:"max",val:(H,k,p)=>H.ct?H.ct[k*5+p]:null,fmt:v=>String(v),
+    note:"Number of contact points on each pad in the simulation (lighter = 1, full colour = 2 or more). Not a real-sensor field; it shows when and how each fingertip touched."}};
+let metric="normal";
+$("#metric").innerHTML=Object.entries(METRICS).map(([k,m])=>`<button type="button" data-k="${k}" aria-pressed="${k===metric}">${m.label}</button>`).join("");
+$("#metric").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b)return; metric=b.dataset.k; for(const x of document.querySelectorAll("#metric button"))x.setAttribute("aria-pressed",String(x.dataset.k===metric)); $("#cnote").textContent=METRICS[metric].note+" Bands under the plot: the grip command (darker = closed by the grip button, lighter = pinch by the trigger). Hover for the values at a moment; click or drag to move the video there."; drawCharts();});
+$("#cnote").textContent=METRICS[metric].note+" Bands under the plot: the grip command (darker = closed by the grip button, lighter = pinch by the trigger). Hover for the values at a moment; click or drag to move the video there.";
+$("#legend").innerHTML=PADS.map((p,i)=>`<span><i style="background:var(--s${i+1})"></i>${p}</span>`).join("")+`<span><b style="background:var(--grip-closed)"></b>grip closed</span><span><b style="background:var(--grip-pinch)"></b>pinch</span>`;
+$("#charts").innerHTML=SIDES.map(s=>`<div class="chart"><h3>${cap(s)} hand</h3><canvas id="c_${s}"></canvas><canvas class="ov" id="o_${s}"></canvas><div class="tip" id="tip_${s}"></div></div>`).join("");
+
+const v=$("#v"); let D=null;
+fetch("tactile.json").then(r=>r.json()).then(j=>{
+  const dec=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  const dec16=s=>{const b=dec(s);return new Uint16Array(b.buffer,b.byteOffset,b.byteLength/2);};
+  const dec32=s=>{const b=dec(s);return new Uint32Array(b.buffer,b.byteOffset,b.byteLength/4);};
+  const decI8=s=>{const b=dec(s);return new Int8Array(b.buffer,b.byteOffset,b.byteLength);};
+  const opt=(o,k,f)=>o[k]!=null?f(o[k]):null;
+  D={n:j.n,fps:j.fps,ts:j.taxel_scale,ns:j.normal_scale,cap:j.taxel_cap,shcap:j.shear_cap||5,nmax:j.normal_max,smax:j.sensor_max||25};
+  for(const s of SIDES){const o=j[s]; D[s]={tx:dec(o.taxel),nf:dec16(o.normal),px:dec(o.prox),g:dec(o.grip),sx:opt(o,"shear_x",decI8),sy:opt(o,"shear_y",decI8),
+    tg:opt(o,"tang",dec16),dir:opt(o,"dirn",dec16),ct:opt(o,"contacts",dec),st:opt(o,"status",dec),rn:opt(o,"raw_normal",dec16),rt:opt(o,"raw_tang",dec16),rp:opt(o,"raw_prox",dec32)};}
+  if(!D.left.sx)$("#padmode").hidden=true;
+  setPadMode(padMode); paintScale(); drawCharts(); last=-1; update();
+}).catch(e=>{$("#hands").insertAdjacentHTML("afterbegin",`<p class="muted">tactile.json could not be loaded (${e}).</p>`);});
+function paintScale(){const R=dark()?RAMP_D:RAMP_L;$("#scalebar").style.background=`linear-gradient(90deg,${R.join(",")})`;}
+const frameAt=t=>Math.max(0,Math.min(D.n-1,Math.round(t*D.fps)));
+let want=null;                                                     // the last requested time: drives the tactile view while the picture cannot seek yet
+let inMemory=false, loadedFrac=0;
+const canSeek=()=>inMemory||!!(v.seekable&&v.seekable.length&&v.seekable.end(0)>=v.duration-1);
+const now=()=>(want!=null&&!canSeek())?want:v.currentTime;
+function seekTo(t){want=t; try{v.currentTime=t;}catch(e){} last=-1; update(); paintBar(true);}
+// The NAS's python http.server cannot send byte ranges, so a browser cannot seek a video it serves. A Range request tells:
+// 206 = the server can (the browser seeks natively); 200 = it sends the whole file, which is read into memory (with progress)
+// and then played from a blob: URL, where any time can be reached. The video plays from the server meanwhile.
+(function loadWhole(){const ac=new AbortController();
+  fetch(v.getAttribute("src"),{headers:{Range:"bytes=0-"},signal:ac.signal}).then(async r=>{
+    if(r.status===206){ac.abort(); return;}
+    if(!r.ok)throw r.status;
+    const n=+r.headers.get("content-length")||0, rd=r.body.getReader(), parts=[]; let got=0; $("#vnote").hidden=false;
+    for(;;){const {done,value}=await rd.read(); if(done)break; parts.push(value); got+=value.length; if(n){loadedFrac=got/n; $("#vpct").textContent=Math.round(100*loadedFrac)+"%";}}
+    const t=v.currentTime, playing=!v.paused;
+    v.addEventListener("loadedmetadata",()=>{inMemory=true; try{v.currentTime=want!=null?want:t;}catch(e){} if(playing)v.play().catch(()=>{}); $("#vnote").hidden=true; paintBar(true);},{once:true});
+    v.src=URL.createObjectURL(new Blob(parts,{type:"video/mp4"}));
+  }).catch(()=>{$("#vnote").hidden=true;});})();
+// playbar: drag (mouse, touch, pen) or click anywhere on it, arrow keys (Shift = 5 s), Home/End, space; ticks = task stages
+const track=$("#ptrack"), PLAY="M4.5 2.8v10.4l8.5-5.2z", PAUSE="M4 2.5h3v11H4zM9 2.5h3v11H9z";
+let dragging=false, dragT=0, wasPlaying=false, barKey="";
+const dur=()=>isFinite(v.duration)&&v.duration>0?v.duration:(F.seconds||0);
+const tAt=e=>{const r=track.getBoundingClientRect(); return Math.max(0,Math.min(dur(),(e.clientX-r.left)/r.width*dur()));};
+function toggle(){v.paused?v.play().catch(()=>{}):v.pause();}
+function paintBar(force){const T=dur(); if(!T)return; const t=dragging?dragT:now(), f=Math.max(0,Math.min(1,t/T));
+  const lf=inMemory?1:Math.max(loadedFrac,v.buffered.length?v.buffered.end(v.buffered.length-1)/T:0);
+  const key=f.toFixed(4)+"|"+lf.toFixed(3)+"|"+v.paused; if(!force&&key===barKey)return; barKey=key;
+  $("#pknob").style.left=$("#pdone").style.width=(100*f)+"%"; $("#ploaded").style.width=(100*Math.min(1,lf))+"%";
+  $("#clock").textContent=`${t.toFixed(2)} / ${T.toFixed(1)} s`; track.setAttribute("aria-valuenow",t.toFixed(1)); track.setAttribute("aria-valuemax",T.toFixed(1));
+  $("#picon").setAttribute("d",v.paused?PLAY:PAUSE); $("#pplay").setAttribute("aria-label",v.paused?"Play":"Pause");}
+track.addEventListener("pointerdown",e=>{if(e.button!==0)return; dragging=true; wasPlaying=!v.paused; v.pause(); track.setPointerCapture(e.pointerId); dragT=tAt(e); seekTo(dragT); e.preventDefault();});
+track.addEventListener("pointermove",e=>{if(!dragging)return; dragT=tAt(e); seekTo(dragT);});
+const endDrag=()=>{if(!dragging)return; dragging=false; seekTo(dragT); if(wasPlaying&&canSeek())v.play().catch(()=>{});};
+track.addEventListener("pointerup",endDrag); track.addEventListener("pointercancel",endDrag);
+track.addEventListener("keydown",e=>{const T=dur(), st=e.shiftKey?5:1; let t=null;
+  if(e.key==="ArrowRight"||e.key==="ArrowUp")t=now()+st; else if(e.key==="ArrowLeft"||e.key==="ArrowDown")t=now()-st; else if(e.key==="Home")t=0; else if(e.key==="End")t=T;
+  else if(e.key===" "||e.key==="k"){toggle(); e.preventDefault(); return;}
+  if(t!=null){seekTo(Math.max(0,Math.min(T,t))); e.preventDefault();}});
+$("#pplay").addEventListener("click",toggle); v.addEventListener("click",toggle);
+v.addEventListener("play",()=>{if(!canSeek())want=null;});           // still loading: play on from where the picture is
+$("#prate").addEventListener("change",e=>{v.playbackRate=v.defaultPlaybackRate=+e.target.value;});
+if(!document.fullscreenEnabled)$("#pfull").hidden=true;
+$("#pfull").addEventListener("click",()=>{try{const p=document.fullscreenElement?document.exitFullscreen():$("#vbox").requestFullscreen(); p&&p.catch&&p.catch(()=>{});}catch(e){}});
+function paintTicks(){const T=dur(); if(!T||!F.stages)return; $("#pticks").innerHTML=F.stages.map(g=>`<span class="pb-tick" style="left:${100*g.t/T}%" title="${g.label} · ${g.t.toFixed(1)} s"></span>`).join("");}
+paintTicks(); v.addEventListener("loadedmetadata",()=>{paintTicks(); paintBar(true);});
+
+// ---- pads ----------------------------------------------------------------------------------------------------------------------
+function rrect(g,x,y,w,h,r){g.beginPath(); if(g.roundRect)g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h);}
+function arrow(g,x,y,dx,dy,col,halo,lw){const L=Math.hypot(dx,dy); if(L<2)return; const ux=dx/L,uy=dy/L,hs=Math.min(L*0.55,3+2*lw), ex=x+dx, ey=y+dy;
+  const head=()=>{g.beginPath(); g.moveTo(ex,ey); g.lineTo(ex-ux*hs-uy*hs*0.6,ey-uy*hs+ux*hs*0.6); g.lineTo(ex-ux*hs+uy*hs*0.6,ey-uy*hs-ux*hs*0.6); g.closePath();};
+  g.lineCap="round"; g.lineJoin="round";
+  g.strokeStyle=halo; g.lineWidth=lw+3; g.beginPath(); g.moveTo(x,y); g.lineTo(ex-ux*hs*0.5,ey-uy*hs*0.5); g.stroke(); head(); g.lineWidth=3; g.stroke();
+  g.strokeStyle=col; g.fillStyle=col; g.lineWidth=lw; g.beginPath(); g.moveTo(x,y); g.lineTo(ex-ux*hs*0.5,ey-uy*hs*0.5); g.stroke(); head(); g.fill();}
+// taxels_N layout: (finger, channel z/x/y, row = pad +y, col = pad +x toward the tip). Seen from outside the pad with the
+// fingertip up, pad +x points up and pad +y right (the SDK's clockwise direction), so screen cell (r, c) = grid[row c][col 2-r].
+function drawPad(s,p,i){const cv=$(`#pc_${s}_${p}`), W=cv.clientWidth, Hh=cv.clientHeight; if(!W||!Hh)return; const dpr=devicePixelRatio||1;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(Hh*dpr)){cv.width=Math.round(W*dpr); cv.height=Math.round(Hh*dpr);}
+  const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,Hh);
+  const ink=css("--ink"), paper=css("--paper"), empty=css("--cell-empty"), H=D[s], grid=padMode==="grid";
+  rrect(g,1,1,W-2,Hh-2,[12,12,6,6]); g.fillStyle=paper; g.fill(); g.strokeStyle=css("--rule"); g.lineWidth=2; g.stroke();
+  const pd=5, gap=2, cw=(W-2*pd-2*gap)/3, ch=(Hh-2*pd-2*gap)/3, base=i*45+p*9;
+  if(!grid){rrect(g,pd,pd,W-2*pd,Hh-2*pd,[9,9,4,4]); g.fillStyle=ramp(H.nf[i*5+p]*D.ns/D.smax)||empty; g.fill();}
+  else for(let r=0;r<3;r++)for(let c=0;c<3;c++){const k=base+c*3+(2-r), x=pd+c*(cw+gap), y=pd+r*(ch+gap);
+    rrect(g,x,y,cw,ch,3); g.fillStyle=ramp(H.tx[k]*D.ts/D.cap)||empty; g.fill();
+    if(H.sx){const fx=H.sx[k]*D.ts, fy=H.sy[k]*D.ts, L=Math.hypot(fx,fy), val=L/D.shcap;
+      if(val>=0.02){const len=(0.35+0.65*Math.min(1,val))*(Math.min(cw,ch)-5), dx=fy/L*len, dy=-fx/L*len; arrow(g,x+cw/2-dx/2,y+ch/2-dy/2,dx,dy,ink,paper,1.3);}}}
+  if(!grid&&H.tg&&H.dir){const T=H.tg[i*5+p]*D.ns, dir=H.dir[i*5+p];
+    if(dir!==65535&&T>=0.1){const th=dir*Math.PI/180, len=(0.25+0.75*Math.min(1,T/D.smax))*(Math.min(W,Hh)/2-6); arrow(g,W/2,Hh/2,Math.sin(th)*len,-Math.cos(th)*len,ink,paper,2.2);}}}
+const dash="—";
+let last=-1;
+function update(){ if(!D)return; const i=frameAt(now()); if(i===last)return; last=i;
+  $("#rot").textContent=`${(i/D.fps).toFixed(2)} s`; const C=COLORS();
+  for(const s of SIDES){const H=D[s];
+    const g=H.g[i]; $("#g_"+s).textContent=g===1?"grip closed":g===2?"pinch":"open";
+    const body=[];
+    for(let p=0;p<5;p++){drawPad(s,p,i); const k=i*5+p, nf=H.nf[k]*D.ns, tg=H.tg?H.tg[k]*D.ns:null, pr=H.px[k], dir=H.dir?H.dir[k]:null;
+      $("#nv_"+s+"_"+p).textContent=nf.toFixed(1)+" N";
+      $("#tv_"+s+"_"+p).textContent=tg!=null?`tang ${tg.toFixed(1)} N`:"";
+      $("#px_"+s+"_"+p).textContent=pr===255?"":`near ${(pr/20).toFixed(1)} mm`;
+      const td=(x,dim)=>`<td${dim?' class="dim"':""}>${x}</td>`;
+      body.push(`<tr><th><span class="sw" style="background:${C[p]}"></span>${PADS[p]}</th>`+td(nf.toFixed(1),nf===0)+td(tg!=null?tg.toFixed(1):dash,!tg)+td(pr===255?"none":(pr/20).toFixed(2),pr===255)+td(H.ct?H.ct[k]:dash,!(H.ct&&H.ct[k]))+
+        td(H.rn?H.rn[k]:dash,!(H.rn&&H.rn[k]))+td(H.rt?H.rt[k]:dash,!(H.rt&&H.rt[k]))+td(dir==null?dash:dir===65535?"65535 (none)":dir+"°",dir==null||dir===65535)+td(H.rp?H.rp[k]:dash,!(H.rp&&H.rp[k]))+td(H.st?H.st[k]:dash,!(H.st&&H.st[k]))+"</tr>");}
+    $("#rb_"+s).innerHTML=body.join("");
+  } drawCursors(i);
+}
+// ---- charts ------------------------------------------------------------------------------------------------------------------------
+const geo={};
+function drawCharts(){ if(!D)return; const dpr=devicePixelRatio||1, C=COLORS(), M=METRICS[metric];
+  for(const s of SIDES){const cv=$("#c_"+s), ov=$("#o_"+s), W=cv.clientWidth, Hh=cv.clientHeight; for(const k of [cv,ov]){k.width=W*dpr;k.height=Hh*dpr;k.style.width=W+"px";k.style.height=Hh+"px";}
+    const x0=48,x1=W-8,y0=10,yb=Hh-38,gy=Hh-30,gh=8; geo[s]={x0,x1,y0,yb,W,Hh};
+    const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,Hh);
+    g.font="11px system-ui,sans-serif"; g.fillStyle=css("--muted"); g.strokeStyle=css("--grid"); g.lineWidth=1;
+    const H=D[s], X=i=>x0+(i/D.n)*(x1-x0), stride=Math.max(1,Math.floor(D.n/((x1-x0)*2)));
+    if(M.strips){const rh=(yb-y0)/5;
+      for(let p=0;p<5;p++){const yy=y0+p*rh; g.fillStyle=css("--muted"); g.textAlign="right"; g.fillText(PADS[p],x0-5,yy+rh/2+4); g.strokeStyle=css("--grid"); g.beginPath(); g.moveTo(x0,yy+rh); g.lineTo(x1,yy+rh); g.stroke();
+        g.fillStyle=C[p]; for(let i=0;i<D.n;i+=stride){let m=0; for(let k=i;k<Math.min(D.n,i+stride);k++)m=Math.max(m,M.val(H,k,p)||0); if(!m)continue; g.globalAlpha=m>=2?1:0.45; g.fillRect(X(i),yy+3,Math.max(1,(x1-x0)*stride/D.n+0.5),rh-6);} g.globalAlpha=1;}}
+    else{
+      for(const yv of M.ticks){const y=yb-(yv/M.ymax)*(yb-y0); g.strokeStyle=css("--grid"); g.beginPath(); g.moveTo(x0,y); g.lineTo(x1,y); g.stroke(); g.fillStyle=css("--muted"); g.textAlign="right"; g.fillText(yv+(M.unit==="°"?"°":" "+M.unit),x0-5,y+4);}
+      if(M.sensor){const y=yb-(D.smax/M.ymax)*(yb-y0); g.save(); g.setLineDash([4,3]); g.strokeStyle=css("--ink-2"); g.beginPath(); g.moveTo(x0,y); g.lineTo(x1,y); g.stroke(); g.restore(); g.textAlign="left"; g.fillStyle=css("--ink-2"); g.fillText("real sensor max 25 N",x0+4,y-4);}
+      for(let p=0;p<5;p++){g.strokeStyle=g.fillStyle=C[p]; g.lineWidth=1.5;
+        if(M.agg==="dots"){for(let i=0;i<D.n;i+=stride){let m=null; for(let k=i;k<Math.min(D.n,i+stride)&&m==null;k++)m=M.val(H,k,p); if(m==null)continue; g.fillRect(X(i)-1.1,yb-(m/M.ymax)*(yb-y0)-1.1,2.2,2.2);} continue;}
+        g.beginPath(); let pen=false;
+        for(let i=0;i<D.n;i+=stride){let m=null; for(let k=i;k<Math.min(D.n,i+stride);k++){const vv=M.val(H,k,p); if(vv==null)continue; m=m==null?vv:(M.agg==="min"?Math.min(m,vv):Math.max(m,vv));}
+          if(m==null){pen=false; continue;} const x=X(i), y=yb-(Math.min(m,M.ymax)/M.ymax)*(yb-y0); pen?g.lineTo(x,y):g.moveTo(x,y); pen=true;} g.stroke();}}
+    g.fillStyle=css("--muted"); const T=D.n/D.fps, step=T>240?60:T>120?30:15; g.textAlign="center";
+    for(let tt=0;tt<=T;tt+=step)g.fillText(tt+" s",X(tt*D.fps),Hh-6);
+    for(let i=0;i<D.n;i++){const gm=H.g[i]; if(!gm)continue; g.fillStyle=gm===1?css("--grip-closed"):css("--grip-pinch"); g.fillRect(X(i),gy,Math.max(1,(x1-x0)/D.n+0.5),gh);}
+  } last=-1; drawCursors(frameAt(now()));
+}
+function drawCursors(i,hover){ for(const s of SIDES){const G=geo[s]; if(!G)continue; const ov=$("#o_"+s), g=ov.getContext("2d"), dpr=devicePixelRatio||1; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,G.W,G.Hh);
+  const x=G.x0+(i/D.n)*(G.x1-G.x0); g.strokeStyle=css("--ink"); g.lineWidth=1.5; g.beginPath(); g.moveTo(x,G.y0); g.lineTo(x,G.Hh-22); g.stroke();
+  if(hover!=null){const xh=G.x0+(hover/D.n)*(G.x1-G.x0); g.strokeStyle=css("--muted"); g.setLineDash([3,3]); g.beginPath(); g.moveTo(xh,G.y0); g.lineTo(xh,G.Hh-22); g.stroke(); g.setLineDash([]);}}}
+function hoverAt(s,e){const G=geo[s]; const r=$("#o_"+s).getBoundingClientRect(); const fx=(e.clientX-r.left-G.x0)/(G.x1-G.x0); return Math.max(0,Math.min(D.n-1,Math.round(fx*D.n)));}
+for(const s of SIDES){const ov=$("#o_"+s), tip=$("#tip_"+s); let drag=false;
+  ov.addEventListener("mousemove",e=>{if(!D)return; const i=hoverAt(s,e); drawCursors(frameAt(now()),i); const C=COLORS(), H=D[s], M=METRICS[metric];
+    tip.innerHTML=`<b>${(i/D.fps).toFixed(2)} s</b> · ${H.g[i]===1?"grip closed":H.g[i]===2?"pinch":"open"} · ${M.label.toLowerCase()}<br>`+PADS.map((p,k)=>{const vv=M.val(H,i,k); return `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${C[k]};margin-right:4px"></span>${p} ${vv==null?(metric==="dir"?"none":metric==="prox"?"nothing in range":dash):M.fmt(vv)}`;}).join("<br>");
+    tip.style.display="block"; const r=ov.getBoundingClientRect(); let lx=e.clientX-r.left+12; if(lx>r.width-170)lx=e.clientX-r.left-180; tip.style.left=lx+"px"; tip.style.top="30px"; if(drag)seekTo(i/D.fps);});
+  ov.addEventListener("mouseleave",()=>{tip.style.display="none"; drag=false; if(D)drawCursors(frameAt(now()));});
+  ov.addEventListener("mousedown",e=>{if(!D)return; drag=true; seekTo(hoverAt(s,e)/D.fps);}); addEventListener("mouseup",()=>drag=false);
+}
+v.addEventListener("timeupdate",update); v.addEventListener("seeked",update);
+const hs=/^#t(\d+)$/.exec(location.hash); if(hs){const th=parseInt(hs[1],10); want=th; const go=()=>seekTo(th); v.readyState>=1?go():v.addEventListener("loadedmetadata",go,{once:true}); setTimeout(()=>{last=-1;update();},300);}   // #t95 opens the page at 95 s
+(function loop(){ if(!v.paused)update(); paintBar(); requestAnimationFrame(loop);})();
+addEventListener("resize",()=>{drawCharts(); last=-1; update();});
+const redraw=()=>{paintScale(); drawCharts(); last=-1; update();};
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>

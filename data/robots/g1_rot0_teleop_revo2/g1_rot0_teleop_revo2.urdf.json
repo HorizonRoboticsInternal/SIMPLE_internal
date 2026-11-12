@@ -1,0 +1,319 @@
+{
+ "source": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2_v3.xml",
+ "source_sha256": "09e29d447de1842d02fdc8a9a550163855c82a104a452c0beaf81eb7436293bc",
+ "links": 80,
+ "revolute": 51,
+ "fixed": 48,
+ "mimic": 10,
+ "visuals": 97,
+ "collisions": 81,
+ "frames": [
+  {
+   "link": "head_stereo_left_optical_frame",
+   "parent": "torso_link",
+   "kind": "site",
+   "xyz": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "rpy": [
+    -2.431087,
+    0.0,
+    -1.570796
+   ]
+  },
+  {
+   "link": "head_stereo_right_optical_frame",
+   "parent": "torso_link",
+   "kind": "site",
+   "xyz": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "rpy": [
+    -2.431446,
+    -0.002786,
+    -1.576805
+   ]
+  },
+  {
+   "link": "left_hand_thumb_touch_site",
+   "parent": "left_hand_thumb_touch_link",
+   "kind": "site",
+   "xyz": [
+    -1e-05,
+    -0.003243,
+    -0.00731
+   ],
+   "rpy": [
+    -3.134415,
+    -0.147045,
+    -1.572008
+   ]
+  },
+  {
+   "link": "left_hand_index_touch_site",
+   "parent": "left_hand_index_touch_link",
+   "kind": "site",
+   "xyz": [
+    -0.015397,
+    0.0,
+    -0.001766
+   ],
+   "rpy": [
+    -3.14129,
+    -1.095197,
+    3.141593
+   ]
+  },
+  {
+   "link": "left_hand_middle_touch_site",
+   "parent": "left_hand_middle_touch_link",
+   "kind": "site",
+   "xyz": [
+    -0.013235,
+    0.0,
+    -0.000164
+   ],
+   "rpy": [
+    3.141073,
+    -1.221727,
+    -3.141593
+   ]
+  },
+  {
+   "link": "left_hand_ring_touch_site",
+   "parent": "left_hand_ring_touch_link",
+   "kind": "site",
+   "xyz": [
+    -0.012752,
+    0.0,
+    -0.000131
+   ],
+   "rpy": [
+    3.140559,
+    -1.221727,
+    3.141593
+   ]
+  },
+  {
+   "link": "left_hand_pinky_touch_site",
+   "parent": "left_hand_pinky_touch_link",
+   "kind": "site",
+   "xyz": [
+    -0.013683,
+    0.0,
+    -0.004031
+   ],
+   "rpy": [
+    -3.139498,
+    -1.095197,
+    3.141593
+   ]
+  },
+  {
+   "link": "right_hand_thumb_touch_site",
+   "parent": "right_hand_thumb_touch_link",
+   "kind": "site",
+   "xyz": [
+    0.0,
+    -0.010775,
+    -0.00072
+   ],
+   "rpy": [
+    3.132316,
+    -0.06675,
+    1.570796
+   ]
+  },
+  {
+   "link": "right_hand_index_touch_site",
+   "parent": "right_hand_index_touch_link",
+   "kind": "site",
+   "xyz": [
+    0.003185,
+    0.0,
+    -0.006185
+   ],
+   "rpy": [
+    -3.139442,
+    -1.095197,
+    -3.141593
+   ]
+  },
+  {
+   "link": "right_hand_middle_touch_site",
+   "parent": "right_hand_middle_touch_link",
+   "kind": "site",
+   "xyz": [
+    0.004244,
+    0.0,
+    -0.008239
+   ],
+   "rpy": [
+    3.138891,
+    -1.095195,
+    3.141593
+   ]
+  },
+  {
+   "link": "right_hand_ring_touch_site",
+   "parent": "right_hand_ring_touch_link",
+   "kind": "site",
+   "xyz": [
+    0.004127,
+    0.0,
+    -0.008013
+   ],
+   "rpy": [
+    3.136093,
+    -1.095196,
+    -3.141593
+   ]
+  },
+  {
+   "link": "right_hand_pinky_touch_site",
+   "parent": "right_hand_pinky_touch_link",
+   "kind": "site",
+   "xyz": [
+    0.004172,
+    0.0,
+    -0.008101
+   ],
+   "rpy": [
+    -3.130215,
+    -1.095195,
+    -3.141593
+   ]
+  },
+  {
+   "link": "hbvcam_left_pinhole_optical_frame",
+   "parent": "torso_link",
+   "kind": "camera",
+   "xyz": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "rpy": [
+    -2.430247,
+    -0.007546,
+    -1.56499
+   ]
+  },
+  {
+   "link": "hbvcam_right_pinhole_optical_frame",
+   "parent": "torso_link",
+   "kind": "camera",
+   "xyz": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "rpy": [
+    -2.432342,
+    -0.001923,
+    -1.562961
+   ]
+  },
+  {
+   "link": "wrist_left_optical_frame",
+   "parent": "left_wrist_cam_mount",
+   "kind": "camera",
+   "xyz": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "rpy": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "link": "wrist_right_optical_frame",
+   "parent": "right_wrist_cam_mount",
+   "kind": "camera",
+   "xyz": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "rpy": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "link": "imu_link",
+   "parent": "torso_link",
+   "kind": "g1_urdf",
+   "xyz": [
+    -0.03959,
+    -0.00224,
+    0.13792
+   ],
+   "rpy": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "link": "d435_link",
+   "parent": "torso_link",
+   "kind": "g1_urdf",
+   "xyz": [
+    0.057624,
+    0.01753,
+    0.41987
+   ],
+   "rpy": [
+    0.0,
+    0.830777,
+    0.0
+   ]
+  },
+  {
+   "link": "mid360_link",
+   "parent": "torso_link",
+   "kind": "g1_urdf",
+   "xyz": [
+    0.000284,
+    3e-05,
+    0.40618
+   ],
+   "rpy": [
+    0.0,
+    0.040143,
+    0.0
+   ]
+  },
+  {
+   "link": "pelvis_imu_link",
+   "parent": "pelvis",
+   "kind": "realformat",
+   "xyz": [
+    0.04525,
+    0.0,
+    -0.08339
+   ],
+   "rpy": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "camera_frames": {
+  "hbvcam_left_pinhole": "hbvcam_left_pinhole_optical_frame",
+  "hbvcam_right_pinhole": "hbvcam_right_pinhole_optical_frame",
+  "wrist_left": "wrist_left_optical_frame",
+  "wrist_right": "wrist_right_optical_frame"
+ },
+ "velocity_default": []
+}

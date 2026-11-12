@@ -1,0 +1,90 @@
+{
+ "made": "2026-10-26",
+ "wrist_side": "tuner page (wrist_mount_pose.json)",
+ "mount_quat_wxyz": [
+  0.707107,
+  0.0,
+  0.707107,
+  0.0
+ ],
+ "mount_pos_m": [
+  0.0365,
+  0.0,
+  0.0
+ ],
+ "mount_x_m": 0.0365,
+ "cam_tilt_deg": 35.0,
+ "cam_quat_in_mount": [
+  0.0,
+  0.0,
+  0.9537169507482269,
+  -0.3007057995042731
+ ],
+ "cam_pos_in_mount": [
+  0.0,
+  -0.0338401,
+  0.0125623
+ ],
+ "palm_y": {
+  "left": -1.0,
+  "right": 1.0
+ },
+ "right_wrist_pose": {
+  "pos": [
+   0.0365,
+   -0.0,
+   0.0
+  ],
+  "quat_wxyz": [
+   0.0,
+   0.7071068905932316,
+   0.0,
+   0.7071066717798468
+  ],
+  "note": "the left pose mirrored through the palm plane (y -> -y)"
+ },
+ "fovy_deg": 40.43,
+ "image": [
+  640,
+  360
+ ],
+ "head_mount": {
+  "stl": "/home/Horizon/Downloads/head_stereo_mount-rot0.stl",
+  "pos": [
+   0.0024,
+   0.0,
+   0.3138
+  ],
+  "quat_wxyz": [
+   0.0,
+   0.0,
+   0.0,
+   1.0
+  ],
+  "module_follows": true,
+  "placed_by": "tuner page (head_mount_pose.json)"
+ },
+ "wrist_camera": {
+  "lens_in_mount_frame_m": [
+   0,
+   -0.0384,
+   0.014
+  ],
+  "optical_axis": "+z_m = +x of wrist_yaw (toward the hand)",
+  "image_up": "+y_m (toward the forearm axis)"
+ },
+ "module": {
+  "name": "HBVCAM-F2619HD V11",
+  "board_mm": [
+   20,
+   14,
+   8
+  ],
+  "efl_mm": 4.4,
+  "pixel_um": 3.0,
+  "sensor": "OS02H10 1/2.8in 1920x1080",
+  "hfov_deg": 66.3,
+  "vfov_deg": 40.4,
+  "dfov_deg": 73.8
+ }
+}

@@ -49,6 +49,7 @@ class MujocoSimulator(Simulator):
         self.robot_mjcf = None
         self.render_option = None
         self.renderers = {}
+        self.render_observation_cameras = True   # False: skip the per-step camera renders when nothing consumes them (teleop_holomotion_v14, 2026-10-26)
         self.default_camera_name = None
         self.render_step = 0
         self.last_action = [0 for _ in range(17)]#TODO
@@ -562,13 +563,32 @@ class MujocoSimulator(Simulator):
                 pos=cam_pose.position,
                 quat=cam_q,
             )
+        elif camera.mount == "eye_in_hand" and camera.cam_cfg.pose.get("mujoco_body"):
+            # Opt-in wrist camera (2026-11-10, scripts/psi0_replay): the pose is given in the robot's
+            # hand-camera frame (Isaac: <robot>/<side>_hand_camera_base_link, camera axes "world" =
+            # +x forward, +z up). MuJoCo has no such body, so the camera goes on `mujoco_body` at
+            # `mujoco_offset` (the hand-camera frame inside that body, identity rotation).
+            body = None
+            for b in self.mj_worldbody.find_all('body'):
+                if b.name == camera.cam_cfg.pose["mujoco_body"]:
+                    body = b
+                    break
+            assert body is not None, f"wrist camera body {camera.cam_cfg.pose['mujoco_body']} not in the model"
+            offset = np.asarray(camera.cam_cfg.pose.get("mujoco_offset", [0.0, 0.0, 0.0]), dtype=np.float64)
+            self._add_mujoco_camera(
+                body,
+                camera,
+                name=cname,
+                pos=offset + np.asarray(camera.pose.position, dtype=np.float64),
+                quat=t3d.quaternions.qmult(camera.pose.quaternion, q_isaac_mujoco),
+            )
         elif camera.mount == "eye_in_hand":
             self._add_mujoco_camera(
                 self.mj_worldbody,
                 camera,
                 name=cname,
                 pos=[1.5, 0., 0.8],  #  FIXME
-                xyaxes=[0,1,0,-0.5,0,1], 
+                xyaxes=[0,1,0,-0.5,0,1],
             )
         elif camera.mount == "eye_in_head":
             torso_body = None
@@ -686,6 +706,13 @@ class MujocoSimulator(Simulator):
 
     def render(self, render_robot_mask: bool | str = False) -> Dict[str, np.ndarray]:
         image_observations = {}
+        if not getattr(self, "render_observation_cameras", True):
+            # nothing shows these pictures: black frames of the right shape, so the observation keeps its keys
+            # (gymnasium's passive checker compares them with the observation space)
+            blank = getattr(self, "_blank_frames", None)
+            if blank is None or set(blank) != set(self.renderers):
+                blank = self._blank_frames = {n: np.zeros((r.height, r.width, 3), dtype=np.uint8) for n, r in self.renderers.items()}
+            return dict(blank)
         mask_camera_name = None
         if isinstance(render_robot_mask, str):
             mask_camera_name = render_robot_mask
@@ -694,8 +721,8 @@ class MujocoSimulator(Simulator):
 
         robot_geom_ids = self._robot_mask_geom_ids() if mask_camera_name is not None else set()
         for mjCamera in self.mj_worldbody.find_all('camera'):
-            renderer = self.renderers[mjCamera.name]
-            if renderer is None:
+            renderer = self.renderers.get(mjCamera.name)       # cameras that come with a model (e.g. on the robot)
+            if renderer is None:                               # have no sensor renderer: not an observation
                 continue
             
             # with self._telemetry.timer(f"render.updatescene.{mjCamera.name}"):

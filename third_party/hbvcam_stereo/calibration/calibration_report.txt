@@ -1,0 +1,24 @@
+Calibration date: 2026-09-10
+Input: calib_images_2560x720_20260910_114033
+Resolution: 1280x720 per eye, 2560x720 SBS
+Model: fisheye
+Board: 8x7 inner corners, 100 mm squares
+Captured pairs: 35
+Used pairs: 25
+Rejected for board coverage <1.5%: left_18.png, left_19.png, left_20.png, left_21.png, left_22.png, left_23.png, left_24.png, left_25.png, left_26.png
+Rejected extreme rectification view: left_09.png
+Left mono RMS: 0.104444 px
+Right mono RMS: 0.122386 px
+Stereo RMS: 0.116680 px
+Baseline: 60.517121 mm
+Rectified valid-corner vertical error median: 0.079742 px
+Rectified valid-corner vertical error p95: 0.280903 px
+Rectified valid-corner vertical error max: 0.569073 px
+Valid rectified corner correspondences: 1181
+Out-of-view rectified corner correspondences: 779
+K1: [[471.1972134803515, 0.0, 771.0475315841079], [0.0, 474.3610364699382, 450.15761834607105], [0.0, 0.0, 1.0]]
+D1: [-0.03586915825702962, 0.0003048951007540904, -0.00297105195623831, 0.0003573734007425068]
+K2: [[474.3137604031625, 0.0, 717.4469694615468], [0.0, 477.6127133373165, 450.5723330002082], [0.0, 0.0, 1.0]]
+D2: [-0.034882225083802905, -0.00018095159296954502, -0.003240609466832453, 0.00048468371071361705]
+R: [[0.9999325695995697, 0.0006278308812930558, -0.011595778645109085], [-0.0006071724084857226, 0.9999982225823242, 0.001784985674678633], [0.011596878703696384, -0.0017778246755316097, 0.999931173503334]]
+T_mm: [-60.51129929156411, 0.6011728850046884, -0.5858365380500132]

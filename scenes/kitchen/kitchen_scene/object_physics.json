@@ -1,0 +1,1001 @@
+{
+  "objects": [
+    {
+      "id": "plate_a",
+      "title": "Blue-rim plate A",
+      "kind": "plate",
+      "pos": [
+        -0.7,
+        1.1,
+        0.853
+      ],
+      "radius": 0.115,
+      "mass": 0.03,
+      "source_names": [
+        "Blue rim paper plate"
+      ],
+      "provenance": "Existing loose plate; rigid approximation of a paper plate",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "plate_a",
+      "joint": "plate_a_free",
+      "collision_geoms": [
+        "plate_a_collision_000",
+        "plate_a_collision_001",
+        "plate_a_collision_002",
+        "plate_a_collision_003",
+        "plate_a_collision_004",
+        "plate_a_collision_005",
+        "plate_a_collision_006",
+        "plate_a_collision_007",
+        "plate_a_collision_008",
+        "plate_a_collision_009",
+        "plate_a_collision_010",
+        "plate_a_collision_011",
+        "plate_a_collision_012",
+        "plate_a_collision_013",
+        "plate_a_collision_014",
+        "plate_a_collision_015",
+        "plate_a_collision_016",
+        "plate_a_collision_017",
+        "plate_a_collision_018",
+        "plate_a_collision_019",
+        "plate_a_collision_020",
+        "plate_a_collision_021",
+        "plate_a_collision_022",
+        "plate_a_collision_023",
+        "plate_a_collision_024",
+        "plate_a_collision_025",
+        "plate_a_collision_026",
+        "plate_a_collision_027",
+        "plate_a_collision_028",
+        "plate_a_collision_029",
+        "plate_a_collision_030",
+        "plate_a_collision_031",
+        "plate_a_collision_032",
+        "plate_a_collision_033",
+        "plate_a_collision_034",
+        "plate_a_collision_035",
+        "plate_a_collision_036",
+        "plate_a_collision_037",
+        "plate_a_collision_038",
+        "plate_a_collision_039",
+        "plate_a_collision_040",
+        "plate_a_collision_041",
+        "plate_a_collision_042",
+        "plate_a_collision_043",
+        "plate_a_collision_044",
+        "plate_a_collision_045",
+        "plate_a_collision_046",
+        "plate_a_collision_047",
+        "plate_a_collision_048",
+        "plate_a_collision_049",
+        "plate_a_collision_050",
+        "plate_a_collision_051",
+        "plate_a_collision_052",
+        "plate_a_collision_053",
+        "plate_a_collision_054",
+        "plate_a_collision_055",
+        "plate_a_collision_056",
+        "plate_a_collision_057",
+        "plate_a_collision_058",
+        "plate_a_collision_059",
+        "plate_a_collision_060",
+        "plate_a_collision_061",
+        "plate_a_collision_062",
+        "plate_a_collision_063",
+        "plate_a_collision_064",
+        "plate_a_collision_065",
+        "plate_a_collision_066",
+        "plate_a_collision_067",
+        "plate_a_collision_068",
+        "plate_a_collision_069",
+        "plate_a_collision_070",
+        "plate_a_collision_071",
+        "plate_a_collision_072",
+        "plate_a_collision_073",
+        "plate_a_collision_074",
+        "plate_a_collision_075",
+        "plate_a_collision_076",
+        "plate_a_collision_077",
+        "plate_a_collision_078",
+        "plate_a_collision_079",
+        "plate_a_collision_080",
+        "plate_a_collision_081",
+        "plate_a_collision_082",
+        "plate_a_collision_083",
+        "plate_a_collision_084",
+        "plate_a_collision_085",
+        "plate_a_collision_086",
+        "plate_a_collision_087",
+        "plate_a_collision_088",
+        "plate_a_collision_089",
+        "plate_a_collision_090",
+        "plate_a_collision_091",
+        "plate_a_collision_092",
+        "plate_a_collision_093",
+        "plate_a_collision_094",
+        "plate_a_collision_095",
+        "plate_a_collision_096"
+      ],
+      "collision_count": 97,
+      "center_of_mass": [
+        -8.018578567340711e-18,
+        -1.6375970313583141e-18,
+        0.00611987636615902
+      ],
+      "inertia_matrix": [
+        [
+          0.00010370890431494364,
+          2.091112588534054e-21,
+          -2.6469779601696886e-22
+        ],
+        [
+          2.091112588534054e-21,
+          0.00010370890431494364,
+          3.1598299399525657e-22
+        ],
+        [
+          -2.6469779601696886e-22,
+          3.1598299399525657e-22,
+          0.00020626129721855674
+        ]
+      ],
+      "bottom_z": 0.001,
+      "top_z": 0.015,
+      "bounding_radius": 0.115,
+      "diagnostic_grasp": {
+        "position": [
+          0.1058,
+          0,
+          0.0123
+        ],
+        "closing_axis": [
+          0,
+          0,
+          1
+        ],
+        "open_gap": 0.01,
+        "closed_gap": 0.0015,
+        "pad_half_size": [
+          0.0015,
+          0.009,
+          0.006
+        ],
+        "max_force": 3.0
+      }
+    },
+    {
+      "id": "plate_b",
+      "title": "Blue-rim plate B",
+      "kind": "plate",
+      "pos": [
+        -0.7,
+        1.45,
+        0.853
+      ],
+      "radius": 0.115,
+      "mass": 0.03,
+      "source_names": [
+        "Blue rim paper plate.001"
+      ],
+      "provenance": "Existing loose plate; rigid approximation of a paper plate",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "plate_b",
+      "joint": "plate_b_free",
+      "collision_geoms": [
+        "plate_b_collision_000",
+        "plate_b_collision_001",
+        "plate_b_collision_002",
+        "plate_b_collision_003",
+        "plate_b_collision_004",
+        "plate_b_collision_005",
+        "plate_b_collision_006",
+        "plate_b_collision_007",
+        "plate_b_collision_008",
+        "plate_b_collision_009",
+        "plate_b_collision_010",
+        "plate_b_collision_011",
+        "plate_b_collision_012",
+        "plate_b_collision_013",
+        "plate_b_collision_014",
+        "plate_b_collision_015",
+        "plate_b_collision_016",
+        "plate_b_collision_017",
+        "plate_b_collision_018",
+        "plate_b_collision_019",
+        "plate_b_collision_020",
+        "plate_b_collision_021",
+        "plate_b_collision_022",
+        "plate_b_collision_023",
+        "plate_b_collision_024",
+        "plate_b_collision_025",
+        "plate_b_collision_026",
+        "plate_b_collision_027",
+        "plate_b_collision_028",
+        "plate_b_collision_029",
+        "plate_b_collision_030",
+        "plate_b_collision_031",
+        "plate_b_collision_032",
+        "plate_b_collision_033",
+        "plate_b_collision_034",
+        "plate_b_collision_035",
+        "plate_b_collision_036",
+        "plate_b_collision_037",
+        "plate_b_collision_038",
+        "plate_b_collision_039",
+        "plate_b_collision_040",
+        "plate_b_collision_041",
+        "plate_b_collision_042",
+        "plate_b_collision_043",
+        "plate_b_collision_044",
+        "plate_b_collision_045",
+        "plate_b_collision_046",
+        "plate_b_collision_047",
+        "plate_b_collision_048",
+        "plate_b_collision_049",
+        "plate_b_collision_050",
+        "plate_b_collision_051",
+        "plate_b_collision_052",
+        "plate_b_collision_053",
+        "plate_b_collision_054",
+        "plate_b_collision_055",
+        "plate_b_collision_056",
+        "plate_b_collision_057",
+        "plate_b_collision_058",
+        "plate_b_collision_059",
+        "plate_b_collision_060",
+        "plate_b_collision_061",
+        "plate_b_collision_062",
+        "plate_b_collision_063",
+        "plate_b_collision_064",
+        "plate_b_collision_065",
+        "plate_b_collision_066",
+        "plate_b_collision_067",
+        "plate_b_collision_068",
+        "plate_b_collision_069",
+        "plate_b_collision_070",
+        "plate_b_collision_071",
+        "plate_b_collision_072",
+        "plate_b_collision_073",
+        "plate_b_collision_074",
+        "plate_b_collision_075",
+        "plate_b_collision_076",
+        "plate_b_collision_077",
+        "plate_b_collision_078",
+        "plate_b_collision_079",
+        "plate_b_collision_080",
+        "plate_b_collision_081",
+        "plate_b_collision_082",
+        "plate_b_collision_083",
+        "plate_b_collision_084",
+        "plate_b_collision_085",
+        "plate_b_collision_086",
+        "plate_b_collision_087",
+        "plate_b_collision_088",
+        "plate_b_collision_089",
+        "plate_b_collision_090",
+        "plate_b_collision_091",
+        "plate_b_collision_092",
+        "plate_b_collision_093",
+        "plate_b_collision_094",
+        "plate_b_collision_095",
+        "plate_b_collision_096"
+      ],
+      "collision_count": 97,
+      "center_of_mass": [
+        -8.018578567340711e-18,
+        -1.6375970313583141e-18,
+        0.00611987636615902
+      ],
+      "inertia_matrix": [
+        [
+          0.00010370890431494364,
+          2.091112588534054e-21,
+          -2.6469779601696886e-22
+        ],
+        [
+          2.091112588534054e-21,
+          0.00010370890431494364,
+          3.1598299399525657e-22
+        ],
+        [
+          -2.6469779601696886e-22,
+          3.1598299399525657e-22,
+          0.00020626129721855674
+        ]
+      ],
+      "bottom_z": 0.001,
+      "top_z": 0.015,
+      "bounding_radius": 0.115,
+      "diagnostic_grasp": {
+        "position": [
+          0.1058,
+          0,
+          0.0123
+        ],
+        "closing_axis": [
+          0,
+          0,
+          1
+        ],
+        "open_gap": 0.01,
+        "closed_gap": 0.0015,
+        "pad_half_size": [
+          0.0015,
+          0.009,
+          0.006
+        ],
+        "max_force": 3.0
+      }
+    },
+    {
+      "id": "bottle_red",
+      "title": "Red condiment bottle",
+      "kind": "bottle",
+      "pos": [
+        -0.99,
+        1.91,
+        0.847
+      ],
+      "radius": 0.027,
+      "height": 0.22,
+      "mass": 0.25,
+      "source_names": [
+        "Red squeeze bottle",
+        "Red squeeze bottle cap"
+      ],
+      "provenance": "Existing bottle and cap; one sealed rigid body",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bottle_red",
+      "joint": "bottle_red_free",
+      "collision_geoms": [
+        "bottle_red_collision_000",
+        "bottle_red_collision_001",
+        "bottle_red_collision_002",
+        "bottle_red_collision_003",
+        "bottle_red_collision_004",
+        "bottle_red_collision_005"
+      ],
+      "collision_count": 6,
+      "center_of_mass": [
+        3.1509860578182437e-19,
+        -7.117536909054831e-19,
+        0.09206509425948373
+      ],
+      "inertia_matrix": [
+        [
+          0.0007500186880967069,
+          1.08498688712673e-21,
+          1.3656777148938247e-20
+        ],
+        [
+          1.08498688712673e-21,
+          0.0007500186880967068,
+          -1.8624765332669017e-20
+        ],
+        [
+          1.3656777148938247e-20,
+          -1.8624765332669017e-20,
+          8.28453658196893e-05
+        ]
+      ],
+      "bottom_z": 0.001,
+      "top_z": 0.2211,
+      "bounding_radius": 0.027,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0.08800000000000001
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.079,
+        "closed_gap": 0.041999999999999996,
+        "pad_half_size": [
+          0.006,
+          0.012,
+          0.02
+        ],
+        "max_force": 12.0
+      }
+    },
+    {
+      "id": "bottle_green",
+      "title": "Green condiment bottle",
+      "kind": "bottle",
+      "pos": [
+        -0.91,
+        1.93,
+        0.847
+      ],
+      "radius": 0.026,
+      "height": 0.23,
+      "mass": 0.25,
+      "source_names": [
+        "Green squeeze bottle",
+        "Green squeeze bottle cap"
+      ],
+      "provenance": "Existing bottle and cap; one sealed rigid body",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bottle_green",
+      "joint": "bottle_green_free",
+      "collision_geoms": [
+        "bottle_green_collision_000",
+        "bottle_green_collision_001",
+        "bottle_green_collision_002",
+        "bottle_green_collision_003",
+        "bottle_green_collision_004",
+        "bottle_green_collision_005"
+      ],
+      "collision_count": 6,
+      "center_of_mass": [
+        -4.038291859100219e-19,
+        4.441555412477085e-20,
+        0.09615622696185662
+      ],
+      "inertia_matrix": [
+        [
+          0.0008141326536689865,
+          -5.433060931593613e-23,
+          -8.877137961619854e-21
+        ],
+        [
+          -5.433060931593613e-23,
+          0.0008141326536689865,
+          -4.308655483639241e-22
+        ],
+        [
+          -8.877137961619854e-21,
+          -4.308655483639241e-22,
+          7.687471513787376e-05
+        ]
+      ],
+      "bottom_z": 0.001,
+      "top_z": 0.23115,
+      "bounding_radius": 0.026,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0.09200000000000001
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.077,
+        "closed_gap": 0.039999999999999994,
+        "pad_half_size": [
+          0.006,
+          0.012,
+          0.02
+        ],
+        "max_force": 12.0
+      }
+    },
+    {
+      "id": "carton_bags",
+      "title": "Storage-bag carton",
+      "kind": "carton",
+      "pos": [
+        -1.04,
+        0.48,
+        0.93
+      ],
+      "dims": [
+        0.17,
+        0.25,
+        0.16
+      ],
+      "mass": 0.16,
+      "source_names": [
+        "Storage bag carton",
+        "Storage bag carton label",
+        "Storage bag carton side label",
+        "Storage bag carton top label"
+      ],
+      "provenance": "Existing carton and its three label faces; rigid closed box",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "carton_bags",
+      "joint": "carton_bags_free",
+      "collision_geoms": [
+        "carton_bags_collision_000"
+      ],
+      "collision_count": 1,
+      "center_of_mass": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_matrix": [
+        [
+          0.0011746666666666667,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0007266666666666668,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0012186666666666667
+        ]
+      ],
+      "bottom_z": -0.08,
+      "top_z": 0.08,
+      "bounding_radius": 0.125,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.195,
+        "closed_gap": 0.158,
+        "pad_half_size": [
+          0.006,
+          0.022,
+          0.025
+        ],
+        "max_force": 12.0
+      }
+    },
+    {
+      "id": "carton_wrap",
+      "title": "Cling-wrap carton",
+      "kind": "carton",
+      "pos": [
+        -1.06,
+        1.27,
+        0.906
+      ],
+      "dims": [
+        0.17,
+        0.31,
+        0.105
+      ],
+      "mass": 0.18,
+      "source_names": [
+        "Cling wrap carton",
+        "Cling wrap carton label",
+        "Cling wrap carton side label",
+        "Cling wrap carton top label"
+      ],
+      "provenance": "Existing carton and its three label faces; rigid closed box",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "carton_wrap",
+      "joint": "carton_wrap_free",
+      "collision_geoms": [
+        "carton_wrap_collision_000"
+      ],
+      "collision_count": 1,
+      "center_of_mass": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "inertia_matrix": [
+        [
+          0.0016068750000000004,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0005988750000000001,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0018750000000000004
+        ]
+      ],
+      "bottom_z": -0.0525,
+      "top_z": 0.0525,
+      "bounding_radius": 0.155,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.195,
+        "closed_gap": 0.158,
+        "pad_half_size": [
+          0.006,
+          0.022,
+          0.025
+        ],
+        "max_force": 12.0
+      }
+    },
+    {
+      "id": "bowl_small",
+      "title": "Small hollow bowl",
+      "kind": "bowl",
+      "pos": [
+        -0.7,
+        0.7,
+        0.851
+      ],
+      "radius": 0.07,
+      "height": 0.055,
+      "mass": 0.18,
+      "source_names": [],
+      "provenance": "New task object; authored ceramic bowl, not claimed to be in the source capture",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bowl_small",
+      "joint": "bowl_small_free",
+      "collision_geoms": [
+        "bowl_small_collision_000",
+        "bowl_small_collision_001",
+        "bowl_small_collision_002",
+        "bowl_small_collision_003",
+        "bowl_small_collision_004",
+        "bowl_small_collision_005",
+        "bowl_small_collision_006",
+        "bowl_small_collision_007",
+        "bowl_small_collision_008",
+        "bowl_small_collision_009",
+        "bowl_small_collision_010",
+        "bowl_small_collision_011",
+        "bowl_small_collision_012",
+        "bowl_small_collision_013",
+        "bowl_small_collision_014",
+        "bowl_small_collision_015",
+        "bowl_small_collision_016",
+        "bowl_small_collision_017",
+        "bowl_small_collision_018",
+        "bowl_small_collision_019",
+        "bowl_small_collision_020",
+        "bowl_small_collision_021",
+        "bowl_small_collision_022",
+        "bowl_small_collision_023",
+        "bowl_small_collision_024",
+        "bowl_small_collision_025",
+        "bowl_small_collision_026",
+        "bowl_small_collision_027",
+        "bowl_small_collision_028",
+        "bowl_small_collision_029",
+        "bowl_small_collision_030",
+        "bowl_small_collision_031",
+        "bowl_small_collision_032",
+        "bowl_small_collision_033",
+        "bowl_small_collision_034",
+        "bowl_small_collision_035",
+        "bowl_small_collision_036",
+        "bowl_small_collision_037",
+        "bowl_small_collision_038",
+        "bowl_small_collision_039",
+        "bowl_small_collision_040",
+        "bowl_small_collision_041",
+        "bowl_small_collision_042",
+        "bowl_small_collision_043",
+        "bowl_small_collision_044",
+        "bowl_small_collision_045",
+        "bowl_small_collision_046",
+        "bowl_small_collision_047",
+        "bowl_small_collision_048",
+        "bowl_small_collision_049",
+        "bowl_small_collision_050",
+        "bowl_small_collision_051",
+        "bowl_small_collision_052",
+        "bowl_small_collision_053",
+        "bowl_small_collision_054",
+        "bowl_small_collision_055",
+        "bowl_small_collision_056",
+        "bowl_small_collision_057",
+        "bowl_small_collision_058",
+        "bowl_small_collision_059",
+        "bowl_small_collision_060",
+        "bowl_small_collision_061",
+        "bowl_small_collision_062",
+        "bowl_small_collision_063",
+        "bowl_small_collision_064",
+        "bowl_small_collision_065",
+        "bowl_small_collision_066",
+        "bowl_small_collision_067",
+        "bowl_small_collision_068",
+        "bowl_small_collision_069",
+        "bowl_small_collision_070",
+        "bowl_small_collision_071",
+        "bowl_small_collision_072",
+        "bowl_small_collision_073",
+        "bowl_small_collision_074",
+        "bowl_small_collision_075",
+        "bowl_small_collision_076",
+        "bowl_small_collision_077",
+        "bowl_small_collision_078",
+        "bowl_small_collision_079",
+        "bowl_small_collision_080",
+        "bowl_small_collision_081",
+        "bowl_small_collision_082",
+        "bowl_small_collision_083",
+        "bowl_small_collision_084",
+        "bowl_small_collision_085",
+        "bowl_small_collision_086",
+        "bowl_small_collision_087",
+        "bowl_small_collision_088",
+        "bowl_small_collision_089",
+        "bowl_small_collision_090",
+        "bowl_small_collision_091",
+        "bowl_small_collision_092",
+        "bowl_small_collision_093",
+        "bowl_small_collision_094",
+        "bowl_small_collision_095",
+        "bowl_small_collision_096"
+      ],
+      "collision_count": 97,
+      "center_of_mass": [
+        -3.538715424084633e-18,
+        7.246837437620125e-19,
+        0.023524228291788324
+      ],
+      "inertia_matrix": [
+        [
+          0.00026819002037183206,
+          -7.411538288475128e-22,
+          -1.6517142471458857e-20
+        ],
+        [
+          -7.411538288475128e-22,
+          0.000268190020371832,
+          3.2346070673273594e-20
+        ],
+        [
+          -1.6517142471458857e-20,
+          3.2346070673273594e-20,
+          0.0004411072893591826
+        ]
+      ],
+      "bottom_z": 0,
+      "top_z": 0.055,
+      "bounding_radius": 0.07,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0.033
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.158,
+        "closed_gap": 0.10750000000000001,
+        "pad_half_size": [
+          0.005,
+          0.012,
+          0.009
+        ],
+        "max_force": 12.0
+      }
+    },
+    {
+      "id": "bowl_large",
+      "title": "Large hollow bowl",
+      "kind": "bowl",
+      "pos": [
+        -0.7,
+        1.81,
+        0.851
+      ],
+      "radius": 0.085,
+      "height": 0.07,
+      "mass": 0.28,
+      "source_names": [],
+      "provenance": "New task object; authored ceramic bowl, not claimed to be in the source capture",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bowl_large",
+      "joint": "bowl_large_free",
+      "collision_geoms": [
+        "bowl_large_collision_000",
+        "bowl_large_collision_001",
+        "bowl_large_collision_002",
+        "bowl_large_collision_003",
+        "bowl_large_collision_004",
+        "bowl_large_collision_005",
+        "bowl_large_collision_006",
+        "bowl_large_collision_007",
+        "bowl_large_collision_008",
+        "bowl_large_collision_009",
+        "bowl_large_collision_010",
+        "bowl_large_collision_011",
+        "bowl_large_collision_012",
+        "bowl_large_collision_013",
+        "bowl_large_collision_014",
+        "bowl_large_collision_015",
+        "bowl_large_collision_016",
+        "bowl_large_collision_017",
+        "bowl_large_collision_018",
+        "bowl_large_collision_019",
+        "bowl_large_collision_020",
+        "bowl_large_collision_021",
+        "bowl_large_collision_022",
+        "bowl_large_collision_023",
+        "bowl_large_collision_024",
+        "bowl_large_collision_025",
+        "bowl_large_collision_026",
+        "bowl_large_collision_027",
+        "bowl_large_collision_028",
+        "bowl_large_collision_029",
+        "bowl_large_collision_030",
+        "bowl_large_collision_031",
+        "bowl_large_collision_032",
+        "bowl_large_collision_033",
+        "bowl_large_collision_034",
+        "bowl_large_collision_035",
+        "bowl_large_collision_036",
+        "bowl_large_collision_037",
+        "bowl_large_collision_038",
+        "bowl_large_collision_039",
+        "bowl_large_collision_040",
+        "bowl_large_collision_041",
+        "bowl_large_collision_042",
+        "bowl_large_collision_043",
+        "bowl_large_collision_044",
+        "bowl_large_collision_045",
+        "bowl_large_collision_046",
+        "bowl_large_collision_047",
+        "bowl_large_collision_048",
+        "bowl_large_collision_049",
+        "bowl_large_collision_050",
+        "bowl_large_collision_051",
+        "bowl_large_collision_052",
+        "bowl_large_collision_053",
+        "bowl_large_collision_054",
+        "bowl_large_collision_055",
+        "bowl_large_collision_056",
+        "bowl_large_collision_057",
+        "bowl_large_collision_058",
+        "bowl_large_collision_059",
+        "bowl_large_collision_060",
+        "bowl_large_collision_061",
+        "bowl_large_collision_062",
+        "bowl_large_collision_063",
+        "bowl_large_collision_064",
+        "bowl_large_collision_065",
+        "bowl_large_collision_066",
+        "bowl_large_collision_067",
+        "bowl_large_collision_068",
+        "bowl_large_collision_069",
+        "bowl_large_collision_070",
+        "bowl_large_collision_071",
+        "bowl_large_collision_072",
+        "bowl_large_collision_073",
+        "bowl_large_collision_074",
+        "bowl_large_collision_075",
+        "bowl_large_collision_076",
+        "bowl_large_collision_077",
+        "bowl_large_collision_078",
+        "bowl_large_collision_079",
+        "bowl_large_collision_080",
+        "bowl_large_collision_081",
+        "bowl_large_collision_082",
+        "bowl_large_collision_083",
+        "bowl_large_collision_084",
+        "bowl_large_collision_085",
+        "bowl_large_collision_086",
+        "bowl_large_collision_087",
+        "bowl_large_collision_088",
+        "bowl_large_collision_089",
+        "bowl_large_collision_090",
+        "bowl_large_collision_091",
+        "bowl_large_collision_092",
+        "bowl_large_collision_093",
+        "bowl_large_collision_094",
+        "bowl_large_collision_095",
+        "bowl_large_collision_096"
+      ],
+      "collision_count": 97,
+      "center_of_mass": [
+        -3.775346850619167e-18,
+        -4.198863324246317e-18,
+        0.02931840752511814
+      ],
+      "inertia_matrix": [
+        [
+          0.0006459587645881558,
+          2.498747194400186e-20,
+          3.3881317890172014e-20
+        ],
+        [
+          2.498747194400186e-20,
+          0.0006459587645881555,
+          1.8317087484374245e-20
+        ],
+        [
+          3.3881317890172014e-20,
+          1.8317087484374245e-20,
+          0.0010427750472320908
+        ]
+      ],
+      "bottom_z": 0,
+      "top_z": 0.07,
+      "bounding_radius": 0.085,
+      "diagnostic_grasp": {
+        "position": [
+          0,
+          0,
+          0.042
+        ],
+        "closing_axis": [
+          1,
+          0,
+          0
+        ],
+        "open_gap": 0.188,
+        "closed_gap": 0.13225,
+        "pad_half_size": [
+          0.005,
+          0.012,
+          0.009
+        ],
+        "max_force": 12.0
+      }
+    }
+  ],
+  "scope": "Free rigid props. No grasp welds, motion actuators or robot controller attached to objects.",
+  "mass_method": "Mass normalized to configured engineering prior; COM and inertia from additive collider-volume approximation.",
+  "collision_method": "Convex shell sectors for open bowls/plate rims; primitives and convex segments for bottles/cartons."
+}

@@ -1,0 +1,524 @@
+{
+ "urdf": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2.urdf",
+ "mjcf": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2_v3.xml",
+ "urdf_bodies": 101,
+ "urdf_joints": 51,
+ "urdf_eq": 0,
+ "kinematics": {
+  "configs": 50,
+  "frames_compared": 96,
+  "max_pos_err_m": 1.1884382367099988e-12,
+  "max_rot_err": 1.3921239161440724e-11,
+  "ok": true,
+  "not_in_urdf": [
+   "com_marker",
+   "hbvcam_left_down_optical_frame",
+   "hbvcam_left_front_optical_frame",
+   "hbvcam_left_left_optical_frame",
+   "hbvcam_left_right_optical_frame",
+   "hbvcam_left_up_optical_frame",
+   "hbvcam_right_down_optical_frame",
+   "hbvcam_right_front_optical_frame",
+   "hbvcam_right_left_optical_frame",
+   "hbvcam_right_right_optical_frame",
+   "hbvcam_right_up_optical_frame",
+   "imu",
+   "left_hand_index_touch_ray",
+   "left_hand_middle_touch_ray",
+   "left_hand_pinky_touch_ray",
+   "left_hand_ring_touch_ray",
+   "left_hand_thumb_touch_ray",
+   "left_wrist_cam_optical",
+   "right_hand_index_touch_ray",
+   "right_hand_middle_touch_ray",
+   "right_hand_pinky_touch_ray",
+   "right_hand_ring_touch_ray",
+   "right_hand_thumb_touch_ray",
+   "right_wrist_cam_optical",
+   "wrist_left_front_optical_frame",
+   "wrist_left_left_optical_frame",
+   "wrist_left_right_optical_frame",
+   "wrist_right_front_optical_frame",
+   "wrist_right_left_optical_frame",
+   "wrist_right_right_optical_frame"
+  ]
+ },
+ "inertia": {
+  "total_mass_mjcf": 39.5534327,
+  "total_mass_urdf": 39.5534327,
+  "max_mass_err": 0.0,
+  "max_com_err_m": 8.712475185745916e-13,
+  "max_inertia_err": 2.5100747248258835e-09,
+  "ok": true
+ },
+ "cameras": {
+  "markers": {
+   "hbvcam_left_pinhole": [
+    {
+     "point_optical_m": [
+      0.15,
+      0.08,
+      0.7
+     ],
+     "predicted_px": [
+      370.04,
+      207.94
+     ],
+     "found_px": [
+      370.0,
+      207.5
+     ],
+     "err_px": 0.44
+    },
+    {
+     "point_optical_m": [
+      -0.2,
+      -0.1,
+      0.9
+     ],
+     "predicted_px": [
+      262.32,
+      152.31
+     ],
+     "found_px": [
+      262.0,
+      152.0
+     ],
+     "err_px": 0.44
+    },
+    {
+     "point_optical_m": [
+      0.0,
+      0.12,
+      0.5
+     ],
+     "predicted_px": [
+      317.16,
+      238.96
+     ],
+     "found_px": [
+      317.0,
+      238.66
+     ],
+     "err_px": 0.34
+    },
+    {
+     "point_optical_m": [
+      0.3,
+      -0.12,
+      0.8
+     ],
+     "predicted_px": [
+      409.7,
+      142.72
+     ],
+     "found_px": [
+      409.5,
+      142.29
+     ],
+     "err_px": 0.47
+    },
+    {
+     "point_optical_m": [
+      -0.35,
+      0.15,
+      0.7
+     ],
+     "predicted_px": [
+      193.76,
+      232.61
+     ],
+     "found_px": [
+      193.25,
+      232.25
+     ],
+     "err_px": 0.63
+    }
+   ],
+   "hbvcam_right_pinhole": [
+    {
+     "point_optical_m": [
+      0.15,
+      0.08,
+      0.7
+     ],
+     "predicted_px": [
+      370.04,
+      207.94
+     ],
+     "found_px": [
+      370.0,
+      207.5
+     ],
+     "err_px": 0.44
+    },
+    {
+     "point_optical_m": [
+      -0.2,
+      -0.1,
+      0.9
+     ],
+     "predicted_px": [
+      262.32,
+      152.31
+     ],
+     "found_px": [
+      262.0,
+      152.0
+     ],
+     "err_px": 0.44
+    },
+    {
+     "point_optical_m": [
+      0.0,
+      0.12,
+      0.5
+     ],
+     "predicted_px": [
+      317.16,
+      238.96
+     ],
+     "found_px": [
+      317.0,
+      238.66
+     ],
+     "err_px": 0.34
+    },
+    {
+     "point_optical_m": [
+      0.3,
+      -0.12,
+      0.8
+     ],
+     "predicted_px": [
+      409.7,
+      142.72
+     ],
+     "found_px": [
+      409.5,
+      142.29
+     ],
+     "err_px": 0.47
+    },
+    {
+     "point_optical_m": [
+      -0.35,
+      0.15,
+      0.7
+     ],
+     "predicted_px": [
+      193.76,
+      232.61
+     ],
+     "found_px": [
+      193.25,
+      232.25
+     ],
+     "err_px": 0.63
+    }
+   ],
+   "wrist_left": [
+    {
+     "point_optical_m": [
+      0.0,
+      0.0,
+      0.4
+     ],
+     "predicted_px": [
+      319.5,
+      179.5
+     ],
+     "found_px": [
+      319.66,
+      179.5
+     ],
+     "err_px": 0.16
+    },
+    {
+     "point_optical_m": [
+      0.2,
+      0.1,
+      0.3
+     ],
+     "predicted_px": [
+      480.19,
+      259.84
+     ],
+     "found_px": [
+      480.42,
+      259.75
+     ],
+     "err_px": 0.25
+    },
+    {
+     "point_optical_m": [
+      -0.3,
+      -0.1,
+      0.25
+     ],
+     "predicted_px": [
+      79.53,
+      99.51
+     ],
+     "found_px": [
+      79.73,
+      99.45
+     ],
+     "err_px": 0.21
+    },
+    {
+     "point_optical_m": [
+      0.25,
+      -0.15,
+      0.35
+     ],
+     "predicted_px": [
+      486.54,
+      79.27
+     ],
+     "found_px": [
+      486.53,
+      79.31
+     ],
+     "err_px": 0.04
+    },
+    {
+     "point_optical_m": [
+      -0.2,
+      0.15,
+      0.3
+     ],
+     "predicted_px": [
+      163.61,
+      296.42
+     ],
+     "found_px": [
+      163.69,
+      296.41
+     ],
+     "err_px": 0.08
+    },
+    {
+     "point_optical_m": [
+      0.0,
+      -0.2,
+      0.3
+     ],
+     "predicted_px": [
+      319.5,
+      14.58
+     ],
+     "found_px": [
+      319.57,
+      14.6
+     ],
+     "err_px": 0.08
+    },
+    {
+     "point_optical_m": [
+      0.5,
+      0.05,
+      0.25
+     ],
+     "predicted_px": [
+      629.05,
+      210.45
+     ],
+     "found_px": [
+      629.11,
+      210.39
+     ],
+     "err_px": 0.09
+    },
+    {
+     "point_optical_m": [
+      -0.6,
+      -0.1,
+      0.3
+     ],
+     "predicted_px": [
+      11.68,
+      128.2
+     ],
+     "found_px": [
+      11.76,
+      128.12
+     ],
+     "err_px": 0.12
+    },
+    {
+     "point_optical_m": [
+      0.45,
+      -0.1,
+      0.3
+     ],
+     "predicted_px": [
+      591.62,
+      119.03
+     ],
+     "found_px": [
+      591.63,
+      118.9
+     ],
+     "err_px": 0.13
+    }
+   ],
+   "wrist_right": [
+    {
+     "point_optical_m": [
+      0.0,
+      0.0,
+      0.4
+     ],
+     "predicted_px": [
+      319.5,
+      179.5
+     ],
+     "found_px": [
+      319.34,
+      179.5
+     ],
+     "err_px": 0.16
+    },
+    {
+     "point_optical_m": [
+      0.2,
+      0.1,
+      0.3
+     ],
+     "predicted_px": [
+      480.19,
+      259.84
+     ],
+     "found_px": [
+      480.2,
+      259.84
+     ],
+     "err_px": 0.01
+    },
+    {
+     "point_optical_m": [
+      -0.3,
+      -0.1,
+      0.25
+     ],
+     "predicted_px": [
+      79.53,
+      99.51
+     ],
+     "found_px": [
+      79.55,
+      99.64
+     ],
+     "err_px": 0.13
+    },
+    {
+     "point_optical_m": [
+      0.25,
+      -0.15,
+      0.35
+     ],
+     "predicted_px": [
+      486.54,
+      79.27
+     ],
+     "found_px": [
+      486.39,
+      79.39
+     ],
+     "err_px": 0.19
+    },
+    {
+     "point_optical_m": [
+      -0.2,
+      0.15,
+      0.3
+     ],
+     "predicted_px": [
+      163.61,
+      296.42
+     ],
+     "found_px": [
+      163.52,
+      296.44
+     ],
+     "err_px": 0.09
+    },
+    {
+     "point_optical_m": [
+      0.0,
+      -0.2,
+      0.3
+     ],
+     "predicted_px": [
+      319.5,
+      14.58
+     ],
+     "found_px": [
+      319.25,
+      14.63
+     ],
+     "err_px": 0.25
+    },
+    {
+     "point_optical_m": [
+      0.5,
+      0.05,
+      0.25
+     ],
+     "predicted_px": [
+      629.05,
+      210.45
+     ],
+     "found_px": [
+      628.96,
+      210.43
+     ],
+     "err_px": 0.1
+    },
+    {
+     "point_optical_m": [
+      -0.6,
+      -0.1,
+      0.3
+     ],
+     "predicted_px": [
+      11.68,
+      128.2
+     ],
+     "found_px": [
+      11.72,
+      128.16
+     ],
+     "err_px": 0.06
+    },
+    {
+     "point_optical_m": [
+      0.45,
+      -0.1,
+      0.3
+     ],
+     "predicted_px": [
+      591.62,
+      119.03
+     ],
+     "found_px": [
+      591.51,
+      118.91
+     ],
+     "err_px": 0.17
+    }
+   ]
+  },
+  "max_err_px": 0.6311014379638122,
+  "ok": true
+ },
+ "geometry": {
+  "views": 6,
+  "p999_depth_diff_m": 0.0,
+  "pixels_over_1mm": 0,
+  "robot_pixels": 151169,
+  "ok": true
+ },
+ "all_ok": true
+}

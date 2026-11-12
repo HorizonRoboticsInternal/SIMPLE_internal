@@ -119,13 +119,15 @@ class SonicLocoManipEnv(BaseDualSim):
         self.mjData = self.mujoco.mjData
         
         # set up viewer
+        if not hasattr(self, "viewer_key_hook"):
+            self.viewer_key_hook = None                 # a teleop CLI may take the viewer window's keys too (2026-11-04: SPACE for the auto cycle)
         if self.onscreen:
             if self.viewer is not None:
                 self.viewer.close()
             self.viewer = mujoco.viewer.launch_passive(
                 self.mjModel,
                 self.mjData,
-                key_callback=self.task.robot.elastic_band.MujuocoKeyCallback,
+                key_callback=self._viewer_key,
                 show_left_ui=False,
                 show_right_ui=False,
             )
@@ -134,10 +136,16 @@ class SonicLocoManipEnv(BaseDualSim):
             self.viewer = None
 
         if self.viewer:
-            self.viewer.cam.azimuth = 100
-            self.viewer.cam.elevation = -30
-            self.viewer.cam.distance = 3
-            self.viewer.cam.lookat = np.array([0, 0, 0.38])
+            import os
+            cam = dict(azimuth=100, elevation=-30, distance=3, lookat=[0, 0, 0.38])
+            cam.update(getattr(self.task, "viewer_cam", None) or {})                     # a task's own default view (kitchen: VIEW_THIRD, 2026-10-26)
+            env_cam = os.environ.get("SIMPLE_VIEWER_CAM")                                  # "x,y,z,distance,azimuth,elevation" overrides it
+            if env_cam:
+                v = [float(x) for x in env_cam.split(",")]; cam = dict(lookat=v[:3], distance=v[3], azimuth=v[4], elevation=v[5])
+            self.viewer.cam.azimuth = cam["azimuth"]
+            self.viewer.cam.elevation = cam["elevation"]
+            self.viewer.cam.distance = cam["distance"]
+            self.viewer.cam.lookat = np.array(cam["lookat"], dtype=float)
             self.viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE # mjCAMERA_TRACKING
 
         self.mujoco.step(render=False)
@@ -155,6 +163,17 @@ class SonicLocoManipEnv(BaseDualSim):
         self._success = False
         return obs, info
     
+    def _viewer_key(self, keycode: int) -> None:
+        """The sim window's key presses: the elastic band's keys as before, then the CLI's hook (keyboard focus is wherever the
+        operator last clicked -- the headset-view window, the sim window or the terminal; all three must take SPACE)."""
+        self.task.robot.elastic_band.MujuocoKeyCallback(keycode)
+        hook = getattr(self, "viewer_key_hook", None)
+        if hook is not None:
+            try:
+                hook(int(keycode))
+            except Exception as e:                      # noqa: BLE001  never let a key kill the viewer thread
+                print(f"[sonic env] viewer key hook failed: {e}")
+
     def step(self, action):
         for i in range(self.control_decimal):
             # self.check_fall()
@@ -202,8 +221,10 @@ class SonicLocoManipEnv(BaseDualSim):
         return self._render_frame()
 
     def _render_frame(self):
-        # frame_mujoco = self.mujoco.render()
-        frame_mujoco = None
+        # benchmark speed-up: skip the MuJoCo camera render when Isaac renders the observation
+        # (mujoco_isaac, no debug tiling); the mujoco-only sim mode still needs it
+        skip_mujoco = self.isaac is not None and not self.task.metadata.get("debug", False)
+        frame_mujoco = None if skip_mujoco else self.mujoco.render()
 
         if self.isaac:
             frame_isaac = self.isaac.render()

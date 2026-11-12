@@ -1,0 +1,1611 @@
+{
+ "made": "2026-11-04",
+ "seed": 11,
+ "n": 50,
+ "min_clearance_mm": 24.0,
+ "min_lip_mm": 18.0,
+ "plates": [
+  {
+   "id": "plate_00",
+   "diameter_mm": 178.4,
+   "height_mm": 36.0,
+   "rim_thickness_mm": 4.6,
+   "rim_lip_mm": 18.6,
+   "rim_underside_clearance_mm": 31.4,
+   "mass_kg": 0.2552,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "floral",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0633141210111634,
+    "h": 0.012735611127534525
+   },
+   "inertia": {
+    "ixx": 0.0005353,
+    "iyy": 0.0005353,
+    "izz": 0.0010154
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_01",
+   "diameter_mm": 233.0,
+   "height_mm": 34.1,
+   "rim_thickness_mm": 5.4,
+   "rim_lip_mm": 21.1,
+   "rim_underside_clearance_mm": 28.7,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "oval",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07983870358018463,
+    "h": 0.010368795045674098
+   },
+   "inertia": {
+    "ixx": 0.001108,
+    "iyy": 0.001108,
+    "izz": 0.0021384
+   },
+   "base_rgb": [
+    0.3,
+    0.45,
+    0.35
+   ],
+   "accent_rgb": [
+    0.9,
+    0.9,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_02",
+   "diameter_mm": 199.4,
+   "height_mm": 37.2,
+   "rim_thickness_mm": 7.6,
+   "rim_lip_mm": 22.9,
+   "rim_underside_clearance_mm": 29.6,
+   "mass_kg": 0.3445,
+   "material": "melamine",
+   "plan": "squircle",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05472063524292191,
+    "h": 0.012183502116559192
+   },
+   "inertia": {
+    "ixx": 0.0010387,
+    "iyy": 0.0010387,
+    "izz": 0.001998
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_03",
+   "diameter_mm": 186.7,
+   "height_mm": 32.5,
+   "rim_thickness_mm": 7.0,
+   "rim_lip_mm": 18.6,
+   "rim_underside_clearance_mm": 25.6,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "floral",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06067461341346875,
+    "h": 0.009583262125096529
+   },
+   "inertia": {
+    "ixx": 0.0009065,
+    "iyy": 0.0009065,
+    "izz": 0.0017426
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_04",
+   "diameter_mm": 204.6,
+   "height_mm": 32.3,
+   "rim_thickness_mm": 5.7,
+   "rim_lip_mm": 27.5,
+   "rim_underside_clearance_mm": 26.5,
+   "mass_kg": 0.2769,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "dots",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05889815904730973,
+    "h": 0.011921597844405876
+   },
+   "inertia": {
+    "ixx": 0.0007487,
+    "iyy": 0.0007487,
+    "izz": 0.0014493
+   },
+   "base_rgb": [
+    0.97,
+    0.93,
+    0.88
+   ],
+   "accent_rgb": [
+    0.55,
+    0.3,
+    0.1
+   ]
+  },
+  {
+   "id": "plate_06",
+   "diameter_mm": 229.5,
+   "height_mm": 34.4,
+   "rim_thickness_mm": 5.3,
+   "rim_lip_mm": 23.8,
+   "rim_underside_clearance_mm": 29.1,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06939615581788744,
+    "h": 0.010100882590297504
+   },
+   "inertia": {
+    "ixx": 0.0013564,
+    "iyy": 0.0013564,
+    "izz": 0.0026337
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_07",
+   "diameter_mm": 243.4,
+   "height_mm": 37.3,
+   "rim_thickness_mm": 6.9,
+   "rim_lip_mm": 30.9,
+   "rim_underside_clearance_mm": 30.4,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07854171129517298,
+    "h": 0.011024718796280105
+   },
+   "inertia": {
+    "ixx": 0.001527,
+    "iyy": 0.001527,
+    "izz": 0.0029611
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_08",
+   "diameter_mm": 222.5,
+   "height_mm": 34.8,
+   "rim_thickness_mm": 6.7,
+   "rim_lip_mm": 22.0,
+   "rim_underside_clearance_mm": 28.1,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "plain",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06720593565205968,
+    "h": 0.011723197135733122
+   },
+   "inertia": {
+    "ixx": 0.0012778,
+    "iyy": 0.0012778,
+    "izz": 0.0024747
+   },
+   "base_rgb": [
+    0.97,
+    0.93,
+    0.88
+   ],
+   "accent_rgb": [
+    0.55,
+    0.3,
+    0.1
+   ]
+  },
+  {
+   "id": "plate_09",
+   "diameter_mm": 206.2,
+   "height_mm": 37.0,
+   "rim_thickness_mm": 7.5,
+   "rim_lip_mm": 25.4,
+   "rim_underside_clearance_mm": 29.5,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "oval",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07145733738280755,
+    "h": 0.01257589555693706
+   },
+   "inertia": {
+    "ixx": 0.0009146,
+    "iyy": 0.0009146,
+    "izz": 0.0017379
+   },
+   "base_rgb": [
+    0.86,
+    0.92,
+    0.86
+   ],
+   "accent_rgb": [
+    0.1,
+    0.4,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_14",
+   "diameter_mm": 203.9,
+   "height_mm": 33.4,
+   "rim_thickness_mm": 4.7,
+   "rim_lip_mm": 23.0,
+   "rim_underside_clearance_mm": 28.8,
+   "mass_kg": 0.2519,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0639569725472264,
+    "h": 0.012519653912779559
+   },
+   "inertia": {
+    "ixx": 0.0006779,
+    "iyy": 0.0006779,
+    "izz": 0.0013089
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_15",
+   "diameter_mm": 178.5,
+   "height_mm": 35.6,
+   "rim_thickness_mm": 5.9,
+   "rim_lip_mm": 21.8,
+   "rim_underside_clearance_mm": 29.7,
+   "mass_kg": 0.2313,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0681231565048356,
+    "h": 0.01097103720442665
+   },
+   "inertia": {
+    "ixx": 0.0004848,
+    "iyy": 0.0004848,
+    "izz": 0.0009207
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_16",
+   "diameter_mm": 204.3,
+   "height_mm": 37.4,
+   "rim_thickness_mm": 6.3,
+   "rim_lip_mm": 22.6,
+   "rim_underside_clearance_mm": 31.1,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.060305973680180716,
+    "h": 0.00953911823586711
+   },
+   "inertia": {
+    "ixx": 0.0010902,
+    "iyy": 0.0010902,
+    "izz": 0.0020873
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_17",
+   "diameter_mm": 238.7,
+   "height_mm": 38.3,
+   "rim_thickness_mm": 7.8,
+   "rim_lip_mm": 33.6,
+   "rim_underside_clearance_mm": 30.6,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0642823010388641,
+    "h": 0.010365828293506846
+   },
+   "inertia": {
+    "ixx": 0.0014729,
+    "iyy": 0.0014729,
+    "izz": 0.0028478
+   },
+   "base_rgb": [
+    0.92,
+    0.88,
+    0.95
+   ],
+   "accent_rgb": [
+    0.4,
+    0.2,
+    0.6
+   ]
+  },
+  {
+   "id": "plate_18",
+   "diameter_mm": 245.6,
+   "height_mm": 29.3,
+   "rim_thickness_mm": 5.1,
+   "rim_lip_mm": 22.2,
+   "rim_underside_clearance_mm": 24.2,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.08439195575528255,
+    "h": 0.009449680359042954
+   },
+   "inertia": {
+    "ixx": 0.0015362,
+    "iyy": 0.0015362,
+    "izz": 0.003015
+   },
+   "base_rgb": [
+    0.95,
+    0.85,
+    0.75
+   ],
+   "accent_rgb": [
+    0.8,
+    0.45,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_19",
+   "diameter_mm": 233.1,
+   "height_mm": 33.9,
+   "rim_thickness_mm": 7.5,
+   "rim_lip_mm": 24.4,
+   "rim_underside_clearance_mm": 26.4,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.08253632413272949,
+    "h": 0.014158378418408156
+   },
+   "inertia": {
+    "ixx": 0.0013962,
+    "iyy": 0.0013962,
+    "izz": 0.0027158
+   },
+   "base_rgb": [
+    0.85,
+    0.3,
+    0.25
+   ],
+   "accent_rgb": [
+    0.98,
+    0.95,
+    0.9
+   ]
+  },
+  {
+   "id": "plate_20",
+   "diameter_mm": 186.6,
+   "height_mm": 34.2,
+   "rim_thickness_mm": 6.3,
+   "rim_lip_mm": 27.0,
+   "rim_underside_clearance_mm": 27.9,
+   "mass_kg": 0.0815,
+   "material": "paper",
+   "plan": "squircle",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07739097782117105,
+    "h": 0.012605933765422133
+   },
+   "inertia": {
+    "ixx": 0.0002216,
+    "iyy": 0.0002216,
+    "izz": 0.0004274
+   },
+   "base_rgb": [
+    0.2,
+    0.22,
+    0.25
+   ],
+   "accent_rgb": [
+    0.85,
+    0.85,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_21",
+   "diameter_mm": 224.4,
+   "height_mm": 37.9,
+   "rim_thickness_mm": 6.2,
+   "rim_lip_mm": 21.2,
+   "rim_underside_clearance_mm": 31.7,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "squircle",
+   "decor": "floral",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07242890652869159,
+    "h": 0.012594409338211134
+   },
+   "inertia": {
+    "ixx": 0.001561,
+    "iyy": 0.001561,
+    "izz": 0.0030263
+   },
+   "base_rgb": [
+    0.55,
+    0.7,
+    0.8
+   ],
+   "accent_rgb": [
+    0.95,
+    0.95,
+    0.95
+   ]
+  },
+  {
+   "id": "plate_22",
+   "diameter_mm": 243.6,
+   "height_mm": 33.2,
+   "rim_thickness_mm": 7.9,
+   "rim_lip_mm": 30.6,
+   "rim_underside_clearance_mm": 25.3,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "oval",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06420634907032859,
+    "h": 0.014283800244135753
+   },
+   "inertia": {
+    "ixx": 0.0011316,
+    "iyy": 0.0011316,
+    "izz": 0.0021895
+   },
+   "base_rgb": [
+    0.3,
+    0.45,
+    0.35
+   ],
+   "accent_rgb": [
+    0.9,
+    0.9,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_24",
+   "diameter_mm": 224.3,
+   "height_mm": 31.9,
+   "rim_thickness_mm": 5.3,
+   "rim_lip_mm": 31.0,
+   "rim_underside_clearance_mm": 26.6,
+   "mass_kg": 0.3131,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06828927266300736,
+    "h": 0.010436642228368567
+   },
+   "inertia": {
+    "ixx": 0.0010113,
+    "iyy": 0.0010113,
+    "izz": 0.0019693
+   },
+   "base_rgb": [
+    0.93,
+    0.95,
+    0.97
+   ],
+   "accent_rgb": [
+    0.1,
+    0.5,
+    0.45
+   ]
+  },
+  {
+   "id": "plate_25",
+   "diameter_mm": 200.2,
+   "height_mm": 39.2,
+   "rim_thickness_mm": 7.9,
+   "rim_lip_mm": 25.0,
+   "rim_underside_clearance_mm": 31.2,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07277209865679611,
+    "h": 0.011377096436577878
+   },
+   "inertia": {
+    "ixx": 0.0010529,
+    "iyy": 0.0010529,
+    "izz": 0.0020036
+   },
+   "base_rgb": [
+    0.93,
+    0.95,
+    0.97
+   ],
+   "accent_rgb": [
+    0.1,
+    0.5,
+    0.45
+   ]
+  },
+  {
+   "id": "plate_26",
+   "diameter_mm": 244.1,
+   "height_mm": 35.7,
+   "rim_thickness_mm": 4.6,
+   "rim_lip_mm": 25.4,
+   "rim_underside_clearance_mm": 31.2,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07938890806551717,
+    "h": 0.01411040668564016
+   },
+   "inertia": {
+    "ixx": 0.0015316,
+    "iyy": 0.0015316,
+    "izz": 0.0029782
+   },
+   "base_rgb": [
+    0.95,
+    0.85,
+    0.75
+   ],
+   "accent_rgb": [
+    0.8,
+    0.45,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_27",
+   "diameter_mm": 215.3,
+   "height_mm": 32.7,
+   "rim_thickness_mm": 6.5,
+   "rim_lip_mm": 30.6,
+   "rim_underside_clearance_mm": 26.2,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "plain",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06796732735296925,
+    "h": 0.010805557662786949
+   },
+   "inertia": {
+    "ixx": 0.0011948,
+    "iyy": 0.0011948,
+    "izz": 0.0023185
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_28",
+   "diameter_mm": 239.2,
+   "height_mm": 39.6,
+   "rim_thickness_mm": 7.7,
+   "rim_lip_mm": 27.4,
+   "rim_underside_clearance_mm": 31.9,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07442322600524183,
+    "h": 0.009977361137749772
+   },
+   "inertia": {
+    "ixx": 0.0014825,
+    "iyy": 0.0014825,
+    "izz": 0.0028607
+   },
+   "base_rgb": [
+    0.95,
+    0.85,
+    0.75
+   ],
+   "accent_rgb": [
+    0.8,
+    0.45,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_29",
+   "diameter_mm": 182.8,
+   "height_mm": 34.3,
+   "rim_thickness_mm": 4.2,
+   "rim_lip_mm": 19.9,
+   "rim_underside_clearance_mm": 30.1,
+   "mass_kg": 0.3614,
+   "material": "stoneware",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05638160937833235,
+    "h": 0.009829079634779931
+   },
+   "inertia": {
+    "ixx": 0.0007905,
+    "iyy": 0.0007905,
+    "izz": 0.00151
+   },
+   "base_rgb": [
+    0.55,
+    0.7,
+    0.8
+   ],
+   "accent_rgb": [
+    0.95,
+    0.95,
+    0.95
+   ]
+  },
+  {
+   "id": "plate_30",
+   "diameter_mm": 178.7,
+   "height_mm": 30.2,
+   "rim_thickness_mm": 4.9,
+   "rim_lip_mm": 18.8,
+   "rim_underside_clearance_mm": 25.3,
+   "mass_kg": 0.3704,
+   "material": "stoneware",
+   "plan": "squircle",
+   "decor": "dots",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05179736708997626,
+    "h": 0.01084182090454366
+   },
+   "inertia": {
+    "ixx": 0.0008826,
+    "iyy": 0.0008826,
+    "izz": 0.0017089
+   },
+   "base_rgb": [
+    0.3,
+    0.45,
+    0.35
+   ],
+   "accent_rgb": [
+    0.9,
+    0.9,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_31",
+   "diameter_mm": 206.5,
+   "height_mm": 31.4,
+   "rim_thickness_mm": 6.7,
+   "rim_lip_mm": 21.3,
+   "rim_underside_clearance_mm": 24.7,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06891720188719323,
+    "h": 0.012024780607812023
+   },
+   "inertia": {
+    "ixx": 0.0010994,
+    "iyy": 0.0010994,
+    "izz": 0.002133
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_32",
+   "diameter_mm": 206.2,
+   "height_mm": 28.7,
+   "rim_thickness_mm": 4.6,
+   "rim_lip_mm": 29.0,
+   "rim_underside_clearance_mm": 24.1,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07661392459316602,
+    "h": 0.012392753077927678
+   },
+   "inertia": {
+    "ixx": 0.0010899,
+    "iyy": 0.0010899,
+    "izz": 0.0021249
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_33",
+   "diameter_mm": 223.0,
+   "height_mm": 35.1,
+   "rim_thickness_mm": 5.4,
+   "rim_lip_mm": 23.6,
+   "rim_underside_clearance_mm": 29.7,
+   "mass_kg": 0.4,
+   "material": "glass",
+   "plan": "oval",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06358366437853855,
+    "h": 0.01106396737441661
+   },
+   "inertia": {
+    "ixx": 0.0010231,
+    "iyy": 0.0010231,
+    "izz": 0.0019642
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_34",
+   "diameter_mm": 193.9,
+   "height_mm": 34.1,
+   "rim_thickness_mm": 7.5,
+   "rim_lip_mm": 19.2,
+   "rim_underside_clearance_mm": 26.6,
+   "mass_kg": 0.2892,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "dots",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06823592690610433,
+    "h": 0.011434837635687891
+   },
+   "inertia": {
+    "ixx": 0.000708,
+    "iyy": 0.000708,
+    "izz": 0.0013599
+   },
+   "base_rgb": [
+    0.86,
+    0.92,
+    0.86
+   ],
+   "accent_rgb": [
+    0.1,
+    0.4,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_35",
+   "diameter_mm": 208.8,
+   "height_mm": 35.2,
+   "rim_thickness_mm": 7.2,
+   "rim_lip_mm": 27.9,
+   "rim_underside_clearance_mm": 28.0,
+   "mass_kg": 0.094,
+   "material": "paper",
+   "plan": "round",
+   "decor": "floral",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07404358245277812,
+    "h": 0.013863712385486476
+   },
+   "inertia": {
+    "ixx": 0.0002657,
+    "iyy": 0.0002657,
+    "izz": 0.0005119
+   },
+   "base_rgb": [
+    0.85,
+    0.3,
+    0.25
+   ],
+   "accent_rgb": [
+    0.98,
+    0.95,
+    0.9
+   ]
+  },
+  {
+   "id": "plate_36",
+   "diameter_mm": 232.5,
+   "height_mm": 31.1,
+   "rim_thickness_mm": 6.9,
+   "rim_lip_mm": 23.1,
+   "rim_underside_clearance_mm": 24.2,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07324763086664718,
+    "h": 0.012052142138701486
+   },
+   "inertia": {
+    "ixx": 0.0013842,
+    "iyy": 0.0013842,
+    "izz": 0.0027037
+   },
+   "base_rgb": [
+    0.93,
+    0.95,
+    0.97
+   ],
+   "accent_rgb": [
+    0.1,
+    0.5,
+    0.45
+   ]
+  },
+  {
+   "id": "plate_37",
+   "diameter_mm": 196.6,
+   "height_mm": 35.2,
+   "rim_thickness_mm": 6.5,
+   "rim_lip_mm": 24.8,
+   "rim_underside_clearance_mm": 28.6,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05007092253641429,
+    "h": 0.011436009237223767
+   },
+   "inertia": {
+    "ixx": 0.0010078,
+    "iyy": 0.0010078,
+    "izz": 0.0019331
+   },
+   "base_rgb": [
+    0.98,
+    0.97,
+    0.92
+   ],
+   "accent_rgb": [
+    0.75,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_38",
+   "diameter_mm": 224.9,
+   "height_mm": 36.9,
+   "rim_thickness_mm": 6.3,
+   "rim_lip_mm": 18.8,
+   "rim_underside_clearance_mm": 30.6,
+   "mass_kg": 0.0835,
+   "material": "paper",
+   "plan": "oval",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06960355880294673,
+    "h": 0.01274516756071656
+   },
+   "inertia": {
+    "ixx": 0.0002404,
+    "iyy": 0.0002404,
+    "izz": 0.0004619
+   },
+   "base_rgb": [
+    0.97,
+    0.93,
+    0.88
+   ],
+   "accent_rgb": [
+    0.55,
+    0.3,
+    0.1
+   ]
+  },
+  {
+   "id": "plate_39",
+   "diameter_mm": 222.2,
+   "height_mm": 34.5,
+   "rim_thickness_mm": 5.3,
+   "rim_lip_mm": 19.3,
+   "rim_underside_clearance_mm": 29.1,
+   "mass_kg": 0.3456,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06625924739154641,
+    "h": 0.010185999984927953
+   },
+   "inertia": {
+    "ixx": 0.0011013,
+    "iyy": 0.0011013,
+    "izz": 0.0021341
+   },
+   "base_rgb": [
+    0.2,
+    0.22,
+    0.25
+   ],
+   "accent_rgb": [
+    0.85,
+    0.85,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_40",
+   "diameter_mm": 239.4,
+   "height_mm": 33.7,
+   "rim_thickness_mm": 4.9,
+   "rim_lip_mm": 23.3,
+   "rim_underside_clearance_mm": 28.8,
+   "mass_kg": 0.3852,
+   "material": "melamine",
+   "plan": "oval",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0628761249065782,
+    "h": 0.011788208724965131
+   },
+   "inertia": {
+    "ixx": 0.0012022,
+    "iyy": 0.0012022,
+    "izz": 0.0023318
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_41",
+   "diameter_mm": 217.6,
+   "height_mm": 31.8,
+   "rim_thickness_mm": 6.5,
+   "rim_lip_mm": 24.1,
+   "rim_underside_clearance_mm": 25.3,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "squircle",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.058655246403115285,
+    "h": 0.013778067587366157
+   },
+   "inertia": {
+    "ixx": 0.0014005,
+    "iyy": 0.0014005,
+    "izz": 0.0027336
+   },
+   "base_rgb": [
+    0.55,
+    0.7,
+    0.8
+   ],
+   "accent_rgb": [
+    0.95,
+    0.95,
+    0.95
+   ]
+  },
+  {
+   "id": "plate_42",
+   "diameter_mm": 201.0,
+   "height_mm": 35.9,
+   "rim_thickness_mm": 5.6,
+   "rim_lip_mm": 26.9,
+   "rim_underside_clearance_mm": 30.3,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.055531046795605596,
+    "h": 0.01333151182920762
+   },
+   "inertia": {
+    "ixx": 0.0010531,
+    "iyy": 0.0010531,
+    "izz": 0.0020202
+   },
+   "base_rgb": [
+    0.2,
+    0.22,
+    0.25
+   ],
+   "accent_rgb": [
+    0.85,
+    0.85,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_43",
+   "diameter_mm": 233.7,
+   "height_mm": 36.9,
+   "rim_thickness_mm": 7.5,
+   "rim_lip_mm": 33.3,
+   "rim_underside_clearance_mm": 29.4,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "squircle",
+   "decor": "plain",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.08958742429882954,
+    "h": 0.013128302588212275
+   },
+   "inertia": {
+    "ixx": 0.0016463,
+    "iyy": 0.0016463,
+    "izz": 0.0032018
+   },
+   "base_rgb": [
+    0.92,
+    0.88,
+    0.95
+   ],
+   "accent_rgb": [
+    0.4,
+    0.2,
+    0.6
+   ]
+  },
+  {
+   "id": "plate_44",
+   "diameter_mm": 232.3,
+   "height_mm": 28.6,
+   "rim_thickness_mm": 4.5,
+   "rim_lip_mm": 22.2,
+   "rim_underside_clearance_mm": 24.1,
+   "mass_kg": 0.0964,
+   "material": "paper",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.08528743676743696,
+    "h": 0.012502602710555089
+   },
+   "inertia": {
+    "ixx": 0.0003317,
+    "iyy": 0.0003317,
+    "izz": 0.0006502
+   },
+   "base_rgb": [
+    0.97,
+    0.93,
+    0.88
+   ],
+   "accent_rgb": [
+    0.55,
+    0.3,
+    0.1
+   ]
+  },
+  {
+   "id": "plate_45",
+   "diameter_mm": 186.8,
+   "height_mm": 31.0,
+   "rim_thickness_mm": 4.8,
+   "rim_lip_mm": 23.8,
+   "rim_underside_clearance_mm": 26.2,
+   "mass_kg": 0.2938,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.060887628383388834,
+    "h": 0.013609794003765812
+   },
+   "inertia": {
+    "ixx": 0.0006639,
+    "iyy": 0.0006639,
+    "izz": 0.0012808
+   },
+   "base_rgb": [
+    0.2,
+    0.22,
+    0.25
+   ],
+   "accent_rgb": [
+    0.85,
+    0.85,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_46",
+   "diameter_mm": 233.3,
+   "height_mm": 31.6,
+   "rim_thickness_mm": 4.5,
+   "rim_lip_mm": 25.0,
+   "rim_underside_clearance_mm": 27.1,
+   "mass_kg": 0.3595,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.06726615919402108,
+    "h": 0.011905433387552998
+   },
+   "inertia": {
+    "ixx": 0.001253,
+    "iyy": 0.001253,
+    "izz": 0.0024462
+   },
+   "base_rgb": [
+    0.86,
+    0.92,
+    0.86
+   ],
+   "accent_rgb": [
+    0.1,
+    0.4,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_47",
+   "diameter_mm": 245.8,
+   "height_mm": 32.5,
+   "rim_thickness_mm": 7.0,
+   "rim_lip_mm": 23.2,
+   "rim_underside_clearance_mm": 25.5,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07523998323209043,
+    "h": 0.0115899008915944
+   },
+   "inertia": {
+    "ixx": 0.0015457,
+    "iyy": 0.0015457,
+    "izz": 0.0030212
+   },
+   "base_rgb": [
+    0.96,
+    0.96,
+    0.94
+   ],
+   "accent_rgb": [
+    0.15,
+    0.35,
+    0.65
+   ]
+  },
+  {
+   "id": "plate_48",
+   "diameter_mm": 176.0,
+   "height_mm": 35.6,
+   "rim_thickness_mm": 6.3,
+   "rim_lip_mm": 23.3,
+   "rim_underside_clearance_mm": 29.4,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "squircle",
+   "decor": "floral",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.059013478608672426,
+    "h": 0.014880436265069939
+   },
+   "inertia": {
+    "ixx": 0.0009695,
+    "iyy": 0.0009695,
+    "izz": 0.0018543
+   },
+   "base_rgb": [
+    0.95,
+    0.85,
+    0.75
+   ],
+   "accent_rgb": [
+    0.8,
+    0.45,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_49",
+   "diameter_mm": 180.6,
+   "height_mm": 33.6,
+   "rim_thickness_mm": 6.8,
+   "rim_lip_mm": 27.8,
+   "rim_underside_clearance_mm": 26.9,
+   "mass_kg": 0.4,
+   "material": "stoneware",
+   "plan": "squircle",
+   "decor": "radial",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0728341257984151,
+    "h": 0.011884811864110167
+   },
+   "inertia": {
+    "ixx": 0.0010034,
+    "iyy": 0.0010034,
+    "izz": 0.0019314
+   },
+   "base_rgb": [
+    0.99,
+    0.99,
+    0.99
+   ],
+   "accent_rgb": [
+    0.2,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_50",
+   "diameter_mm": 235.6,
+   "height_mm": 36.7,
+   "rim_thickness_mm": 6.1,
+   "rim_lip_mm": 21.5,
+   "rim_underside_clearance_mm": 30.6,
+   "mass_kg": 0.4,
+   "material": "melamine",
+   "plan": "oval",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0747462687959719,
+    "h": 0.013121728611811868
+   },
+   "inertia": {
+    "ixx": 0.0012637,
+    "iyy": 0.0012637,
+    "izz": 0.0024376
+   },
+   "base_rgb": [
+    0.85,
+    0.3,
+    0.25
+   ],
+   "accent_rgb": [
+    0.98,
+    0.95,
+    0.9
+   ]
+  },
+  {
+   "id": "plate_51",
+   "diameter_mm": 247.5,
+   "height_mm": 33.3,
+   "rim_thickness_mm": 6.2,
+   "rim_lip_mm": 34.3,
+   "rim_underside_clearance_mm": 27.1,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0640090392229201,
+    "h": 0.013134304665238282
+   },
+   "inertia": {
+    "ixx": 0.001569,
+    "iyy": 0.001569,
+    "izz": 0.003064
+   },
+   "base_rgb": [
+    0.86,
+    0.92,
+    0.86
+   ],
+   "accent_rgb": [
+    0.1,
+    0.4,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_53",
+   "diameter_mm": 245.0,
+   "height_mm": 31.5,
+   "rim_thickness_mm": 5.6,
+   "rim_lip_mm": 18.6,
+   "rim_underside_clearance_mm": 25.9,
+   "mass_kg": 0.0904,
+   "material": "paper",
+   "plan": "round",
+   "decor": "rim_band",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.07313396772021032,
+    "h": 0.009350507346214431
+   },
+   "inertia": {
+    "ixx": 0.0003464,
+    "iyy": 0.0003464,
+    "izz": 0.0006778
+   },
+   "base_rgb": [
+    0.95,
+    0.85,
+    0.75
+   ],
+   "accent_rgb": [
+    0.8,
+    0.45,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_54",
+   "diameter_mm": 209.1,
+   "height_mm": 30.3,
+   "rim_thickness_mm": 4.0,
+   "rim_lip_mm": 26.1,
+   "rim_underside_clearance_mm": 26.3,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.0706212363166893,
+    "h": 0.013798225002681665
+   },
+   "inertia": {
+    "ixx": 0.0011239,
+    "iyy": 0.0011239,
+    "izz": 0.0021865
+   },
+   "base_rgb": [
+    0.3,
+    0.45,
+    0.35
+   ],
+   "accent_rgb": [
+    0.9,
+    0.9,
+    0.8
+   ]
+  },
+  {
+   "id": "plate_55",
+   "diameter_mm": 232.9,
+   "height_mm": 33.5,
+   "rim_thickness_mm": 5.7,
+   "rim_lip_mm": 27.4,
+   "rim_underside_clearance_mm": 27.8,
+   "mass_kg": 0.4,
+   "material": "porcelain",
+   "plan": "round",
+   "decor": "rings",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.08950205348910291,
+    "h": 0.010824354376703276
+   },
+   "inertia": {
+    "ixx": 0.0013934,
+    "iyy": 0.0013934,
+    "izz": 0.0027121
+   },
+   "base_rgb": [
+    0.99,
+    0.99,
+    0.99
+   ],
+   "accent_rgb": [
+    0.2,
+    0.2,
+    0.2
+   ]
+  },
+  {
+   "id": "plate_56",
+   "diameter_mm": 170.2,
+   "height_mm": 30.3,
+   "rim_thickness_mm": 5.2,
+   "rim_lip_mm": 25.8,
+   "rim_underside_clearance_mm": 25.2,
+   "mass_kg": 0.2674,
+   "material": "melamine",
+   "plan": "squircle",
+   "decor": "speckle",
+   "n_coll": 48,
+   "foot_cyl": {
+    "r": 0.05530149332985429,
+    "h": 0.012270899136696711
+   },
+   "inertia": {
+    "ixx": 0.0006096,
+    "iyy": 0.0006096,
+    "izz": 0.0011782
+   },
+   "base_rgb": [
+    0.3,
+    0.45,
+    0.35
+   ],
+   "accent_rgb": [
+    0.9,
+    0.9,
+    0.8
+   ]
+  }
+ ],
+ "note": "50 of 70 candidates (seed 11, --min-clearance-mm 24 --min-lip-mm 18) that pass check_pinch, check_rack_fit and check_under_rim (2026-11-04); ids are the candidates' own, not contiguous",
+ "foot_spheres": 4
+}

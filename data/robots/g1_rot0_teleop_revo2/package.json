@@ -1,0 +1,149 @@
+{
+ "name": "g1_rot0_teleop_revo2.xml",
+ "compiled_model_sha256": null,
+ "made": "2026-10-23",
+ "source_robot": "data/robots/g1_rot0_teleop/g1_rot0_teleop.xml",
+ "hand": "BrainCo Revo 2 (HoloMotion G1+BrainCo module kinematics; Unitree xr_teleoperate meshes)",
+ "xml": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2.xml",
+ "nq": 58,
+ "nv": 57,
+ "nu": 51,
+ "nbody": 68,
+ "njnt": 52,
+ "left_hand_joints": [
+  "left_hand_thumb_metacarpal_joint",
+  "left_hand_thumb_proximal_joint",
+  "left_hand_thumb_distal_joint",
+  "left_hand_index_proximal_joint",
+  "left_hand_index_distal_joint",
+  "left_hand_middle_proximal_joint",
+  "left_hand_middle_distal_joint",
+  "left_hand_ring_proximal_joint",
+  "left_hand_ring_distal_joint",
+  "left_hand_pinky_proximal_joint",
+  "left_hand_pinky_distal_joint"
+ ],
+ "right_hand_joints": [
+  "right_hand_thumb_metacarpal_joint",
+  "right_hand_thumb_proximal_joint",
+  "right_hand_thumb_distal_joint",
+  "right_hand_index_proximal_joint",
+  "right_hand_index_distal_joint",
+  "right_hand_middle_proximal_joint",
+  "right_hand_middle_distal_joint",
+  "right_hand_ring_proximal_joint",
+  "right_hand_ring_distal_joint",
+  "right_hand_pinky_proximal_joint",
+  "right_hand_pinky_distal_joint"
+ ],
+ "actuators_in_joint_order": true,
+ "hand_mass_kg": {
+  "left": 0.408,
+  "right": 0.408
+ },
+ "total_mass_kg": 39.533,
+ "right_index_tip_from_base_m": [
+  0.146,
+  0.02,
+  0.034
+ ],
+ "right_thumb_tip_from_base_m": [
+  0.039,
+  0.012,
+  0.111
+ ],
+ "equality_constraints": 10,
+ "removed": [
+  "left_hand_index_0_joint",
+  "left_hand_index_0_link",
+  "left_hand_index_1_joint",
+  "left_hand_index_1_link",
+  "left_hand_middle_0_joint",
+  "left_hand_middle_0_link",
+  "left_hand_middle_1_joint",
+  "left_hand_middle_1_link",
+  "left_hand_thumb_0_joint",
+  "left_hand_thumb_0_link",
+  "left_hand_thumb_1_joint",
+  "left_hand_thumb_1_link",
+  "left_hand_thumb_2_joint",
+  "left_hand_thumb_2_link",
+  "right_hand_index_0_joint",
+  "right_hand_index_0_link",
+  "right_hand_index_1_joint",
+  "right_hand_index_1_link",
+  "right_hand_middle_0_joint",
+  "right_hand_middle_0_link",
+  "right_hand_middle_1_joint",
+  "right_hand_middle_1_link",
+  "right_hand_thumb_0_joint",
+  "right_hand_thumb_0_link",
+  "right_hand_thumb_1_joint",
+  "right_hand_thumb_1_link",
+  "right_hand_thumb_2_joint",
+  "right_hand_thumb_2_link"
+ ],
+ "meshes": 69,
+ "finger_limits": {
+  "right_hand_thumb_proximal_joint": {
+   "lever_m": 0.0785,
+   "limit_Nm": 1.1,
+   "damping": 0.478,
+   "urdf_effort": 1.1
+  },
+  "right_hand_thumb_distal_joint": {
+   "lever_m": 0.0266,
+   "limit_Nm": 0.399,
+   "damping": 0.173,
+   "urdf_effort": 1.1
+  },
+  "right_hand_index_proximal_joint": {
+   "lever_m": 0.0686,
+   "limit_Nm": 1.03,
+   "damping": 0.448,
+   "urdf_effort": 2.0
+  },
+  "right_hand_index_distal_joint": {
+   "lever_m": 0.0374,
+   "limit_Nm": 0.561,
+   "damping": 0.244,
+   "urdf_effort": 2.0
+  },
+  "right_hand_middle_proximal_joint": {
+   "lever_m": 0.0785,
+   "limit_Nm": 1.177,
+   "damping": 0.512,
+   "urdf_effort": 2.0
+  },
+  "right_hand_middle_distal_joint": {
+   "lever_m": 0.0423,
+   "limit_Nm": 0.635,
+   "damping": 0.276,
+   "urdf_effort": 2.0
+  },
+  "right_hand_ring_proximal_joint": {
+   "lever_m": 0.0755,
+   "limit_Nm": 1.133,
+   "damping": 0.493,
+   "urdf_effort": 2.0
+  },
+  "right_hand_ring_distal_joint": {
+   "lever_m": 0.0414,
+   "limit_Nm": 0.62,
+   "damping": 0.27,
+   "urdf_effort": 2.0
+  },
+  "right_hand_pinky_proximal_joint": {
+   "lever_m": 0.0628,
+   "limit_Nm": 0.941,
+   "damping": 0.409,
+   "urdf_effort": 2.0
+  },
+  "right_hand_pinky_distal_joint": {
+   "lever_m": 0.0345,
+   "limit_Nm": 0.517,
+   "damping": 0.225,
+   "urdf_effort": 2.0
+  }
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "id": "pasta_15",
+ "family": "pasta",
+ "R": 0.11329871097611058,
+ "H": 0.03768929369701203,
+ "w": 0.0433080657231266,
+ "t_rim": 0.005980724598337671,
+ "t": 0.005057691281940561,
+ "r_foot": 0.0264861346364007,
+ "h_foot": 0.008856153858183759,
+ "foot_w": 0.005841705835717552,
+ "well_dz": 0.0,
+ "well_margin": 0.006013193837978549,
+ "edge": 0.0029903622991688354,
+ "rim_rise": 0.0014115060317707487,
+ "lip_under": 0.007178279044988158,
+ "under_drop": 0.0004652936396029921,
+ "recess": 0.002615043471637616,
+ "bowl_k": 2.4438092440873063,
+ "well_depth": 0.02236394252511697,
+ "plan": "round",
+ "plan_n": 4.0,
+ "plan_norm": 1.0,
+ "plan_b": 1.0,
+ "material": "porcelain",
+ "base_rgb": [
+  0.98,
+  0.98,
+  0.96
+ ],
+ "accent_rgb": [
+  0.8,
+  0.65,
+  0.3
+ ],
+ "decor": "plain",
+ "band_px": 8,
+ "band_off": 0.043190167416053235,
+ "n_coll": 72,
+ "foot_cyl": {
+  "r": 0.036499328474379256,
+  "h": 0.01391384514012432
+ },
+ "mass_kg": 0.4,
+ "volume_cm3": 262.5,
+ "extents_mm": [
+  226.6,
+  226.6,
+  37.7
+ ],
+ "diameter_mm": 226.6,
+ "height_mm": 37.7,
+ "rim_thickness_mm": 6.0,
+ "rim_underside_clearance_mm": 31.7,
+ "mass_raw_kg": 0.63,
+ "rim_lip_mm": 43.3,
+ "faces": 6720,
+ "inertia": {
+  "ixx": 0.001331,
+  "iyy": 0.001331,
+  "izz": 0.0025673
+ },
+ "com_z": 0.02502,
+ "watertight": true,
+ "foot_spheres": 4,
+ "well_depth_mm": 22.4,
+ "well_floor_mm": 65.0
+}

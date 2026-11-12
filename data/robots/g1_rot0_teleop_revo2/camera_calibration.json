@@ -1,0 +1,1260 @@
+{
+ "made": "2026-10-28 16:48",
+ "source_mjcf": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2_v3.xml",
+ "source_urdf": "data/robots/g1_rot0_teleop_revo2/g1_rot0_teleop_revo2.urdf",
+ "source_calibration": "third_party/hbvcam_stereo/calibration/stereo_calib.yaml",
+ "conventions": {
+  "optical_frame": "ROS optical: x right, y down, z forward = the image axes (u along x, v along y); the URDF *_optical_frame links",
+  "mujoco_camera": "looks along its -z with y up; optical = MuJoCo camera frame x Rx(pi)",
+  "quaternions": "w x y z",
+  "units": "m, rad, px; calibration T in mm",
+  "rpy": "URDF: R = Rz(yaw) Ry(pitch) Rx(roll)",
+  "pixels": "OpenCV: pixel (0,0) is centred at x = 0, y = 0",
+  "frames_in_pelvis": "world pose at the model's zero pose (every joint 0, pelvis at (0, 0, 0.793), identity), expressed in the pelvis; the wrist entries move with the arm"
+ },
+ "recorded_images": {
+  "observation.images.ego_view_left": {
+   "what": "rectified left eye of the HBVCAM stereo head (R1/P1 of the stereo calibration), rendered by MuJoCo at 1280x720 and area-downscaled to 640x360",
+   "model": "pinhole, rectified: no distortion; u = fx x/z + cx, v = fy y/z + cy in the optical frame",
+   "width": 640,
+   "height": 360,
+   "fx": 246.7829,
+   "fy": 246.7829,
+   "cx": 317.1564,
+   "cy": 179.7328,
+   "K": [
+    [
+     246.7829,
+     0.0,
+     317.1564
+    ],
+    [
+     0.0,
+     246.7829,
+     179.7328
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "fov_deg": {
+    "h": 104.72,
+    "v": 72.21
+   },
+   "render": {
+    "mujoco_camera": "hbvcam_left_pinhole",
+    "size": [
+     1280,
+     720
+    ],
+    "mjcf_camera_attributes": {
+     "resolution": "1280 720",
+     "sensorsize": "1280 720",
+     "focalpixel": "493.566 493.566",
+     "principalpixel": "5.18729 -0.0344048"
+    },
+    "downscale": "area 2x; pixel centres x' = (x + 0.5) s - 0.5",
+    "P_1280x720": [
+     [
+      493.565781,
+      0.0,
+      634.812714,
+      0.0
+     ],
+     [
+      0.0,
+      493.565781,
+      359.965595,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+     ]
+    ],
+    "R_rect": [
+     [
+      0.999955,
+      -0.009323,
+      -0.001933
+     ],
+     [
+      0.009325,
+      0.999956,
+      0.000854
+     ],
+     [
+      0.001925,
+      -0.000872,
+      0.999998
+     ]
+    ],
+    "note": "K at 1280x720 = P[:3,:3]; the rectified eye frame = the raw eye frame rotated by R_rect"
+   },
+   "optical_frame": {
+    "urdf_link": "hbvcam_left_pinhole_optical_frame",
+    "parent": "torso_link",
+    "xyz_m": [
+     0.077025,
+     0.030356,
+     0.392956
+    ],
+    "rpy_rad": [
+     -2.430247,
+     -0.007546,
+     -1.56499
+    ],
+    "quat_wxyz": [
+     0.244448,
+     -0.665694,
+     0.659987,
+     -0.24802
+    ],
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.073061,
+      0.030356,
+      0.446956
+     ],
+     "rpy_rad": [
+      -2.430247,
+      -0.007546,
+      -1.56499
+     ],
+     "quat_wxyz": [
+      0.244448,
+      -0.665694,
+      0.659987,
+      -0.24802
+     ]
+    }
+   }
+  },
+  "observation.images.ego_view_right": {
+   "what": "rectified right eye of the HBVCAM stereo head (R2/P2 of the stereo calibration), rendered by MuJoCo at 1280x720 and area-downscaled to 640x360",
+   "model": "pinhole, rectified: no distortion; u = fx x/z + cx, v = fy y/z + cy in the optical frame",
+   "width": 640,
+   "height": 360,
+   "fx": 246.7829,
+   "fy": 246.7829,
+   "cx": 317.1564,
+   "cy": 179.7328,
+   "baseline_mm": 60.517,
+   "K": [
+    [
+     246.7829,
+     0.0,
+     317.1564
+    ],
+    [
+     0.0,
+     246.7829,
+     179.7328
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "fov_deg": {
+    "h": 104.72,
+    "v": 72.21
+   },
+   "render": {
+    "mujoco_camera": "hbvcam_right_pinhole",
+    "size": [
+     1280,
+     720
+    ],
+    "mjcf_camera_attributes": {
+     "resolution": "1280 720",
+     "sensorsize": "1280 720",
+     "focalpixel": "493.566 493.566",
+     "principalpixel": "5.18729 -0.0344048"
+    },
+    "downscale": "area 2x; pixel centres x' = (x + 0.5) s - 0.5",
+    "P_1280x720": [
+     [
+      493.565781,
+      0.0,
+      634.812714,
+      -29869.180164
+     ],
+     [
+      0.0,
+      493.565781,
+      359.965595,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+     ]
+    ],
+    "R_rect": [
+     [
+      0.999904,
+      -0.009934,
+      0.009681
+     ],
+     [
+      0.009942,
+      0.99995,
+      -0.000815
+     ],
+     [
+      -0.009672,
+      0.000911,
+      0.999953
+     ]
+    ],
+    "note": "K at 1280x720 = P[:3,:3]; the rectified eye frame = the raw eye frame rotated by R_rect"
+   },
+   "optical_frame": {
+    "urdf_link": "hbvcam_right_pinhole_optical_frame",
+    "parent": "torso_link",
+    "xyz_m": [
+     0.076622,
+     -0.030356,
+     0.393458
+    ],
+    "rpy_rad": [
+     -2.432342,
+     -0.001923,
+     -1.562961
+    ],
+    "quat_wxyz": [
+     0.24586,
+     -0.665936,
+     0.660268,
+     -0.245211
+    ],
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.072659,
+      -0.030356,
+      0.447458
+     ],
+     "rpy_rad": [
+      -2.432342,
+      -0.001923,
+      -1.562961
+     ],
+     "quat_wxyz": [
+      0.24586,
+      -0.665936,
+      0.660268,
+      -0.245211
+     ]
+    }
+   },
+   "stereo": {
+    "baseline_mm": 60.517,
+    "T_left_to_right_m": [
+     0.060517,
+     0.0,
+     0.0
+    ],
+    "note": "rectified pair: the right optical frame is the left one shifted along +x; disparity = fx * baseline / depth"
+   }
+  },
+  "observation.images.wrist_left": {
+   "what": "monocular wrist camera in the printed collar on the left wrist (palm side, looking along the forearm): equidistant fisheye view, 150 deg on the image diagonal (130.7 x 73.5 deg), 640x360, assembled from three 90-deg MuJoCo faces (wrist_<side>_front/left/right); rendered on a 30 Hz schedule and repeated to the dataset's 50 fps (wrist_cams.fresh = 1 on a new render)",
+   "model": "equidistant fisheye: r_px = f * theta; theta = angle to the optical axis, phi = atan2(v - cy, u - cx); no further distortion; black outside the lens circle",
+   "width": 640,
+   "height": 360,
+   "f": 280.483,
+   "cx": 319.5,
+   "cy": 179.5,
+   "fov_diag_deg": 150.0,
+   "hfov_deg": 130.7,
+   "vfov_deg": 73.5,
+   "render": {
+    "mujoco_faces": [
+     "wrist_left_front",
+     "wrist_left_left",
+     "wrist_left_right"
+    ],
+    "face_fovy_deg": 90,
+    "face_px": 448,
+    "near_plane_m": 0.006,
+    "schedule_hz": 30,
+    "pinhole_camera_of_the_module": {
+     "name": "wrist_left",
+     "mjcf_camera_attributes": {
+      "fovy": "40.43"
+     },
+     "note": "the F2619HD's own 76-deg (diagonal) pinhole at the same pose; not recorded"
+    }
+   },
+   "optical_frame": {
+    "urdf_link": "wrist_left_optical_frame",
+    "parent": "left_wrist_cam_mount",
+    "xyz_m": [
+     0.0,
+     -0.03384,
+     0.012562
+    ],
+    "rpy_rad": [
+     0.610865,
+     0.0,
+     3.141593
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     0.300706,
+     0.953717
+    ],
+    "in_wrist_yaw_link": {
+     "parent": "left_wrist_yaw_link",
+     "xyz_m": [
+      0.049062,
+      -0.03384,
+      0.0
+     ],
+     "rpy_rad": [
+      -2.530727,
+      -1.570796,
+      0.0
+     ],
+     "quat_wxyz": [
+      0.212631,
+      -0.67438,
+      -0.212631,
+      -0.67438
+     ]
+    },
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.24883,
+      0.114812,
+      0.095228
+     ],
+     "rpy_rad": [
+      -1.713666,
+      -1.570716,
+      -0.817253
+     ],
+     "quat_wxyz": [
+      0.212592,
+      -0.674412,
+      -0.212541,
+      -0.674388
+     ]
+    }
+   }
+  },
+  "observation.images.wrist_right": {
+   "what": "monocular wrist camera in the printed collar on the right wrist (palm side, looking along the forearm): equidistant fisheye view, 150 deg on the image diagonal (130.7 x 73.5 deg), 640x360, assembled from three 90-deg MuJoCo faces (wrist_<side>_front/left/right); rendered on a 30 Hz schedule and repeated to the dataset's 50 fps (wrist_cams.fresh = 1 on a new render)",
+   "model": "equidistant fisheye: r_px = f * theta; theta = angle to the optical axis, phi = atan2(v - cy, u - cx); no further distortion; black outside the lens circle",
+   "width": 640,
+   "height": 360,
+   "f": 280.483,
+   "cx": 319.5,
+   "cy": 179.5,
+   "fov_diag_deg": 150.0,
+   "hfov_deg": 130.7,
+   "vfov_deg": 73.5,
+   "render": {
+    "mujoco_faces": [
+     "wrist_right_front",
+     "wrist_right_left",
+     "wrist_right_right"
+    ],
+    "face_fovy_deg": 90,
+    "face_px": 448,
+    "near_plane_m": 0.006,
+    "schedule_hz": 30,
+    "pinhole_camera_of_the_module": {
+     "name": "wrist_right",
+     "mjcf_camera_attributes": {
+      "fovy": "40.43"
+     },
+     "note": "the F2619HD's own 76-deg (diagonal) pinhole at the same pose; not recorded"
+    }
+   },
+   "optical_frame": {
+    "urdf_link": "wrist_right_optical_frame",
+    "parent": "right_wrist_cam_mount",
+    "xyz_m": [
+     0.0,
+     -0.03384,
+     0.012562
+    ],
+    "rpy_rad": [
+     0.610865,
+     0.0,
+     3.141593
+    ],
+    "quat_wxyz": [
+     0.0,
+     0.0,
+     0.300706,
+     0.953717
+    ],
+    "in_wrist_yaw_link": {
+     "parent": "right_wrist_yaw_link",
+     "xyz_m": [
+      0.049062,
+      0.03384,
+      -0.0
+     ],
+     "rpy_rad": [
+      -2.530727,
+      1.570796,
+      3.141593
+     ],
+     "quat_wxyz": [
+      0.67438,
+      0.212631,
+      0.67438,
+      -0.212631
+     ]
+    },
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.24883,
+      -0.114802,
+      0.095228
+     ],
+     "rpy_rad": [
+      -1.716484,
+      1.570716,
+      -2.327157
+     ],
+     "quat_wxyz": [
+      0.674388,
+      0.212541,
+      0.674412,
+      -0.212592
+     ]
+    }
+   }
+  }
+ },
+ "raw_head_fisheye": {
+  "left": {
+   "K": [
+    [
+     471.197213,
+     0.0,
+     771.047532
+    ],
+    [
+     0.0,
+     474.361036,
+     450.157618
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "D_fisheye_k1_k4": [
+    -0.035869,
+    0.000305,
+    -0.002971,
+    0.000357
+   ],
+   "image": [
+    1280,
+    720
+   ],
+   "model": "OpenCV fisheye (cv2.fisheye): r = f theta_d, theta_d = theta (1 + k1 theta^2 + k2 theta^4 + k3 theta^6 + k4 theta^8)",
+   "optical_frame": {
+    "urdf_link": "head_stereo_left_optical_frame",
+    "parent": "torso_link",
+    "xyz_m": [
+     0.077025,
+     0.030356,
+     0.392956
+    ],
+    "rpy_rad": [
+     -2.431087,
+     0.0,
+     -1.570796
+    ],
+    "quat_wxyz": [
+     0.245951,
+     -0.662954,
+     0.662954,
+     -0.245951
+    ],
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.073061,
+      0.030356,
+      0.446956
+     ],
+     "rpy_rad": [
+      -2.431087,
+      0.0,
+      -1.570796
+     ],
+     "quat_wxyz": [
+      0.245951,
+      -0.662954,
+      0.662954,
+      -0.245951
+     ]
+    }
+   }
+  },
+  "right": {
+   "K": [
+    [
+     474.31376,
+     0.0,
+     717.446969
+    ],
+    [
+     0.0,
+     477.612713,
+     450.572333
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "D_fisheye_k1_k4": [
+    -0.034882,
+    -0.000181,
+    -0.003241,
+    0.000485
+   ],
+   "image": [
+    1280,
+    720
+   ],
+   "model": "OpenCV fisheye (cv2.fisheye): r = f theta_d, theta_d = theta (1 + k1 theta^2 + k2 theta^4 + k3 theta^6 + k4 theta^8)",
+   "optical_frame": {
+    "urdf_link": "head_stereo_right_optical_frame",
+    "parent": "torso_link",
+    "xyz_m": [
+     0.076622,
+     -0.030356,
+     0.393458
+    ],
+    "rpy_rad": [
+     -2.431446,
+     -0.002786,
+     -1.576805
+    ],
+    "quat_wxyz": [
+     0.244166,
+     -0.661346,
+     0.664645,
+     -0.24749
+    ],
+    "in_pelvis": {
+     "parent": "pelvis (zero pose, pelvis at z 0.793)",
+     "xyz_m": [
+      0.072659,
+      -0.030356,
+      0.447458
+     ],
+     "rpy_rad": [
+      -2.431446,
+      -0.002786,
+      -1.576805
+     ],
+     "quat_wxyz": [
+      0.244166,
+      -0.661346,
+      0.664645,
+      -0.24749
+     ]
+    }
+   }
+  },
+  "stereo": {
+   "R_right_wrt_left": [
+    [
+     0.999933,
+     0.000628,
+     -0.011596
+    ],
+    [
+     -0.000607,
+     0.999998,
+     0.001785
+    ],
+    [
+     0.011597,
+     -0.001778,
+     0.999931
+    ]
+   ],
+   "T_right_wrt_left_mm": [
+    -60.511299,
+    0.601173,
+    -0.585837
+   ],
+   "note": "OpenCV stereoCalibrate: x_right = R x_left + T"
+  },
+  "rectification": {
+   "R1": [
+    [
+     0.999955,
+     -0.009323,
+     -0.001933
+    ],
+    [
+     0.009325,
+     0.999956,
+     0.000854
+    ],
+    [
+     0.001925,
+     -0.000872,
+     0.999998
+    ]
+   ],
+   "R2": [
+    [
+     0.999904,
+     -0.009934,
+     0.009681
+    ],
+    [
+     0.009942,
+     0.99995,
+     -0.000815
+    ],
+    [
+     -0.009672,
+     0.000911,
+     0.999953
+    ]
+   ],
+   "P1": [
+    [
+     493.565781,
+     0.0,
+     634.812714,
+     0.0
+    ],
+    [
+     0.0,
+     493.565781,
+     359.965595,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ]
+   ],
+   "P2": [
+    [
+     493.565781,
+     0.0,
+     634.812714,
+     -29869.180164
+    ],
+    [
+     0.0,
+     493.565781,
+     359.965595,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ]
+   ],
+   "note": "OpenCV fisheye.stereoRectify outputs at 1280x720; the recorded ego_view K = P[:3,:3] scaled to 640x360"
+  },
+  "calibration": {
+   "file": "third_party/hbvcam_stereo/calibration/stereo_calib.yaml",
+   "report": "third_party/hbvcam_stereo/calibration/calibration_report.txt",
+   "date": "2026-09-10",
+   "board": "8x7 inner corners, 100 mm squares, 25 of 35 pairs used",
+   "stereo_rms_px": 0.11668,
+   "baseline_mm": 60.517121,
+   "note": "calibration of the real HBVCAM module; its eye poses on the robot are the sites above (the 10-26 head tuning moved them, a visual fit, not a calibration)"
+  }
+ },
+ "mujoco_cameras": [
+  {
+   "name": "hbvcam_left_front",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.662954,
+    0.245951,
+    -0.245951,
+    -0.662954
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -2.431087,
+    0.0,
+    -1.570796
+   ]
+  },
+  {
+   "name": "hbvcam_left_right",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.294866,
+    -0.294866,
+    -0.642693,
+    -0.642693
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -1.570796,
+    -0.860292,
+    -3.141593
+   ]
+  },
+  {
+   "name": "hbvcam_left_left",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.642693,
+    0.642693,
+    0.294866,
+    -0.294866
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -1.570796,
+    0.860292,
+    0.0
+   ]
+  },
+  {
+   "name": "hbvcam_left_up",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.294866,
+    0.642693,
+    -0.642693,
+    -0.294866
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -0.860292,
+    0.0,
+    -1.570796
+   ]
+  },
+  {
+   "name": "hbvcam_left_down",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.642693,
+    -0.294866,
+    0.294866,
+    -0.642693
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    2.281301,
+    0.0,
+    -1.570796
+   ]
+  },
+  {
+   "name": "hbvcam_right_front",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.661346,
+    0.244166,
+    -0.24749,
+    -0.664645
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -2.431446,
+    -0.002786,
+    -1.576805
+   ]
+  },
+  {
+   "name": "hbvcam_right_right",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.292641,
+    -0.297323,
+    -0.642644,
+    -0.642626
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -1.566524,
+    -0.860645,
+    3.132346
+   ]
+  },
+  {
+   "name": "hbvcam_right_left",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.642644,
+    0.642626,
+    0.292641,
+    -0.297323
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -1.575069,
+    0.860645,
+    -0.009247
+   ]
+  },
+  {
+   "name": "hbvcam_right_up",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.294991,
+    0.640294,
+    -0.644977,
+    -0.294973
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    -0.860649,
+    -0.002786,
+    -1.576805
+   ]
+  },
+  {
+   "name": "hbvcam_right_down",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.640294,
+    -0.294991,
+    0.294973,
+    -0.644977
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    2.280943,
+    -0.002786,
+    -1.576805
+   ]
+  },
+  {
+   "name": "hbvcam_left_pinhole",
+   "body": "torso_link",
+   "pos_m": [
+    0.077025,
+    0.030356,
+    0.392956
+   ],
+   "quat_wxyz": [
+    0.665694,
+    0.244448,
+    -0.24802,
+    -0.659987
+   ],
+   "attributes": {
+    "resolution": "1280 720",
+    "sensorsize": "1280 720",
+    "focalpixel": "493.566 493.566",
+    "principalpixel": "5.18729 -0.0344048"
+   },
+   "role": "rectified eye, recorded",
+   "optical_frame_rpy_rad": [
+    -2.430247,
+    -0.007546,
+    -1.56499
+   ]
+  },
+  {
+   "name": "hbvcam_right_pinhole",
+   "body": "torso_link",
+   "pos_m": [
+    0.076622,
+    -0.030356,
+    0.393458
+   ],
+   "quat_wxyz": [
+    0.665936,
+    0.24586,
+    -0.245211,
+    -0.660268
+   ],
+   "attributes": {
+    "resolution": "1280 720",
+    "sensorsize": "1280 720",
+    "focalpixel": "493.566 493.566",
+    "principalpixel": "5.18729 -0.0344048"
+   },
+   "role": "rectified eye, recorded",
+   "optical_frame_rpy_rad": [
+    -2.432342,
+    -0.001923,
+    -1.562961
+   ]
+  },
+  {
+   "name": "wrist_left",
+   "body": "left_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.0,
+    0.0,
+    0.953717,
+    -0.300706
+   ],
+   "attributes": {
+    "fovy": "40.43"
+   },
+   "role": "wrist module pinhole (not recorded)",
+   "optical_frame_rpy_rad": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "name": "wrist_left_front",
+   "body": "left_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.0,
+    0.0,
+    0.953717,
+    -0.300706
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "name": "wrist_left_left",
+   "body": "left_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.67438,
+    -0.212631,
+    -0.67438,
+    0.212631
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    1.570796,
+    -0.959931,
+    1.570796
+   ]
+  },
+  {
+   "name": "wrist_left_right",
+   "body": "left_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.67438,
+    -0.212631,
+    0.67438,
+    -0.212631
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    1.570796,
+    0.959931,
+    -1.570796
+   ]
+  },
+  {
+   "name": "wrist_right",
+   "body": "right_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.0,
+    0.0,
+    0.953717,
+    -0.300706
+   ],
+   "attributes": {
+    "fovy": "40.43"
+   },
+   "role": "wrist module pinhole (not recorded)",
+   "optical_frame_rpy_rad": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "name": "wrist_right_front",
+   "body": "right_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.0,
+    0.0,
+    0.953717,
+    -0.300706
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    0.610865,
+    0.0,
+    3.141593
+   ]
+  },
+  {
+   "name": "wrist_right_left",
+   "body": "right_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.67438,
+    -0.212631,
+    -0.67438,
+    0.212631
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    1.570796,
+    -0.959931,
+    1.570796
+   ]
+  },
+  {
+   "name": "wrist_right_right",
+   "body": "right_wrist_cam_mount",
+   "pos_m": [
+    0.0,
+    -0.03384,
+    0.012562
+   ],
+   "quat_wxyz": [
+    0.67438,
+    -0.212631,
+    0.67438,
+    -0.212631
+   ],
+   "attributes": {
+    "fovy": "90"
+   },
+   "role": "fisheye face",
+   "optical_frame_rpy_rad": [
+    1.570796,
+    0.959931,
+    -1.570796
+   ]
+  }
+ ],
+ "imu": {
+  "mjcf_site_imu": {
+   "parent": "torso_link",
+   "xyz_m": [
+    -0.03959,
+    -0.00224,
+    0.13792
+   ],
+   "rpy_rad": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "quat_wxyz": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "urdf_imu_link": {
+   "parent": "torso_link",
+   "xyz_m": [
+    -0.03959,
+    -0.00224,
+    0.13792
+   ],
+   "rpy_rad": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "urdf_pelvis_imu_link": {
+   "parent": "pelvis",
+   "xyz_m": [
+    0.04525,
+    0.0,
+    -0.08339
+   ],
+   "rpy_rad": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "urdf_d435_link": {
+   "parent": "torso_link",
+   "xyz_m": [
+    0.057624,
+    0.01753,
+    0.41987
+   ],
+   "rpy_rad": [
+    0.0,
+    0.830777,
+    0.0
+   ]
+  },
+  "urdf_mid360_link": {
+   "parent": "torso_link",
+   "xyz_m": [
+    0.000284,
+    3e-05,
+    0.40618
+   ],
+   "rpy_rad": [
+    0.0,
+    0.040143,
+    0.0
+   ]
+  },
+  "note": "the recorded states.robot.imu_* columns are defined at pelvis_imu_link; imu_link is the stock G1 torso IMU (= the MJCF site imu)"
+ }
+}

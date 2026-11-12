@@ -1,0 +1,214 @@
+{
+  "objects": [
+    {
+      "id": "plate_a",
+      "title": "Blue-rim plate A",
+      "kind": "plate",
+      "pos": [
+        -0.7,
+        1.1,
+        0.853
+      ],
+      "radius": 0.115,
+      "mass": 0.03,
+      "source_names": [
+        "Blue rim paper plate"
+      ],
+      "provenance": "Existing loose plate; rigid approximation of a paper plate",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "plate_a",
+      "joint": "plate_a_free"
+    },
+    {
+      "id": "plate_b",
+      "title": "Blue-rim plate B",
+      "kind": "plate",
+      "pos": [
+        -0.7,
+        1.45,
+        0.853
+      ],
+      "radius": 0.115,
+      "mass": 0.03,
+      "source_names": [
+        "Blue rim paper plate.001"
+      ],
+      "provenance": "Existing loose plate; rigid approximation of a paper plate",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "plate_b",
+      "joint": "plate_b_free"
+    },
+    {
+      "id": "bottle_red",
+      "title": "Red condiment bottle",
+      "kind": "bottle",
+      "pos": [
+        -0.99,
+        1.91,
+        0.847
+      ],
+      "radius": 0.027,
+      "height": 0.22,
+      "mass": 0.25,
+      "source_names": [
+        "Red squeeze bottle",
+        "Red squeeze bottle cap"
+      ],
+      "provenance": "Existing bottle and cap; one sealed rigid body",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bottle_red",
+      "joint": "bottle_red_free"
+    },
+    {
+      "id": "bottle_green",
+      "title": "Green condiment bottle",
+      "kind": "bottle",
+      "pos": [
+        -0.91,
+        1.93,
+        0.847
+      ],
+      "radius": 0.026,
+      "height": 0.23,
+      "mass": 0.25,
+      "source_names": [
+        "Green squeeze bottle",
+        "Green squeeze bottle cap"
+      ],
+      "provenance": "Existing bottle and cap; one sealed rigid body",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bottle_green",
+      "joint": "bottle_green_free"
+    },
+    {
+      "id": "carton_bags",
+      "title": "Storage-bag carton",
+      "kind": "carton",
+      "pos": [
+        -1.04,
+        0.48,
+        0.93
+      ],
+      "dims": [
+        0.17,
+        0.25,
+        0.16
+      ],
+      "mass": 0.16,
+      "source_names": [
+        "Storage bag carton",
+        "Storage bag carton label",
+        "Storage bag carton side label",
+        "Storage bag carton top label"
+      ],
+      "provenance": "Existing carton and its three label faces; rigid closed box",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "carton_bags",
+      "joint": "carton_bags_free"
+    },
+    {
+      "id": "carton_wrap",
+      "title": "Cling-wrap carton",
+      "kind": "carton",
+      "pos": [
+        -1.06,
+        1.27,
+        0.906
+      ],
+      "dims": [
+        0.17,
+        0.31,
+        0.105
+      ],
+      "mass": 0.18,
+      "source_names": [
+        "Cling wrap carton",
+        "Cling wrap carton label",
+        "Cling wrap carton side label",
+        "Cling wrap carton top label"
+      ],
+      "provenance": "Existing carton and its three label faces; rigid closed box",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "carton_wrap",
+      "joint": "carton_wrap_free"
+    },
+    {
+      "id": "bowl_small",
+      "title": "Small hollow bowl",
+      "kind": "bowl",
+      "pos": [
+        -0.7,
+        0.7,
+        0.851
+      ],
+      "radius": 0.07,
+      "height": 0.055,
+      "mass": 0.18,
+      "source_names": [],
+      "provenance": "New task object; authored ceramic bowl, not claimed to be in the source capture",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bowl_small",
+      "joint": "bowl_small_free"
+    },
+    {
+      "id": "bowl_large",
+      "title": "Large hollow bowl",
+      "kind": "bowl",
+      "pos": [
+        -0.7,
+        1.81,
+        0.851
+      ],
+      "radius": 0.085,
+      "height": 0.07,
+      "mass": 0.28,
+      "source_names": [],
+      "provenance": "New task object; authored ceramic bowl, not claimed to be in the source capture",
+      "friction": [
+        0.7,
+        0.005,
+        0.0001
+      ],
+      "mass_calibration": "Engineering prior; configurable, not measured",
+      "body": "bowl_large",
+      "joint": "bowl_large_free"
+    }
+  ],
+  "source_project": "/home/Horizon/wrk/KitchenScene_Objects_20261026",
+  "scope": "Eight selected independently movable rigid props; other countertop/background props remain fixed."
+}

@@ -1,0 +1,226 @@
+<title>__TITLE__</title>
+<!--FONTS-->
+<style>
+:root{--bg:#f4f6f7;--paper:#fcfcfb;--ink:#0b0b0b;--ink-2:#52514e;--muted:#6b6a66;--rule:#e2e4e6;--grid:#eceeef;--accent:#0f6b6b;--accent-soft:#e3f1f0;--warn:#9a6700;--warn-soft:#fff4d6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111315;--paper:#1a1a19;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#2d2f31;--grid:#262829;--accent:#5cc3bd;--accent-soft:#16302f;--warn:#e0b44c;--warn-soft:#3a2e10;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111315;--paper:#1a1a19;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#2d2f31;--grid:#262829;--accent:#5cc3bd;--accent-soft:#16302f;--warn:#e0b44c;--warn-soft:#3a2e10;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding-inline:16px;padding-block:22px 56px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.wrap>*{min-width:0}
+.eyebrow{font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(21px,3vw,28px);margin:6px 0 4px;font-weight:600;text-wrap:balance}
+h2{font-size:17px;margin:0;font-weight:600}h3{font-size:14px;margin:0 0 6px;font-weight:600}
+p{margin:6px 0;max-width:90ch}.muted{color:var(--muted)}.small{font-size:13px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;display:grid;gap:10px}
+.stage{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:1100px){.stage{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}}
+video{width:100%;max-width:100%;border-radius:8px;background:#000;display:block;cursor:pointer}
+.pbar{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pb-btn{flex:none;width:34px;height:34px;display:grid;place-items:center;padding:0;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;cursor:pointer}
+.pb-btn:hover{border-color:var(--accent)}.pb-btn svg{width:16px;height:16px}
+.pb-track{position:relative;flex:1;min-width:0;height:30px;cursor:pointer;touch-action:none;outline:none;user-select:none}
+.pb-track::before{content:"";position:absolute;left:0;right:0;top:13px;height:5px;border-radius:3px;background:var(--grid)}
+.pb-loaded,.pb-done{position:absolute;left:0;top:13px;height:5px;border-radius:3px;width:0;pointer-events:none}
+.pb-loaded{background:var(--muted);opacity:.35}.pb-done{background:var(--accent)}
+.pb-knob{position:absolute;top:8px;left:0;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;background:var(--accent);border:2px solid var(--paper);box-shadow:0 0 0 1px var(--accent);pointer-events:none}
+.pb-track:focus-visible .pb-knob{box-shadow:0 0 0 4px var(--accent-soft),0 0 0 1px var(--accent)}
+.pb-tick{position:absolute;top:2px;width:2px;height:8px;margin-left:-1px;border-radius:1px;background:var(--ink-2)}
+.pb-time{flex:none;min-width:16ch;text-align:right;font:500 13px "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.pb-rate{flex:none;height:34px;font:500 13px "IBM Plex Sans",system-ui,sans-serif;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:8px;padding:0 4px}
+@media (max-width:560px){.pb-rate{display:none}}
+.vbox:fullscreen{background:#000;padding:16px;display:flex;flex-direction:column;justify-content:center;color-scheme:dark;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#9a998f;--rule:#3a3c3e;--grid:#2d2f31;--paper:#1a1a19;--accent:#5cc3bd;--accent-soft:#16302f}
+.vbox:fullscreen video{flex:1;min-height:0;object-fit:contain;border-radius:0}
+.chain{list-style:none;margin:0;padding:0;display:grid;gap:2px;align-content:start;max-height:640px;overflow:auto}
+.chain li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:14px}
+.chain li:hover{background:var(--grid)}.chain li.on{background:var(--accent-soft);font-weight:600}
+.chain .n{font:500 12px "IBM Plex Mono",ui-monospace,monospace;color:#fff;border-radius:4px;text-align:center;line-height:20px}
+.chain .t{font:12px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chain li.off .n{background:var(--muted)!important}.chain li.off{color:var(--muted)}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 16px;margin:0}dl.kv dt{color:var(--muted);font-size:13px;font-weight:600}dl.kv dd{margin:0}
+details summary{cursor:pointer;color:var(--accent);font-weight:500}
+.cap{white-space:pre-line;max-width:90ch;margin-top:6px}
+.top{position:relative;max-width:640px}
+.top img,.top canvas{width:100%;display:block;border-radius:8px}
+.top canvas{position:absolute;inset:0;cursor:crosshair}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:6px 10px;border-bottom:1px solid var(--rule)}th{color:var(--muted);font-weight:600;font-size:13px;white-space:nowrap}
+td.num,td.mono{font:13px "IBM Plex Mono",ui-monospace,monospace;white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--grid)}tr.on td{background:var(--accent-soft)}
+.chip{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--rule);white-space:nowrap}
+.chip.inc{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+button.play{font:500 12px "IBM Plex Sans",system-ui,sans-serif;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:6px;padding:2px 9px;cursor:pointer}
+button.play:hover{border-color:var(--accent)}
+.samples{display:grid;gap:6px;margin:8px 0 4px}
+.smp{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 12px;font-size:13px;padding:6px 8px;border-radius:6px;background:var(--grid);cursor:pointer}
+.smp .t{font:12px "IBM Plex Mono",ui-monospace,monospace;color:var(--accent)}
+.smp .h{color:var(--ink-2)}.smp .o{color:var(--muted);font-size:12px}
+.stats{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.bars{display:grid;gap:4px}.bar{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:8px;align-items:center;font-size:13px}
+.bar .l{position:relative;padding:2px 6px;z-index:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar .l i{position:absolute;inset:0;right:auto;background:var(--accent-soft);border-radius:3px;z-index:-1}
+.bar .v{font:12px "IBM Plex Mono",ui-monospace,monospace;text-align:right;color:var(--ink-2)}
+code{font:13px "IBM Plex Mono",ui-monospace,monospace;background:var(--accent-soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+a{color:var(--accent)}
+</style>
+<div class="wrap">
+<header><div class="eyebrow">HoloMotion v1.4 sim teleop · segment, caption and sub-task annotation</div>
+<h1>__TITLE__</h1><p class="muted" id="lede"></p></header>
+
+<section class="card"><h2>Task</h2><dl class="kv" id="task"></dl>
+<details><summary>Video caption</summary><div class="cap" id="vcap"></div></details></section>
+
+<section class="card stage">
+  <div><div class="vbox" id="vbox"><video id="v" preload="auto" playsinline src="__VIDEO__"></video>
+    <div class="pbar"><button class="pb-btn" id="pplay" type="button" aria-label="Play"><svg viewBox="0 0 16 16" aria-hidden="true"><path id="picon" d="M4.5 2.8v10.4l8.5-5.2z" fill="currentColor"/></svg></button>
+      <div class="pb-track" id="ptrack" role="slider" tabindex="0" aria-label="Video time (seconds)" aria-valuemin="0" aria-valuenow="0"><div class="pb-loaded" id="ploaded"></div><div class="pb-done" id="pdone"></div><div id="pticks"></div><div class="pb-knob" id="pknob"></div></div>
+      <span class="pb-time" id="clock">0.00 s</span>
+      <select class="pb-rate" id="prate" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+      <button class="pb-btn" id="pfull" type="button" aria-label="Full screen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
+    <div class="muted small" id="vnote" hidden>Loading the whole video so it can jump to any time (this server cannot send parts of a file): <span id="vpct">0%</span></div></div>
+    <p class="muted small">The process video: the head camera as recorded (left) and a third-person chase camera (right), with the annotation playing along underneath: the sub task, the actions running now, both hands, the interaction sentence and the objects in view, and a timeline of all sub tasks (▲ incidental events, the trimmed tail outlined).</p></div>
+  <div><h3>Sub tasks</h3><ol class="chain" id="chain"></ol></div>
+</section>
+
+<section class="card"><h2>Where the robot walked</h2>
+<div class="top"><img id="topimg" src="topview.jpg" alt="Top view of the kitchen with the robot's path"><canvas id="topc"></canvas></div>
+<p class="muted small">Top view of the kitchen (rendered at the first frame, robot hidden) with the robot base's path, coloured by sub task; the ring is the robot now. Click the path to move the video there.</p></section>
+
+<section class="card"><h2>Task-related slices</h2><div class="scroll"><table id="slices"></table></div>
+<p class="muted small" id="slicenote"></p></section>
+
+<section class="card"><h2>Actions</h2><div class="scroll"><table id="acts"></table></div></section>
+
+<section class="card"><h2>5 s segments and sampled frames</h2><p class="muted small">The Horizon layout: each 5 s segment has its sub task and the actions it overlaps; every 0.5 s a sampled frame has the objects in view with their state, both hands (in view, holding, object, grasp state) and one interaction sentence. Click a row to open its samples, a sample to move the video there.</p><div class="scroll"><table id="segs"></table></div></section>
+
+<section class="card"><h2>Statistics</h2><div class="stats" id="stats"></div></section>
+
+<section class="card"><h2>Files and how they were made</h2><div id="files"></div></section>
+</div>
+<script>
+(()=>{
+const F=__FACTS__;
+const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const PAL=["#3987e5","#e8743b","#1baf7a","#c98500","#d55181","#7f6cd6","#2aa6b8","#a0602c","#5f8f2f","#c2454f"];
+const v=$("#v"); let C=null, SL=null, TR=null, FPS=50, ACTS=[], stopAt=null;
+const fs=f=>((f-1)/FPS), fmt=t=>t.toFixed(1)+" s";
+Promise.all([fetch("caption.json").then(r=>r.json()),fetch("__SLICES__").then(r=>r.json()),fetch("traj.json").then(r=>r.json())]).then(([c,s,t])=>{C=c;SL=s;TR=t;FPS=c.config.fps;build();}).catch(e=>{$("#lede").textContent="Could not load the annotation files: "+e;});
+
+function build(){
+  const cfg=C.config, trim=cfg.trim;
+  const m=new Map(); for(const g of C.segments)for(const a of g["Current Action"])m.set(a.label+"|"+a.start_frame,a); ACTS=[...m.values()].sort((a,b)=>a.start_frame-b.start_frame);
+  const nsamp=C.segments.reduce((n,g)=>n+Object.keys(g.interaction).length,0);
+  $("#lede").textContent=`${F.seconds} s at ${FPS} fps · ${SL.length} sub tasks · ${ACTS.length} actions (${ACTS.filter(a=>!a.task_relevant).length} incidental) · ${C.segments.length} segments of ${cfg.segment_sec} s · ${nsamp} sampled frames at ${cfg.sample_fps} per second · trimmed to ${(trim.kept_frames/FPS).toFixed(1)} s. Annotated from the simulation itself (the recording's bit-exact replay), in the Horizon caption.json layout.`;
+  const L=F.meta.task_labels||{};
+  $("#task").innerHTML=[["Main task",cfg["Main Task"]],["Summary",C.global_summary],["Task labels",`${L.level_1} › ${L.level_2}`],["Scene",F.meta.scene],["Robot",`${F.meta.device.robot}, teleoperated with ${F.meta.device.teleop}`],
+    ["Trim",`keeps frames 1–${trim.kept_frames} of ${trim.original_frames}: ${trim.rule}`],["Dataset",`${F.dataset}, episode ${F.episode}`]].map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+  $("#vcap").textContent=C.video_caption;
+  // chain
+  $("#chain").innerHTML=SL.map((s,i)=>`<li data-i="${i}" class="${s.task_relevant?"":"off"}"><span class="n" style="background:${PAL[i%PAL.length]}">${i+1}</span><span>${esc(s.sub_task)}</span><span class="t">${s.start_s.toFixed(1)}–${s.end_s.toFixed(1)} s</span></li>`).join("");
+  $("#chain").addEventListener("click",e=>{const li=e.target.closest("li"); if(li)playSlice(+li.dataset.i,false);});
+  // slices
+  $("#slices").innerHTML=`<thead><tr><th>#</th><th>sub task</th><th>time</th><th>frames</th><th>length</th><th>kind</th><th>actions</th><th></th></tr></thead><tbody>`+SL.map((s,i)=>
+    `<tr><td class="num"><span class="sw" style="background:${PAL[i%PAL.length]}"></span>${i+1}</td><td>${esc(s.sub_task)}</td><td class="mono">${s.start_s.toFixed(1)}–${s.end_s.toFixed(1)} s</td><td class="mono">${s.start_frame}–${s.end_frame}</td><td class="mono">${s.seconds.toFixed(1)} s</td>`+
+    `<td>${s.task_relevant?'<span class="chip">task</span>':'<span class="chip inc">not task-relevant</span>'}${s.kept?"":' <span class="chip inc">trimmed</span>'}</td><td class="small">${esc(s.actions.join(" · "))}</td>`+
+    `<td style="white-space:nowrap"><button class="play" data-i="${i}">Play</button>${s.clip?` <a class="small" href="${esc(s.clip)}">clip</a>`:""}</td></tr>`).join("")+"</tbody>";
+  $("#slices").addEventListener("click",e=>{const b=e.target.closest("button.play"); if(b)playSlice(+b.dataset.i,true);});
+  $("#slicenote").textContent="One slice per sub task, contiguous, frames 1-based (frame n = dataset frame_index n−1). Play runs a slice and stops at its end"+(SL.some(s=>s.clip)?"; clip downloads it as its own video.":".")+" The task ends where the trim cuts; the last slice (stepping back) is outside it.";
+  // actions
+  $("#acts").innerHTML=`<thead><tr><th>action</th><th>time</th><th>frames</th><th>kind</th><th>description</th></tr></thead><tbody>`+ACTS.map((a,i)=>
+    `<tr class="click" data-t="${fs(a.start_frame)}"><td>${esc(a.label)}</td><td class="mono">${fs(a.start_frame).toFixed(1)}–${(a.end_frame/FPS).toFixed(1)} s</td><td class="mono">${a.start_frame}–${a.end_frame}</td><td>${a.task_relevant?'<span class="chip">task</span>':'<span class="chip inc">incidental</span>'}</td><td class="small">${esc(a.description)}</td></tr>`).join("")+"</tbody>";
+  $("#acts").addEventListener("click",e=>{const r=e.target.closest("tr.click"); if(r)seekTo(+r.dataset.t);});
+  // segments
+  const handTxt=h=>(h.grasp_state?`${h.grasp_state} ${h.object||""}`:"free")+(h.visible?"":" (not in view)");
+  $("#segs").innerHTML=`<thead><tr><th>#</th><th>time</th><th>frames</th><th>sub task</th><th>actions</th></tr></thead><tbody>`+C.segments.map(g=>{
+    const acts=[...new Set(g["Current Action"].map(a=>a.label))];
+    const smp=Object.keys(g.interaction).map(f=>`<div class="smp" data-t="${fs(+f)}"><span class="t">${fs(+f).toFixed(1)} s</span><span>${esc(g.interaction[f])}</span><span></span><span class="h">left: ${esc(handTxt(g.hands[f].left))} · right: ${esc(handTxt(g.hands[f].right))}</span><span></span><span class="o">in view: ${esc(g.objects[f].map(o=>o.name+" ("+o.state+")").join(", ")||"nothing tracked")}</span></div>`).join("");
+    return `<tr class="click seg" data-id="${g.segment_id}"><td class="num">${g.segment_id}</td><td class="mono">${g.seconds[0].toFixed(0)}–${g.seconds[1].toFixed(0)} s</td><td class="mono">${g.start_frame}–${g.end_frame}</td><td>${esc(g["Sub Task"])}</td><td class="small">${esc(acts.join(" · "))}</td></tr>`+
+      `<tr class="smprow" data-id="${g.segment_id}" hidden><td></td><td colspan="4"><div class="samples">${smp}</div></td></tr>`;}).join("")+"</tbody>";
+  $("#segs").addEventListener("click",e=>{const s=e.target.closest(".smp"); if(s){seekTo(+s.dataset.t);return;} const r=e.target.closest("tr.seg"); if(r){const x=document.querySelector(`tr.smprow[data-id="${r.dataset.id}"]`); x.hidden=!x.hidden;}});
+  stats(); files(); paintTicks(); drawTop();
+}
+function bars(title,rows,unit){const mx=Math.max(1,...rows.map(r=>r[1]));return `<div><h3>${title}</h3><div class="bars">${rows.map(([k,n])=>`<div class="bar"><span class="l"><i style="width:${100*n/mx}%"></i>${esc(k)}</span><span class="v">${unit(n)}</span></div>`).join("")}</div></div>`;}
+function stats(){
+  const subDur={}; SL.forEach(s=>{subDur[s.sub_task]=(subDur[s.sub_task]||0)+s.seconds;});
+  const actDur={}; ACTS.forEach(a=>{actDur[a.label]=(actDur[a.label]||0)+(a.end_frame-a.start_frame+1)/FPS;});
+  const gs={}, vis={"left in view":0,"right in view":0,"left holding":0,"right holding":0}, obj={}; let n=0;
+  for(const g of C.segments)for(const f in g.hands){n++; for(const s of ["left","right"]){const h=g.hands[f][s]; const k=`${s}: ${h.grasp_state||"free"}`; gs[k]=(gs[k]||0)+1; if(h.visible)vis[s+" in view"]++; if(h.holding)vis[s+" holding"]++;}
+    for(const o of g.objects[f])obj[o.name]=(obj[o.name]||0)+1;}
+  const top=(o,k)=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,k);
+  $("#stats").innerHTML=bars("Time per sub task",top(subDur,20),x=>x.toFixed(1)+" s")+bars("Time per action label",top(actDur,14),x=>x.toFixed(1)+" s")+
+    bars(`Hand grasp states (${n} sampled frames)`,top(gs,14),x=>String(x))+bars(`Hands in view / holding (${n} sampled frames)`,Object.entries(vis),x=>(100*x/n).toFixed(0)+"%")+
+    bars(`Objects most often in view (${n} sampled frames)`,top(obj,12),x=>(100*x/n).toFixed(0)+"%");
+}
+function files(){
+  const nas=SL.some(s=>s.clip);
+  const rows=[["caption.json","the annotation in the Horizon layout: config (Main Task, trim, source), 5 s segments with Sub Task, Current Action, sampled frames, objects, interaction and hands; global_summary; video_caption"],
+    ["metadata.json","task labels (3 levels), scene, robot, duration, trim"],["__SLICES__","the task-related slices: one per sub task with frame ranges, seconds, actions"+(nas?" and clip file":"")],
+    ["traj.json","the robot base path (every 5th frame) with its sub task, the actions, the detected events, and the top-view pixel mapping"]];
+  if(nas)rows.push(["slices/","one video clip per sub task, cut from the process video"]);
+  $("#files").innerHTML=`<div class="scroll"><table><tbody>${rows.map(([f,d])=>`<tr><td class="mono"><a href="${f}">${f}</a></td><td class="small">${d}</td></tr>`).join("")}</tbody></table></div>`+
+   `<p class="small">How: <code>episode_events.py</code> replays the recording bit-exactly and logs every 20 ms frame: what each hand and the rest of the robot touch (by name), every kitchen joint (dishwasher door, racks, bin pedal and lid), every prop's pose, the base pose and speed, and every 0.5 s which objects the head camera sees (in the picture and not hidden behind something). <code>episode_annotate.py</code> turns those events into sub tasks, actions and sentences: a door or rack action is a hand on it while its joint moves; picking, carrying and placing a dish come from its contacts, its height above the counter, the walking periods and whether it ends inside a rack. A carry that stops at the pedal bin splits into four sub tasks: the walk to the bin; stepping on the pedal (from the first foot press until the lid is fully open, 1.3 rad or more); swiping the dish over the bin (until the robot walks on: the free hand's palm moves in toward the dish and back out, one swipe per pass of 10 cm or more); and the walk on to the dishwasher. Incidental events (a foot brushing the pedal while walking past, a hand resting on the sink) are kept but marked not task-relevant. Unlike the Horizon set, where Gemini captioned the video, every frame range here is measured; the sentences are templates filled from those measurements and were checked against the video.</p>`+
+   (F.review?`<p class="small">Same episode with all camera views and the tactile sensors: <a href="${esc(F.review)}">episode review page</a>.</p>`:"")+(F.check?`<p class="small">Recording quality, checked with the team's standard data criteria: <a href="${esc(F.check)}">data check report</a>.</p>`:"");
+}
+// ---- top view -----------------------------------------------------------------------------------------------------------------------
+function drawTop(){ if(!TR||!TR.map)return; const img=$("#topimg"), cv=$("#topc"); if(!img.complete||!img.naturalWidth){img.onload=drawTop;return;}
+  const W=img.clientWidth, H=img.clientHeight, dpr=devicePixelRatio||1; cv.width=W*dpr; cv.height=H*dpr; const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const M=TR.map, P=(x,y)=>[((x-M.cx)/M.sx*M.W+M.W/2)*W/M.W,(M.H/2-(y-M.cy)/M.sy*M.H)*H/M.H];
+  g.lineWidth=3; g.lineCap="round"; g.lineJoin="round";
+  for(let i=1;i<TR.x.length;i++){const a=P(TR.x[i-1],TR.y[i-1]), b=P(TR.x[i],TR.y[i]); g.strokeStyle=SL[TR.sub[i]]&&SL[TR.sub[i]].task_relevant?PAL[TR.sub[i]%PAL.length]:"#888"; g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();}
+  const s=P(TR.x[0],TR.y[0]); g.fillStyle="#1a7f37"; g.beginPath(); g.arc(s[0],s[1],5,0,7); g.fill();
+  const k=Math.max(0,Math.min(TR.x.length-1,Math.round(now()*FPS/5))), q=P(TR.x[k],TR.y[k]); g.strokeStyle="#fff"; g.lineWidth=5; g.beginPath(); g.arc(q[0],q[1],8,0,7); g.stroke(); g.strokeStyle="#0b0b0b"; g.lineWidth=2.5; g.beginPath(); g.arc(q[0],q[1],8,0,7); g.stroke();
+}
+$("#topc").addEventListener("click",e=>{ if(!TR||!TR.map)return; const r=e.currentTarget.getBoundingClientRect(), M=TR.map; const x=(e.clientX-r.left)/r.width*M.W, y=(e.clientY-r.top)/r.height*M.H;
+  const wx=(x-M.W/2)/M.W*M.sx+M.cx, wy=(M.H/2-y)/M.H*M.sy+M.cy; let best=0,bd=1e9; for(let i=0;i<TR.x.length;i++){const d=(TR.x[i]-wx)**2+(TR.y[i]-wy)**2; if(d<bd){bd=d;best=i;}} seekTo(best*5/FPS);});
+// ---- video: the same draggable playbar as the review page ------------------------------------------------------------------------
+let want=null, inMemory=false, loadedFrac=0;
+const canSeek=()=>inMemory||!!(v.seekable&&v.seekable.length&&v.seekable.end(0)>=v.duration-1);
+const now=()=>(want!=null&&!canSeek())?want:v.currentTime;
+function seekTo(t){want=t; try{v.currentTime=t;}catch(e){} paintBar(true); follow(true);}
+function playSlice(i,stop){const s=SL[i]; stopAt=stop?s.end_s:null; seekTo(s.start_s+0.01); if(stop)v.play().catch(()=>{});}
+(function loadWhole(){const ac=new AbortController();
+  fetch(v.getAttribute("src"),{headers:{Range:"bytes=0-"},signal:ac.signal}).then(async r=>{
+    if(r.status===206){ac.abort(); return;}
+    if(!r.ok)throw r.status;
+    const n=+r.headers.get("content-length")||0, rd=r.body.getReader(), parts=[]; let got=0; $("#vnote").hidden=false;
+    for(;;){const {done,value}=await rd.read(); if(done)break; parts.push(value); got+=value.length; if(n){loadedFrac=got/n; $("#vpct").textContent=Math.round(100*loadedFrac)+"%";}}
+    const t=v.currentTime, playing=!v.paused;
+    v.addEventListener("loadedmetadata",()=>{inMemory=true; try{v.currentTime=want!=null?want:t;}catch(e){} if(playing)v.play().catch(()=>{}); $("#vnote").hidden=true; paintBar(true);},{once:true});
+    v.src=URL.createObjectURL(new Blob(parts,{type:"video/mp4"}));
+  }).catch(()=>{$("#vnote").hidden=true;});})();
+const track=$("#ptrack"), PLAY="M4.5 2.8v10.4l8.5-5.2z", PAUSE="M4 2.5h3v11H4zM9 2.5h3v11H9z";
+let dragging=false, dragT=0, wasPlaying=false, barKey="";
+const dur=()=>isFinite(v.duration)&&v.duration>0?v.duration:(F.seconds||0);
+const tAt=e=>{const r=track.getBoundingClientRect(); return Math.max(0,Math.min(dur(),(e.clientX-r.left)/r.width*dur()));};
+function toggle(){v.paused?v.play().catch(()=>{}):v.pause();}
+function paintBar(force){const T=dur(); if(!T)return; const t=dragging?dragT:now(), f=Math.max(0,Math.min(1,t/T));
+  const lf=inMemory?1:Math.max(loadedFrac,v.buffered.length?v.buffered.end(v.buffered.length-1)/T:0);
+  const key=f.toFixed(4)+"|"+lf.toFixed(3)+"|"+v.paused; if(!force&&key===barKey)return; barKey=key;
+  $("#pknob").style.left=$("#pdone").style.width=(100*f)+"%"; $("#ploaded").style.width=(100*Math.min(1,lf))+"%";
+  $("#clock").textContent=`${t.toFixed(2)} / ${T.toFixed(1)} s`; track.setAttribute("aria-valuenow",t.toFixed(1)); track.setAttribute("aria-valuemax",T.toFixed(1));
+  $("#picon").setAttribute("d",v.paused?PLAY:PAUSE); $("#pplay").setAttribute("aria-label",v.paused?"Play":"Pause");}
+track.addEventListener("pointerdown",e=>{if(e.button!==0)return; dragging=true; stopAt=null; wasPlaying=!v.paused; v.pause(); track.setPointerCapture(e.pointerId); dragT=tAt(e); seekTo(dragT); e.preventDefault();});
+track.addEventListener("pointermove",e=>{if(!dragging)return; dragT=tAt(e); seekTo(dragT);});
+const endDrag=()=>{if(!dragging)return; dragging=false; seekTo(dragT); if(wasPlaying&&canSeek())v.play().catch(()=>{});};
+track.addEventListener("pointerup",endDrag); track.addEventListener("pointercancel",endDrag);
+track.addEventListener("keydown",e=>{const T=dur(), st=e.shiftKey?5:1; let t=null;
+  if(e.key==="ArrowRight"||e.key==="ArrowUp")t=now()+st; else if(e.key==="ArrowLeft"||e.key==="ArrowDown")t=now()-st; else if(e.key==="Home")t=0; else if(e.key==="End")t=T;
+  else if(e.key===" "||e.key==="k"){toggle(); e.preventDefault(); return;}
+  if(t!=null){seekTo(Math.max(0,Math.min(T,t))); e.preventDefault();}});
+$("#pplay").addEventListener("click",toggle); v.addEventListener("click",toggle);
+v.addEventListener("play",()=>{if(!canSeek())want=null;});
+$("#prate").addEventListener("change",e=>{v.playbackRate=v.defaultPlaybackRate=+e.target.value;});
+if(!document.fullscreenEnabled)$("#pfull").hidden=true;
+$("#pfull").addEventListener("click",()=>{try{const p=document.fullscreenElement?document.exitFullscreen():$("#vbox").requestFullscreen(); p&&p.catch&&p.catch(()=>{});}catch(e){}});
+function paintTicks(){const T=dur(); if(!T||!SL)return; $("#pticks").innerHTML=SL.slice(1).map(s=>`<span class="pb-tick" style="left:${100*s.start_s/T}%" title="${esc(s.sub_task)} · ${s.start_s.toFixed(1)} s"></span>`).join("");}
+v.addEventListener("loadedmetadata",()=>{paintTicks(); paintBar(true);});
+let curSub=-1, lastTop=-1;
+function follow(force){ if(!SL)return; const t=now(); const i=SL.findIndex(s=>t>=s.start_s&&t<s.end_s);
+  if(i!==curSub||force){curSub=i; for(const li of document.querySelectorAll("#chain li"))li.classList.toggle("on",+li.dataset.i===i);}
+  const k=Math.round(t*FPS/5); if(k!==lastTop||force){lastTop=k; drawTop();}
+  if(stopAt!=null&&t>=stopAt){v.pause(); stopAt=null;}}
+(function loop(){ paintBar(); follow(false); requestAnimationFrame(loop);})();
+addEventListener("resize",()=>drawTop());
+})();
+</script>
