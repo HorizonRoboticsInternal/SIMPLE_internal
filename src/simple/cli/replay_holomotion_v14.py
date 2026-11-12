@@ -107,6 +107,8 @@ def _build_env(info: dict, setup: dict, headless: bool = True, check_legacy: boo
         from simple.robots.g1_sonic_revo2 import hand_variant_of, select_hand_variant
         _hv = select_hand_variant(hand_variant_of(info.get("robot_mjcf")))   # 2026-11-04: legacy or official hand, as recorded (class file, limits, couplings, grip poses, pinch knots)
         print(f"[replay] Revo 2 hand: {_hv['variant']} ({_hv['mjcf']})", flush=True)
+        from simple.robots.g1_sonic_revo2 import use_recorded_grip
+        use_recorded_grip(info)                           # 2026-11-11: the grip poses + button assignment the recording was made with
     env = gym.make(info["env_id"], sim_mode="mujoco", render_hz=info["render_hz"], physics_dt=info["physics_dt"],
                    headless=headless, max_episode_steps=10 ** 9, sonic_config=sonic_config,
                    target=getattr(mod, "TARGET", None), dr_level=info["dr_level"], success_criteria=0.9,

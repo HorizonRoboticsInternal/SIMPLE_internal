@@ -895,6 +895,10 @@ def main(
     if robot_kind == "revo2":                                 # 2026-11-04: legacy or official hand model (class file, joint limits, couplings, grip poses, pinch knots)
         from simple.robots.g1_sonic_revo2 import select_hand_variant
         _hv = select_hand_variant(revo2_hand)
+        from simple.robots.g1_sonic_revo2 import grip_config as _grip_config
+        _gc = _grip_config(); _words = {"closed": "full close (closed)", "close2": "second closing pose (close2)", "open": "nothing"}
+        print(f"[HoloMotion v1.4] Revo 2 buttons: side (grip) -> {_words[_gc['buttons']['grip']]}, trigger -> {_words[_gc['buttons']['trigger']]}; "
+              f"close2 = {_gc['close2']} (grip_poses.json next to the robot file)", flush=True)
         print(f"[HoloMotion v1.4] Revo 2 hand: {revo2_hand} -> {_hv['mjcf']} (grip poses {_hv['grip_poses']}; finger limit {_hv['upper'][3] * 57.2958:.1f} deg, "
               f"couplings {_hv['coupling'][4]:g} / {_hv['coupling'][6]:g} / {_hv['coupling'][8]:g} / {_hv['coupling'][10]:g}, thumb {_hv['coupling'][2]:g})")
     elif revo2_hand != "legacy":
@@ -1229,7 +1233,7 @@ def main(
                             backpack_kg=backpack_kg, robot=robot_kind, head_tilt_deg=head_tilt_deg, black_hands=bool(black_hands),
                             stream_camera=stream_camera, record_camera=record_camera, lean_record=bool(lean_record),
                             record_size=[rec_w, rec_h], wrist_hz=wrist_hz, wrist_fov=wrist_fov,
-                            robot_mjcf=robot.mjcf_path, revo2_hand=revo2_hand if robot_kind == "revo2" else None, physics_dt=sonic_config["SIMULATE_DT"], render_hz=render_hz,
+                            robot_mjcf=robot.mjcf_path, revo2_hand=revo2_hand if robot_kind == "revo2" else None, revo2_grip=_gc if robot_kind == "revo2" else None, physics_dt=sonic_config["SIMULATE_DT"], render_hz=render_hz,
                             policy_models_dir=os.environ.get("HOLOMOTION_UNITREE_POLICY_MODELS_DIR", ""),
                             velocity_onnx=str(agent.node.velocity_onnx_path), motion_onnx=str(agent.node.motion_onnx_path),
                             hand_source=hand_source, hand_skeleton=getattr(agent, "hand_meta", None))

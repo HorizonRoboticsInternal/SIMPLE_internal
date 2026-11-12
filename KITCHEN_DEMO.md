@@ -49,6 +49,11 @@ scripts/teleop_holomotion_v14.sh --scene kitchen --robot revo2 --record --slice 
     --save-dir data/<run>
 ```
 
+Hand buttons (Revo 2, per hand, since 2026-11-11): the side (grip) button closes only the thumb, the four fingers stay
+straight; the trigger gives the full close; both together give the full close. Poses and the button assignment are in
+`data/robots/g1_rot0_teleop_revo2/grip_poses.json` (`"buttons"`); `docs/holomotion_v14_teleop.md` ("Revo 2 buttons") has
+the details. Slices that start with the plate in the hand (A3-A5) hand it over on the first full close (the trigger).
+
 Replay a recording bit for bit, and render its cameras and tactile pads into a full dataset:
 
 ```bash

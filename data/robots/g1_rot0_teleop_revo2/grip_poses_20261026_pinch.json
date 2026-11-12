@@ -1,0 +1,47 @@
+{
+ "open": [
+  1.515,
+  0.0,
+  0.0,
+  0.045,
+  0.052,
+  0.045,
+  0.052,
+  0.045,
+  0.052,
+  0.045,
+  0.052
+ ],
+ "closed": [
+  1.515,
+  1.0472,
+  1.0472,
+  1.4661,
+  1.693,
+  1.4661,
+  1.693,
+  1.4661,
+  1.693,
+  1.4661,
+  1.693
+ ],
+ "threshold": 0.5,
+ "note": "thumb fully opposed (1.515 rad) in both poses; fingers straight when open, curled when closed; 28 of 50 recordings placed",
+ "set_at": "2026-10-26T07:45:27.915Z",
+ "applied_at": "2026-10-26 11:40",
+ "source": "docs/revo2_pose_tuner",
+ "close2": [
+  1.23,
+  0.67,
+  0.67,
+  0.705,
+  0.8143,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "close2_note": "PICO trigger (index finger): thumb-index pinch, other fingers straight; set on the page 2026-10-26T18:37Z"
+}

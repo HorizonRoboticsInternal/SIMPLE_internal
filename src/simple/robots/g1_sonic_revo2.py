@@ -26,9 +26,21 @@ OPEN_FRACTION = np.array([0.0, 0.8, 0.8, 0, 0, 0, 0, 0, 0, 0, 0])
 CLOSED_FRACTION = np.array([0.55, 1.0, 1.0, 1.0, 1.155, 1.0, 1.155, 1.0, 1.155, 1.0, 1.155])
 OPEN_Q = np.minimum(OPEN_FRACTION * np.array([REVO2_UPPER[0], REVO2_UPPER[1], REVO2_UPPER[1], *([REVO2_UPPER[3]] * 8)]), REVO2_UPPER)
 CLOSED_Q = np.minimum(CLOSED_FRACTION * np.array([REVO2_UPPER[0], REVO2_UPPER[1], REVO2_UPPER[1], *([REVO2_UPPER[3]] * 8)]), REVO2_UPPER)
-# second closing pose (PICO trigger, 2026-10-26, user): a thumb-index pinch; the other fingers stay straight
+# second closing pose. 2026-10-26 (user): a thumb-index pinch on the PICO trigger, the other fingers straight (this module
+# default). 2026-11-11 (user, kitchen demo): grip_poses.json makes it a THUMB-ONLY close (fingers straight, thumb bent) and puts
+# it on the side (grip) button -- see BUTTON_POSE
 CLOSE2_Q = np.array([1.23, 0.67, 0.67, 0.705, 0.8143, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 DEFAULT_OPEN_Q, DEFAULT_CLOSED_Q, DEFAULT_CLOSE2_Q = OPEN_Q.copy(), CLOSED_Q.copy(), CLOSE2_Q.copy()
+# which closing pose each controller button commands: "closed" (the power grasp, CLOSED_Q) or "close2" (CLOSE2_Q). Until
+# 2026-11-11: grip (the side button) -> closed, trigger (index finger) -> close2. grip_poses.json may carry
+# {"buttons": {"grip": "close2", "trigger": "closed"}}; a file without it keeps the old assignment.
+LEGACY_BUTTON_POSE = {"grip": "closed", "trigger": "close2"}
+BUTTON_POSE = dict(LEGACY_BUTTON_POSE)
+# the set every Revo 2 recording up to 2026-11-11 was made with (grip_poses.json of 2026-10-26; the legacy hand): a recording
+# without its own record (run_meta revo2_grip) is rebuilt with it, whatever the file says today (use_recorded_grip)
+LEGACY_GRIP = dict(open=[1.515, 0.0, 0.0, 0.045, 0.052, 0.045, 0.052, 0.045, 0.052, 0.045, 0.052],
+                   closed=[1.515, 1.0472, 1.0472, 1.4661, 1.693, 1.4661, 1.693, 1.4661, 1.693, 1.4661, 1.693],
+                   close2=[1.23, 0.67, 0.67, 0.705, 0.8143, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], threshold=0.5, buttons=dict(LEGACY_BUTTON_POSE))
 # the grip poses actually used come from this file when it exists (written from the pose tuner page docs/revo2_pose_tuner,
 # or by hand): {"open": [11 rad, MJCF order], "closed": [11], "close2": [11] (the trigger's pinch), "threshold": 0.5}; absent = the module defaults above
 GRIP_POSES_PATH = Path(os.environ.get("SIMPLE_REVO2_GRIP_POSES") or Path(__file__).resolve().parents[3] / "data/robots/g1_rot0_teleop_revo2/grip_poses.json")
@@ -45,10 +57,39 @@ def set_grip_poses(open_q, closed_q, threshold: float | None = None, close2_q=No
     if threshold is not None: GRIP_THRESHOLD = float(threshold)
 
 
+def set_button_poses(buttons: dict | None) -> None:
+    """Which closing pose the grip (side) button and the trigger command; None = the assignment before 2026-11-11."""
+    m = dict(LEGACY_BUTTON_POSE, **(buttons or {}))
+    for b in ("grip", "trigger"):
+        if m[b] not in ("closed", "close2", "open"): raise ValueError(f"grip poses: button {b!r} -> {m[b]!r}; one of closed, close2, open")
+    BUTTON_POSE.clear(); BUTTON_POSE.update({b: m[b] for b in ("grip", "trigger")})
+
+
 def load_grip_poses(path=GRIP_POSES_PATH) -> dict | None:
     p = Path(path)
     if not p.is_file(): return None
-    cfg = json.loads(p.read_text()); set_grip_poses(cfg["open"], cfg["closed"], cfg.get("threshold"), cfg.get("close2")); cfg["path"] = str(p); return cfg
+    cfg = json.loads(p.read_text()); set_grip_poses(cfg["open"], cfg["closed"], cfg.get("threshold"), cfg.get("close2"))
+    set_button_poses(cfg.get("buttons")); cfg["path"] = str(p); return cfg
+
+
+def grip_config() -> dict:
+    """The grip poses and the button assignment in use now (a recording keeps it as run_meta revo2_grip)."""
+    return dict(open=[round(float(v), 4) for v in OPEN_Q], closed=[round(float(v), 4) for v in CLOSED_Q], close2=[round(float(v), 4) for v in CLOSE2_Q],
+                threshold=float(GRIP_THRESHOLD), buttons=dict(BUTTON_POSE))
+
+
+def use_grip_config(cfg: dict) -> None:
+    """Switch to a given set (grip_config's dict) and rebuild the controller config that carries the open / closed poses."""
+    set_grip_poses(cfg["open"], cfg["closed"], cfg.get("threshold"), cfg.get("close2")); set_button_poses(cfg.get("buttons"))
+    if "G1SonicRevo2" in globals(): G1SonicRevo2.controller_cfg = _controller_cfg()
+
+
+def use_recorded_grip(info: dict) -> dict:
+    """A recording is rebuilt with the grip set it was made with: its own record (run_meta revo2_grip, since 2026-11-11), else,
+    on the legacy hand, the set of that time (LEGACY_GRIP); the official hand keeps its folder's file. Call after select_hand_variant."""
+    if info.get("revo2_grip"): use_grip_config(info["revo2_grip"])
+    elif HAND_VARIANT == "legacy": use_grip_config(LEGACY_GRIP)
+    return grip_config()
 
 
 GRIP_POSES = load_grip_poses()
@@ -87,16 +128,20 @@ def select_hand_variant(name: str, mjcf_path: str | None = None) -> dict:
     REVO2_UPPER[:] = upper; COUPLING[:] = coupling
     G1SonicRevo2.mjcf_path = rel; HAND_VARIANT = name
     cfg = load_grip_poses(path.parent / "grip_poses.json")
-    if cfg is None: set_grip_poses(DEFAULT_OPEN_Q, DEFAULT_CLOSED_Q, 0.5, DEFAULT_CLOSE2_Q)
+    if cfg is None: set_grip_poses(DEFAULT_OPEN_Q, DEFAULT_CLOSED_Q, 0.5, DEFAULT_CLOSE2_Q); set_button_poses(None)
     G1SonicRevo2.controller_cfg = _controller_cfg()
     return dict(variant=name, mjcf=rel, upper=upper.tolist(), coupling=coupling.tolist(), grip_poses=cfg["path"] if cfg else None)
 
 
 def revo2_targets(grip: float, threshold: float | None = None, trigger: float = 0.0) -> np.ndarray:
-    """Grip-mode hand target (11, MJCF order) from the PICO grip and trigger values in 0..1: grip pressed -> CLOSED_Q (the
-    power grasp, as the Dex3 gripper's target_q_for_grip), else trigger pressed -> CLOSE2_Q (the thumb-index pinch), else OPEN_Q."""
+    """Grip-mode hand target (11, MJCF order) from the PICO grip (side button) and trigger values in 0..1. Each pressed
+    button asks for its pose (BUTTON_POSE); the power grasp wins: any pressed button on "closed" -> CLOSED_Q, else any on
+    "close2" -> CLOSE2_Q, else OPEN_Q. Before 2026-11-11 (and with a grip_poses.json without "buttons"): grip -> closed,
+    trigger -> close2, grip wins. Kitchen demo set (2026-11-11): grip -> close2 = only the thumb closes, trigger -> closed,
+    both -> closed."""
     thr = GRIP_THRESHOLD if threshold is None else float(threshold)
-    q = CLOSED_Q if float(grip) > thr else CLOSE2_Q if float(trigger) > thr else OPEN_Q
+    pressed = {BUTTON_POSE[b] for b, v in (("grip", grip), ("trigger", trigger)) if float(v) > thr}
+    q = CLOSED_Q if "closed" in pressed else CLOSE2_Q if "close2" in pressed else OPEN_Q
     return q.astype(np.float32).copy()
 
 

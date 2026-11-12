@@ -85,7 +85,9 @@ Sim only. Hold the left menu button; while it is held nothing reaches the contro
 | left menu + A | start recording / save the episode |
 | left menu + B | abandon the episode |
 | left menu + Y | skip to a new random setup |
-| left menu + both triggers | reset the scene, same setup (a retry); a trigger alone is the Revo 2 pinch pose (2026-10-26) |
+| left menu + both triggers | reset the scene, same setup (a retry) |
+| side (grip) button, Revo 2 | only the thumb closes, the four fingers stay straight (2026-11-11; before: the full close) |
+| trigger, Revo 2 | the full close; with the side button too, still the full close (2026-11-11; before: a thumb-index pinch) |
 
 An episode is also saved automatically when the scene's task check succeeds (the item placed). After every save the
 scene is built again from a new random setup.
@@ -326,6 +328,34 @@ LeRobot v2.1 at 50 fps, the decoupled-WBC schema (as the psi0 datasets) plus:
 `policy.mode` (0 walking, 1 motion), `policy.raw_action`, `policy.target_real`. `action` is the 43-joint target
 (29 body + 2 × 7 Dex3). `observation.object_poses` has fixed slots: the scene's objects, then `distractor_0..N-1`
 (NaN when a setup has fewer).
+
+### Revo 2 buttons: the side button closes only the thumb (2026-11-11)
+
+User: "for the kitchen demo side button hand pose, change from the original pinch to ... the Revo 2 hand only closes the
+thumb". The Revo 2 has two closing poses and two buttons per hand:
+
+| Button (per hand) | Pose | Joint targets (rad: thumb rotation, thumb bend x2, then index / middle / ring / pinky x2) |
+|---|---|---|
+| none | open | 1.515, 0, 0, then 0.045 / 0.052 per finger |
+| side (grip) | `close2`: thumb only | 1.515, 1.045, 1.045, fingers 0 |
+| trigger, or both | `closed`: full close | 1.515, 1.0472, 1.0472, fingers 1.4661 / 1.693 |
+
+- The poses and the button assignment live in `data/robots/g1_rot0_teleop_revo2/grip_poses.json`: `open`, `closed`, `close2`
+  and `"buttons": {"grip": "close2", "trigger": "closed"}`. To put the full close back on the side button, swap the two
+  values. A file without `buttons` means the old assignment (grip = `closed`, trigger = `close2`). The set used until now
+  (trigger = a thumb-index pinch) is kept next to it as `grip_poses_20261026_pinch.json`.
+- Code: `simple.robots.g1_sonic_revo2.revo2_targets` (each pressed button asks for its pose; the full close wins). The
+  teleop prints the assignment at start and stores it with every recording (`revo2_grip` in the exact log's info).
+- Recordings made before this change carry no `revo2_grip`: the replay tools rebuild them with the set of that time
+  (`LEGACY_GRIP`, `use_recorded_grip`), so they do not change.
+- `action.revo2.<side>.grip_mode` keeps its numbers: 0 open, 1 `closed`, 2 `close2` (the pinch before, the thumb-only
+  close now).
+- Slices that start with the plate in the hand (A3-A5): the hand stays latched until the operator commands a full close,
+  which is now the **trigger**. The side button alone does not take the plate over (and so cannot drop it).
+- The second robot variant (`--revo2-hand official`) has its own `grip_poses.json`; it was not changed.
+- Checked with a scripted headless session (`--source synthetic`, side buttons and triggers pressed in turn): side =
+  thumb-only command and the measured fingers stay straight, trigger = full close, both = full close; the recording
+  replays bit-exact.
 
 ### Loop pacing, `--lean-record` and the replay's `--fill` (2026-10-26)
 

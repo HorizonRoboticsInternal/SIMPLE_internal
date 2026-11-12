@@ -252,7 +252,7 @@ class HoloMotionV14Agent(SonicWbcAgent):
         return np.zeros(7, dtype=np.float32)
 
     def _hand_target(self, side: str, grip: float, trigger: float = 0.0) -> np.ndarray:
-        if self._is_revo2():                                   # grip button -> closed pose; trigger (index finger) -> the pinch pose (close2)
+        if self._is_revo2():                                   # each button's pose is BUTTON_POSE (grip_poses.json "buttons"); 2026-11-11 kitchen set: side (grip) -> thumb-only close, trigger -> closed
             from simple.robots.g1_sonic_revo2 import revo2_targets
             return revo2_targets(grip, trigger=trigger)
         return np.asarray(self._grip_q(side=side, status=1, grip=grip), dtype=np.float32)[DEX3_NATURAL_TO_MJCF]

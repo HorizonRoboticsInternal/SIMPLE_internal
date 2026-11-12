@@ -12,7 +12,8 @@ index distal, middle, ring, pinky proximal/distal).
 Extra columns, per side s in left, right (thumb, index, middle, ring, pinky for the pads):
   states.revo2.{s}.joint_position   11 float32 rad       states.revo2.{s}.motor_position  6 float32 rad, the 6 motors
   action.revo2.{s}.cmd_position     11 float32 rad       action.revo2.{s}.motor_target    6 float32 rad
-  action.revo2.{s}.grip_mode         1 int64: 0 open, 1 closed (grip button), 2 pinch / close2 (trigger)
+  action.revo2.{s}.grip_mode         1 int64: 0 open, 1 closed (the power grasp), 2 close2 (the second closing pose: the pinch
+                                     until 2026-11-11, then the thumb-only close); which button gives which is in run_meta revo2_grip
   tactile.{s}.force_normal           5 int32 (0.01 N)    tactile.{s}.force_normal_N       5 float32 N
   tactile.{s}.force_tangential       5 int32 (0.01 N)    tactile.{s}.force_tangential_N   5 float32 N
   tactile.{s}.force_direction        5 int32 deg, 65535 = none     tactile.{s}.proximity_m  5 float32 m, -1 = nothing within 1 cm

@@ -1,8 +1,8 @@
 {
  "open": [
   1.515,
-  0.0,
-  0.0,
+  0,
+  0,
   0.045,
   0.052,
   0.045,
@@ -25,17 +25,12 @@
   1.4661,
   1.693
  ],
- "threshold": 0.5,
- "note": "thumb fully opposed (1.515 rad) in both poses; fingers straight when open, curled when closed; 28 of 50 recordings placed",
- "set_at": "2026-10-26T07:45:27.915Z",
- "applied_at": "2026-10-26 11:40",
- "source": "docs/revo2_pose_tuner",
  "close2": [
-  1.23,
-  0.67,
-  0.67,
-  0.705,
-  0.8143,
+  1.515,
+  1.045,
+  1.045,
+  0,
+  0,
   0,
   0,
   0,
@@ -43,5 +38,60 @@
   0,
   0
  ],
- "close2_note": "PICO trigger (index finger): thumb-index pinch, other fingers straight; set on the page 2026-10-26T18:37Z"
+ "buttons": {
+  "grip": "close2",
+  "trigger": "closed"
+ },
+ "threshold": 0.5,
+ "open_active": [
+  1.515,
+  0,
+  0.045,
+  0.045,
+  0.045,
+  0.045
+ ],
+ "closed_active": [
+  1.515,
+  1.0472,
+  1.4661,
+  1.4661,
+  1.4661,
+  1.4661
+ ],
+ "close2_active": [
+  1.515,
+  1.045,
+  0,
+  0,
+  0,
+  0
+ ],
+ "joints": [
+  "right_hand_thumb_metacarpal_joint",
+  "right_hand_thumb_proximal_joint",
+  "right_hand_thumb_distal_joint",
+  "right_hand_index_proximal_joint",
+  "right_hand_index_distal_joint",
+  "right_hand_middle_proximal_joint",
+  "right_hand_middle_distal_joint",
+  "right_hand_ring_proximal_joint",
+  "right_hand_ring_distal_joint",
+  "right_hand_pinky_proximal_joint",
+  "right_hand_pinky_distal_joint"
+ ],
+ "active_joints": [
+  "right_hand_thumb_metacarpal_joint",
+  "right_hand_thumb_proximal_joint",
+  "right_hand_index_proximal_joint",
+  "right_hand_middle_proximal_joint",
+  "right_hand_ring_proximal_joint",
+  "right_hand_pinky_proximal_joint"
+ ],
+ "units": "rad, MJCF joint order, right hand; the left hand uses the same values",
+ "note": "kitchen demo set, 2026-11-11: the side (grip) button closes only the thumb (close2: thumb opposed and bent, the four fingers straight); the trigger gives the full close (closed); both pressed = the full close. open / closed unchanged since 2026-10-26.",
+ "buttons_note": "which closing pose each button commands: closed | close2 | open. The assignment before 2026-11-11 was grip -> closed, trigger -> close2, with close2 a thumb-index pinch (grip_poses_20261026_pinch.json).",
+ "page": "revo2_pose_tuner",
+ "set_at": "2026-11-11T19:59:35.276Z",
+ "applied_at": "2026-11-11"
 }
